@@ -1,0 +1,101 @@
+import { useState } from "react"
+import { Form, Input, Button, Card, Typography, Divider, Space, Checkbox, Alert } from "antd"
+import { UserOutlined, LockOutlined, GoogleOutlined, GithubOutlined } from "@ant-design/icons"
+import { Link } from "react-router-dom"
+import styles from "./Auth.module.css"
+
+const { Title, Text } = Typography
+
+export default function LoginPage() {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const onFinish = async (values: any) => {
+    setLoading(true)
+    setError("")
+
+    try {
+      console.log("Login:", values)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      window.location.href = "/vehicles"
+    } catch (err) {
+      setError("Credenciais inválidas. Tente novamente.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className={styles.authContainer}>
+      <div className={styles.authContent}>
+        <Card className={styles.authCard}>
+          <div className={styles.authHeader}>
+            <Title level={2} className={styles.authTitle}>
+              Bem-vindo de volta
+            </Title>
+            <Text className={styles.authSubtitle}>Acesse sua conta AutoLogger</Text>
+          </div>
+
+          {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 24 }} />}
+
+          <Form name="login" onFinish={onFinish} layout="vertical" size="large">
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: "Por favor, insira seu email!" },
+                { type: "email", message: "Email inválido!" },
+              ]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="seu@email.com" />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Senha"
+              rules={[{ required: true, message: "Por favor, insira sua senha!" }]}
+            >
+              <Input.Password prefix={<LockOutlined />} placeholder="Sua senha" />
+            </Form.Item>
+
+            <Form.Item>
+              <div className={styles.formOptions}>
+                <Checkbox>Lembrar-me</Checkbox>
+                <Link to="/forgot-password" className={styles.forgotLink}>
+                  Esqueceu a senha?
+                </Link>
+              </div>
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={loading} block className={styles.authButton}>
+                Entrar
+              </Button>
+            </Form.Item>
+          </Form>
+
+          <Divider>ou</Divider>
+
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Button icon={<GoogleOutlined />} block size="large" className={styles.socialButton}>
+              Continuar com Google
+            </Button>
+            <Button icon={<GithubOutlined />} block size="large" className={styles.socialButton}>
+              Continuar com GitHub
+            </Button>
+          </Space>
+
+          <div className={styles.authFooter}>
+            <Text>
+              Não tem uma conta?{" "}
+              <Link to="/register" className={styles.authLink}>
+                Registre-se
+              </Link>
+            </Text>
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
