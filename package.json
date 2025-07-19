@@ -13,6 +13,7 @@
     "@react-three/drei": "^10.0.8",
     "@react-three/fiber": "^9.1.2",
     "@react-three/postprocessing": "^3.0.4",
+    "@types/axios": "^0.14.4",
     "@types/three": "^0.176.0",
     "antd": "^5.24.9",
     "react": "^19.0.0",

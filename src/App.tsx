@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
+import { AuthProvider } from "./contexts/AuthContext";
 import Router from "./routes/Router";
 import "./main.css";
 
@@ -61,7 +62,9 @@ const App: React.FC = () => {
       }}
     >
       <BrowserRouter>
-        <Router />
+        <AuthProvider>
+          <Router />
+        </AuthProvider>
       </BrowserRouter>
     </ConfigProvider>
   );

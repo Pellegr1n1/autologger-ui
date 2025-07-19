@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Form, Input, Button, Card, Typography, Divider, Space, Checkbox, Alert } from "antd"
-import { UserOutlined, LockOutlined, GoogleOutlined, GithubOutlined } from "@ant-design/icons"
-import { Link } from "react-router-dom"
+import { Form, Input, Button, Card, Typography, Checkbox, Alert } from "antd"
+import { UserOutlined, LockOutlined } from "@ant-design/icons"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../../contexts/AuthContext"
 import styles from "./Auth.module.css"
 
 const { Title, Text } = Typography
@@ -9,18 +10,28 @@ const { Title, Text } = Typography
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const { login } = useAuth()
+  const navigate = useNavigate()
 
   const onFinish = async (values: any) => {
     setLoading(true)
     setError("")
 
     try {
-      console.log("Login:", values)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await login({
+        email: values.email,
+        password: values.password,
+      })
 
-      window.location.href = "/vehicles"
-    } catch (err) {
-      setError("Credenciais inválidas. Tente novamente.")
+      navigate("/vehicles")
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError("Email ou senha incorretos. Verifique seus dados.")
+      } else if (err.response?.status === 404) {
+        setError("Usuário não encontrado. Verifique o email.")
+      } else {
+        setError("Erro ao fazer login. Tente novamente.")
+      }
     } finally {
       setLoading(false)
     }
@@ -74,17 +85,6 @@ export default function LoginPage() {
               </Button>
             </Form.Item>
           </Form>
-
-          <Divider>ou</Divider>
-
-          <Space direction="vertical" style={{ width: "100%" }}>
-            <Button icon={<GoogleOutlined />} block size="large" className={styles.socialButton}>
-              Continuar com Google
-            </Button>
-            <Button icon={<GithubOutlined />} block size="large" className={styles.socialButton}>
-              Continuar com GitHub
-            </Button>
-          </Space>
 
           <div className={styles.authFooter}>
             <Text>

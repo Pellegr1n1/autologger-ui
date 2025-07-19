@@ -19,12 +19,12 @@ interface RouteType {
 
 const routes: RouteType[] = [
   { path: "/", component: HomePage },
-  { path: "/register", component: RegisterPage, allowedRoles: [3] },
+  { path: "/register", component: RegisterPage },
   { path: "/login", component: LoginPage },
-  { path: "/profile", component: ProfilePage },
-  { path: "/vehicles", component: VehiclesPage },
-  { path: "/events", component: EventsPage },
-  { path: "/reports", component: ReportsPage },
+  { path: "/profile", component: ProfilePage, isProtected: true },
+  { path: "/vehicles", component: VehiclesPage, isProtected: true },
+  { path: "/events", component: EventsPage, isProtected: true },
+  { path: "/reports", component: ReportsPage, isProtected: true },
 ];
 
 const Router: React.FC = () => {
