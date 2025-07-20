@@ -31,15 +31,15 @@ const ProfilePage: React.FC = () => {
           <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          
+
           <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
             <Input />
           </Form.Item>
-          
+
           <Form.Item name="phone" label="Telefone">
             <Input />
           </Form.Item>
-          
+
           <Form.Item>
             <Button type="primary" htmlType="submit">
               Atualizar Perfil

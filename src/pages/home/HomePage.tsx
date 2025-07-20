@@ -1,15 +1,15 @@
 import styles from './Home.module.css';
 import { Row, Col, Card, Typography, Button, Space, Divider, List } from 'antd';
 import GlobalWireframe from "../../components/common/three/GlobalWireframe";
-import { 
-  ArrowRightOutlined, 
-  CheckCircleOutlined, 
-  EyeOutlined, 
-  RobotOutlined, 
-  SafetyOutlined, 
-  DashboardOutlined, 
-  LockOutlined, 
-  SyncOutlined 
+import {
+  ArrowRightOutlined,
+  CheckCircleOutlined,
+  EyeOutlined,
+  RobotOutlined,
+  SafetyOutlined,
+  DashboardOutlined,
+  LockOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import Footer from '../../components/common/layout/Footer';
 
@@ -43,7 +43,7 @@ export default function HomePage() {
             <Paragraph className={styles.heroDescription}>
               A AutoLogger oferece uma solução inovadora para registro imutável de serviços e despesas automotivas, garantindo transparência e segurança através da tecnologia blockchain.
             </Paragraph>
-            
+
             <Space size="large" className={styles.heroButtons}>
               <Button type="primary" size="large">
                 Comece Agora <ArrowRightOutlined />
@@ -77,7 +77,7 @@ export default function HomePage() {
           </Col>
 
           <Col xs={24} md={12}>
-              <GlobalWireframe />
+            <GlobalWireframe />
           </Col>
         </Row>
       </section>
@@ -116,7 +116,7 @@ export default function HomePage() {
                 />
               </Card>
             </Col>
-            
+
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
@@ -144,7 +144,7 @@ export default function HomePage() {
                 />
               </Card>
             </Col>
-            
+
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
@@ -172,7 +172,7 @@ export default function HomePage() {
                 />
               </Card>
             </Col>
-            
+
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>

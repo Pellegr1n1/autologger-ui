@@ -1,15 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService, User, LoginData, RegisterData, AuthUser } from '../services/api';
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (data: LoginData) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
-  updateProfile: (data: Partial<User>) => Promise<void>;
-  isAuthenticated: boolean;
-}
+import { authService } from '../services/api/apiAuth';
+import { apiBase } from '../services/api/api';
+import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../@types/user.types"
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -27,19 +19,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      if (apiService.isAuthenticated()) {
-        const userData = await apiService.getProfile();
+      if (authService.isAuthenticated()) {
+        const userData = await authService.getProfile();
         setUser(userData);
       }
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
-      apiService.removeToken();
+      apiBase.removeToken();
     } finally {
       setLoading(false);
     }
   };
 
-  // Função helper para converter AuthUser em User
   const convertAuthUserToUser = (authUser: AuthUser): User => {
     return {
       ...authUser,
@@ -51,14 +42,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (data: LoginData) => {
     try {
-      const response = await apiService.login(data);
-      // Converte AuthUser para User temporariamente
+      const response = await authService.login(data);
       const tempUser = convertAuthUserToUser(response.user);
       setUser(tempUser);
-      
-      // Busca o perfil completo em background
+
       try {
-        const fullUser = await apiService.getProfile();
+        const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
         console.warn('Erro ao buscar perfil completo, usando dados básicos:', profileError);
@@ -70,14 +59,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (data: RegisterData) => {
     try {
-      const response = await apiService.register(data);
-      // Converte AuthUser para User temporariamente
+      const response = await authService.register(data);
       const tempUser = convertAuthUserToUser(response.user);
       setUser(tempUser);
-      
-      // Busca o perfil completo em background
+
       try {
-        const fullUser = await apiService.getProfile();
+        const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
         console.warn('Erro ao buscar perfil completo, usando dados básicos:', profileError);
@@ -88,13 +75,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    apiService.logout();
+    authService.logout();
     setUser(null);
   };
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      const updatedUser = await apiService.updateProfile(data);
+      const updatedUser = await authService.updateProfile(data);
       setUser(updatedUser);
     } catch (error) {
       throw error;

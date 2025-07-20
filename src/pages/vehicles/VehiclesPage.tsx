@@ -1,117 +1,350 @@
-import { useState } from "react"
-import { Card, Button, Row, Col, Typography, Empty, Alert } from "antd"
-import { PlusOutlined, CarOutlined } from "@ant-design/icons"
-import { Link } from "react-router-dom"
-import VehicleCard from "../../components/vehicle/VehicleCard"
+import React, { useState } from 'react';
+import { Vehicle, CreateVehicleData, UpdateVehicleData } from '../../@types/vehicle.types';
+import { useVehicles } from '../../hooks/useVehicles';
+import { VehicleList } from '../../components/vehicle/VehicleList/VehicleList';
+import { VehicleForm } from '../../components/vehicle/VehicleForm/VehicleForm';
+import { VehicleModal } from '../../components/vehicle/VehicleModal/VehicleModal';
+import './VehiclesPage.css';
 
-const { Title } = Typography
+type ModalType = 'create' | 'edit' | 'markSold' | 'delete' | 'details' | null;
 
-export default function VehiclesPage() {
-  const [loading, setLoading] = useState(false)
+export const VehiclesPage: React.FC = () => {
+  const {
+    vehicles,
+    stats,
+    loading,
+    error,
+    createVehicle,
+    updateVehicle,
+    markAsSold,
+    deleteVehicle,
+    clearError
+  } = useVehicles();
 
-  const vehicles = [
-    {
-      id: 1,
-      name: "Honda Civic 2020",
-      brand: "Honda",
-      model: "Civic",
-      year: 2020,
-      plate: "ABC-1234",
-      color: "Prata",
-      km: 45000,
-      fuelType: "Flex",
-      lastService: "2024-01-15",
-      nextService: "2024-04-15",
-      status: "ok",
-      eventsCount: 15,
-      totalCost: 8500.0,
-    },
-    {
-      id: 2,
-      name: "Toyota Corolla 2019",
-      brand: "Toyota",
-      model: "Corolla",
-      year: 2019,
-      plate: "XYZ-5678",
-      color: "Branco",
-      km: 62000,
-      fuelType: "Flex",
-      lastService: "2023-12-10",
-      nextService: "2024-02-10",
-      status: "warning",
-      eventsCount: 22,
-      totalCost: 12300.0,
-    },
-  ]
+  const [modalType, setModalType] = useState<ModalType>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const maxVehicles = 2
-  const canAddVehicle = vehicles.length < maxVehicles
+  const handleAddNew = () => {
+    setSelectedVehicle(null);
+    setModalType('create');
+  };
+
+  const handleEdit = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setModalType('edit');
+  };
+
+  const handleMarkAsSold = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setModalType('markSold');
+  };
+
+  const handleDelete = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setModalType('delete');
+  };
+
+  const handleViewDetails = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setModalType('details');
+  };
+
+  const handleCloseModal = () => {
+    setModalType(null);
+    setSelectedVehicle(null);
+    clearError();
+  };
+
+  const handleCreateVehicle = async (data: CreateVehicleData) => {
+    try {
+      setIsSubmitting(true);
+      await createVehicle(data);
+      handleCloseModal();
+    } catch (error) {
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateVehicle = async (data: UpdateVehicleData) => {
+    if (!selectedVehicle) return;
+
+    try {
+      setIsSubmitting(true);
+      const updateData: UpdateVehicleData = {
+        brand: data.brand,
+        model: data.model,
+        year: data.year,
+        color: data.color,
+        mileage: data.mileage
+      };
+      await updateVehicle(selectedVehicle.id, updateData);
+      handleCloseModal();
+    } catch (error) {
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmSale = async () => {
+    if (!selectedVehicle) return;
+
+    try {
+      setIsSubmitting(true);
+      await markAsSold(selectedVehicle.id);
+      handleCloseModal();
+    } catch (error) {
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedVehicle) return;
+
+    try {
+      setIsSubmitting(true);
+      await deleteVehicle(selectedVehicle.id);
+      handleCloseModal();
+    } catch (error) {
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div style={{ padding: "24px" }}>
-      <Card>
-        <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
-          <Col>
-            <Title level={2} style={{ margin: 0 }}>
-              Meus Veículos
-            </Title>
-            <p style={{ color: "#8c8c8c", margin: 0 }}>
-              Gerencie seus veículos ({vehicles.length}/{maxVehicles})
-            </p>
-          </Col>
-          <Col>
-            {canAddVehicle ? (
-              <Link to="/vehicles/add">
-                <Button type="primary" icon={<PlusOutlined />} size="large">
-                  Adicionar Veículo
-                </Button>
-              </Link>
-            ) : (
-              <Button disabled size="large">
-                Limite máximo atingido
-              </Button>
-            )}
-          </Col>
-        </Row>
-
-        {!canAddVehicle && (
-          <Alert
-            message="Limite de veículos atingido"
-            description="Você já cadastrou o número máximo de 2 veículos. Para adicionar um novo veículo, você precisa remover um dos existentes."
-            type="info"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
+    <div className="vehicles-page">
+      <div className="page-container">
+        {error && (
+          <div className="error-banner">
+            <div className="error-content">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              <span>{error}</span>
+              <button onClick={clearError} className="error-close">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         )}
 
-        {vehicles.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <div>
-                <p>Nenhum veículo cadastrado</p>
-                <p style={{ color: "#8c8c8c", fontSize: "14px" }}>
-                  Adicione seu primeiro veículo para começar
-                </p>
-              </div>
-            }
+        <VehicleList
+          activeVehicles={vehicles.active}
+          soldVehicles={vehicles.sold}
+          stats={stats}
+          loading={loading}
+          onEdit={handleEdit}
+          onMarkAsSold={handleMarkAsSold}
+          onDelete={handleDelete}
+          onViewDetails={handleViewDetails}
+          onAddNew={handleAddNew}
+        />
+
+        {modalType === 'create' && (
+          <VehicleModal
+            title="Cadastrar Novo Veículo"
+            isOpen={true}
+            onClose={handleCloseModal}
+            size="large"
           >
-            <Link to="/vehicles/add">
-              <Button type="primary" icon={<PlusOutlined />}>
-                Adicionar Primeiro Veículo
-              </Button>
-            </Link>
-          </Empty>
-        ) : (
-          <Row gutter={[24, 24]}>
-            {vehicles.map((vehicle) => (
-              <Col xs={24} lg={12} key={vehicle.id}>
-                <VehicleCard vehicle={vehicle} />
-              </Col>
-            ))}
-          </Row>
+            <VehicleForm
+              onSubmit={handleCreateVehicle}
+              onCancel={handleCloseModal}
+              loading={isSubmitting}
+              submitLabel="Cadastrar Veículo"
+            />
+          </VehicleModal>
         )}
-      </Card>
+
+        {modalType === 'edit' && selectedVehicle && (
+          <VehicleModal
+            title="Editar Veículo"
+            isOpen={true}
+            onClose={handleCloseModal}
+            size="large"
+          >
+            <VehicleForm
+              vehicle={selectedVehicle}
+              onSubmit={handleUpdateVehicle}
+              onCancel={handleCloseModal}
+              loading={isSubmitting}
+              submitLabel="Salvar Alterações"
+            />
+          </VehicleModal>
+        )}
+
+        {modalType === 'markSold' && selectedVehicle && (
+          <VehicleModal
+            title="Marcar como Vendido"
+            isOpen={true}
+            onClose={handleCloseModal}
+            size="medium"
+          >
+            <div className="confirmation-modal">
+              <div className="confirmation-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <polyline points="20,6 9,17 4,12"/>
+                </svg>
+              </div>
+              <h3>Confirmar Venda</h3>
+              <p>
+                Tem certeza que deseja marcar o veículo{' '}
+                <strong>{selectedVehicle.brand} {selectedVehicle.model}</strong>{' '}
+                como vendido?
+              </p>
+              <p className="warning-text">
+                Esta ação não pode ser desfeita e o veículo será movido para a seção de vendidos.
+              </p>
+              <div className="confirmation-actions">
+                <button
+                  onClick={handleCloseModal}
+                  className="btn btn-secondary"
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmSale}
+                  className="btn btn-success"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Processando...' : 'Confirmar Venda'}
+                </button>
+              </div>
+            </div>
+          </VehicleModal>
+        )}
+
+        {modalType === 'delete' && selectedVehicle && (
+          <VehicleModal
+            title="Excluir Veículo"
+            isOpen={true}
+            onClose={handleCloseModal}
+            size="medium"
+          >
+            <div className="confirmation-modal danger">
+              <div className="confirmation-icon danger">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <polyline points="3,6 5,6 21,6"/>
+                  <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                </svg>
+              </div>
+              <h3>Excluir Veículo</h3>
+              <p>
+                Tem certeza que deseja excluir permanentemente o veículo{' '}
+                <strong>{selectedVehicle.brand} {selectedVehicle.model}</strong>?
+              </p>
+              <p className="warning-text">
+                Esta ação é irreversível e todos os dados do veículo serão perdidos.
+              </p>
+              <div className="confirmation-actions">
+                <button
+                  onClick={handleCloseModal}
+                  className="btn btn-secondary"
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="btn btn-danger"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Excluindo...' : 'Confirmar Exclusão'}
+                </button>
+              </div>
+            </div>
+          </VehicleModal>
+        )}
+
+        {modalType === 'details' && selectedVehicle && (
+          <VehicleModal
+            title="Detalhes do Veículo"
+            isOpen={true}
+            onClose={handleCloseModal}
+            size="large"
+          >
+            <div className="vehicle-details">
+              <div className="details-header">
+                <h3>{selectedVehicle.brand} {selectedVehicle.model} {selectedVehicle.year}</h3>
+                <div className={`status-badge ${selectedVehicle.status}`}>
+                  {selectedVehicle.status === 'active' ? 'Ativo' : 'Vendido'}
+                </div>
+              </div>
+
+              <div className="details-grid">
+                <div className="detail-item">
+                  <label>Placa:</label>
+                  <span>{selectedVehicle.plate}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Marca:</label>
+                  <span>{selectedVehicle.brand}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Modelo:</label>
+                  <span>{selectedVehicle.model}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Ano:</label>
+                  <span>{selectedVehicle.year}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Cor:</label>
+                  <span>{selectedVehicle.color}</span>
+                </div>
+                <div className="detail-item">
+                  <label>RENAVAM:</label>
+                  <span>{selectedVehicle.renavam}</span>
+                </div>
+                <div className="detail-item">
+                  <label>Quilometragem:</label>
+                  <span>{selectedVehicle.mileage.toLocaleString('pt-BR')} km</span>
+                </div>
+                <div className="detail-item">
+                  <label>Cadastrado em:</label>
+                  <span>{new Date(selectedVehicle.createdAt).toLocaleDateString('pt-BR')}</span>
+                </div>
+                {selectedVehicle.soldAt && (
+                  <div className="detail-item">
+                    <label>Vendido em:</label>
+                    <span>{new Date(selectedVehicle.soldAt).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="details-actions">
+                <button
+                  onClick={handleCloseModal}
+                  className="btn btn-secondary"
+                >
+                  Fechar
+                </button>
+                {selectedVehicle.status === 'active' && (
+                  <button
+                    onClick={() => {
+                      handleCloseModal();
+                      handleEdit(selectedVehicle);
+                    }}
+                    className="btn btn-primary"
+                  >
+                    Editar
+                  </button>
+                )}
+              </div>
+            </div>
+          </VehicleModal>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
+
+export default VehiclesPage;
