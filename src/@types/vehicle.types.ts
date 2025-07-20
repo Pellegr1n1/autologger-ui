@@ -70,3 +70,19 @@ export interface VehicleFormErrors {
   renavam?: string;
   mileage?: string;
 }
+
+export interface VehicleEvent {
+  id: string;
+  vehicleId: string;
+  type: 'maintenance' | 'repair' | 'inspection' | 'fuel' | 'other';
+  description: string;
+  cost: number;
+  date: Date;
+  mileage: number;
+  location?: string;
+  attachments?: string[];
+  blockchainHash?: string;
+  isConfirmed: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
