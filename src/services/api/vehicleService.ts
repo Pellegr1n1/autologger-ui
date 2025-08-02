@@ -73,7 +73,7 @@ export class VehicleService {
     const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
     const oldFormat = /^[A-Z]{3}[0-9]{4}$/;
     const mercosulFormat = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
-    
+
     return oldFormat.test(cleanPlate) || mercosulFormat.test(cleanPlate);
   }
 
@@ -90,11 +90,11 @@ export class VehicleService {
    */
   static formatPlate(plate: string): string {
     const cleanPlate = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    
+
     if (cleanPlate.length === 7) {
       return cleanPlate.replace(/^([A-Z]{3})([0-9A-Z]{4})$/, '$1-$2');
     }
-    
+
     return cleanPlate;
   }
 
@@ -103,11 +103,11 @@ export class VehicleService {
    */
   static formatRenavam(renavam: string): string {
     const cleanRenavam = renavam.replace(/\D/g, '');
-    
+
     if (cleanRenavam.length === 11) {
       return cleanRenavam.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
     }
-    
+
     return cleanRenavam;
   }
 

@@ -8,7 +8,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ReportsPage from "../pages/reports/ReportsPage";
 import VehiclesPage from "../pages/vehicles/VehiclesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
-import EventsPage from "../pages/events/EventsPage";
+import EventsPage from "../pages/events/MaintenancePage";
 
 interface RouteType {
   path: string;
