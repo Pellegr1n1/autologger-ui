@@ -1,640 +1,343 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Typography,
-  Space,
-  Empty,
-  Spin,
-  message,
-  Tabs,
-  Badge,
-  Modal,
-  Progress
-} from 'antd';
-import {
-  PlusOutlined,
+import { useState, useEffect } from 'react';
+import { Button, Typography, message, Modal, Card, Statistic, Space, Row, Col, Empty, Tabs } from 'antd';
+import { 
+  FireOutlined, 
   CarOutlined,
-  HistoryOutlined,
-  ExclamationCircleOutlined,
-  DashboardOutlined,
-  TrophyOutlined,
-  CalendarOutlined
+  PlusOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
-import VehicleCard from '../../components/vehicles/VehicleCard';
-import VehicleForm from '../../components/vehicles/VehicleForm';
-import VehicleModal from '../../components/vehicles/VehicleModal';
+import VehicleCard from '../../features/vehicles/components/VehicleCard';
 import { VehicleService } from '../../services/api/vehicleService';
-import {
-  Vehicle,
-  CreateVehicleData,
-  UpdateVehicleData,
-  UserVehicles,
-  VehicleStats
-} from '../../@types/vehicle.types';
+import { Vehicle, UserVehicles, CreateVehicleData } from '../../features/vehicles/types/vehicle.types';
+import DefaultFrame from '../../features/common/layout/Defaultframe';
+import componentStyles from '../../features/common/layout/styles/Components.module.css';
 import styles from './VehiclesPage.module.css';
+import VehicleModal from '../../features/vehicles/components/VehicleModal';
+import VehicleForm from '../../features/vehicles/components/VehicleForm';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
-const VehiclesPage: React.FC = () => {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [soldVehicles, setSoldVehicles] = useState<Vehicle[]>([]);
-  const [vehicleStats, setVehicleStats] = useState<VehicleStats | null>(null);
+export default function VehiclesPage() {
+  const [vehicles, setVehicles] = useState<UserVehicles>({ active: [], sold: [] });
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [isFormVisible, setIsFormVisible] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  
-  const [sellConfirmVisible, setSellConfirmVisible] = useState(false);
-  const [vehicleToSell, setVehicleToSell] = useState<Vehicle | null>(null);
-  const [sellLoading, setSellLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
-    loadInitialData();
+    loadVehicles();
   }, []);
 
-  const loadInitialData = async () => {
-    setLoading(true);
+  const loadVehicles = async () => {
     try {
-      await Promise.all([
-        loadVehicles(),
-        loadVehicleStats()
-      ]);
+      setLoading(true);
+      const data = await VehicleService.getUserVehicles();
+      console.log('Veículos carregados:', data); // Debug
+      console.log('Estrutura da resposta:', {
+        hasActive: !!data.active,
+        hasSold: !!data.sold,
+        activeCount: data.active?.length || 0,
+        soldCount: data.sold?.length || 0,
+        activeType: Array.isArray(data.active) ? 'array' : typeof data.active,
+        soldType: Array.isArray(data.sold) ? 'array' : typeof data.sold
+      });
+      
+      // Debug: verificar dados dos veículos ativos
+      if (data.active && Array.isArray(data.active)) {
+        console.log('Dados dos veículos ativos:', data.active.map(v => ({
+          id: v.id,
+          brand: v.brand,
+          model: v.model,
+          photoUrl: v.photoUrl,
+          imageUrl: v.imageUrl
+        })));
+      }
+      
+      // Garantir que os dados estejam no formato correto
+      const normalizedData: UserVehicles = {
+        active: Array.isArray(data.active) ? data.active : [],
+        sold: Array.isArray(data.sold) ? data.sold : []
+      };
+      
+      console.log('Dados normalizados:', normalizedData);
+      
+      // Se não houver arrays separados, tentar inferir do array único
+      if (normalizedData.active.length === 0 && normalizedData.sold.length === 0) {
+        if (Array.isArray(data)) {
+          // Se a API retornar um array único, separar por status
+          const allVehicles = data as Vehicle[];
+          normalizedData.active = allVehicles.filter(v => !v.soldAt);
+          normalizedData.sold = allVehicles.filter(v => v.soldAt);
+          console.log('Separando veículos por status:', {
+            total: allVehicles.length,
+            active: normalizedData.active.length,
+            sold: normalizedData.sold.length
+          });
+        } else if ((data as any).vehicles && Array.isArray((data as any).vehicles)) {
+          // Se a API retornar { vehicles: [...] }
+          const allVehicles = (data as any).vehicles as Vehicle[];
+          normalizedData.active = allVehicles.filter(v => !v.soldAt);
+          normalizedData.sold = allVehicles.filter(v => v.soldAt);
+          console.log('Separando veículos do campo vehicles:', {
+            total: allVehicles.length,
+            active: normalizedData.active.length,
+            sold: normalizedData.sold.length
+          });
+        }
+      }
+      
+      // Atualizar o estado com os dados normalizados
+      setVehicles(normalizedData);
     } catch (error) {
-      console.error('Erro ao carregar dados iniciais:', error);
-      message.error('Erro ao carregar dados dos veículos');
+      console.error('Erro ao carregar veículos:', error);
+      message.error('Erro ao carregar veículos');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadVehicles = async () => {
-    try {
-      const userVehicles: UserVehicles = await VehicleService.getUserVehicles();
-      setVehicles(userVehicles.active || []);
-      setSoldVehicles(userVehicles.sold || []);
-    } catch (error) {
-      console.error('Erro ao carregar veículos:', error);
-      message.error('Erro ao carregar veículos');
-      setVehicles([]);
-      setSoldVehicles([]);
-    }
+  const handleView = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setModalVisible(true);
   };
 
-  const loadVehicleStats = async () => {
-    try {
-      const stats = await VehicleService.getActiveVehiclesStats();
-      setVehicleStats(stats);
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-      setVehicleStats({
-        count: vehicles.length,
-        limit: 2,
-        canAddMore: vehicles.length < 2
-      });
-    }
+  const handleEdit = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setFormVisible(true);
   };
 
-  const handleCreateVehicle = async () => {
-    try {
-      const currentCount = vehicles.length;
-      const maxLimit = vehicleStats?.limit || 2;
-      
-      if (currentCount >= maxLimit) {
-        message.warning('Você atingiu o limite máximo de veículos ativos');
-        return;
-      }
-
-      const canAdd = await VehicleService.canAddMoreVehicles();
-      if (!canAdd) {
-        message.warning('Você atingiu o limite máximo de veículos ativos');
-        return;
-      }
-      
-      setEditingVehicle(null);
-      setIsFormVisible(true);
-    } catch (error) {
-      console.error('Erro ao verificar limite:', error);
-      message.error('Erro ao verificar limite de veículos');
-    }
-  };
-
-  const handleEditVehicle = (vehicle: Vehicle) => {
-    setEditingVehicle(vehicle);
-    setIsFormVisible(true);
-  };
-
-  const handleViewVehicle = async (vehicle: Vehicle) => {
-    try {
-      const updatedVehicle = await VehicleService.getVehicleById(vehicle.id);
-      setSelectedVehicle(updatedVehicle);
-      setIsModalVisible(true);
-    } catch (error) {
-      console.error('Erro ao carregar dados do veículo:', error);
-      setSelectedVehicle(vehicle);
-      setIsModalVisible(true);
-    }
-  };
-
-  const handleFormSubmit = async (values: CreateVehicleData | UpdateVehicleData) => {
-    setSubmitting(true);
-    try {
-      if (editingVehicle) {
-        const updatedVehicle = await VehicleService.updateVehicle(
-          editingVehicle.id,
-          values as UpdateVehicleData
-        );
-
-        setVehicles(prevVehicles =>
-          prevVehicles.map(v =>
-            v.id === editingVehicle.id ? updatedVehicle : v
-          )
-        );
-
-        message.success('Veículo atualizado com sucesso!');
-      } else {
-        const newVehicle = await VehicleService.createVehicle(values as CreateVehicleData);
-        setVehicles(prevVehicles => [...prevVehicles, newVehicle]);
-        message.success('Veículo cadastrado com sucesso!');
-        await loadVehicleStats();
-      }
-
-      setIsFormVisible(false);
-      setEditingVehicle(null);
-    } catch (error: any) {
-      console.error('Erro ao salvar veículo:', error);
-      const errorMessage = error?.response?.data?.message || 'Erro ao salvar veículo';
-      message.error(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSellVehicle = (vehicleId: string) => {
-    const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (!vehicle) {
-      message.error('Veículo não encontrado');
-      return;
-    }
-
-    setVehicleToSell(vehicle);
-    setSellConfirmVisible(true);
-  };
-
-  const confirmSellVehicle = async () => {
-    if (!vehicleToSell) return;
-    
-    setSellLoading(true);
-    
-    try {
-      if (typeof VehicleService.markVehicleAsSold !== 'function') {
-        message.error('Funcionalidade de venda não disponível');
-        return;
-      }
-      
-      const soldVehicle = await VehicleService.markVehicleAsSold(vehicleToSell.id);
-
-      setVehicles(prevVehicles => prevVehicles.filter(v => v.id !== vehicleToSell.id));
-      setSoldVehicles(prevSoldVehicles => [...prevSoldVehicles, soldVehicle]);
-
-      message.success('Veículo marcado como vendido!');
-
-      setSellConfirmVisible(false);
-      setVehicleToSell(null);
-
-      await loadVehicleStats();
-    } catch (error: any) {
-      console.error('Erro ao marcar veículo como vendido:', error);
-      const errorMessage = error?.response?.data?.message || 'Erro ao marcar veículo como vendido';
-      message.error(errorMessage);
-    } finally {
-      setSellLoading(false);
-    }
-  };
-
-  const cancelSellVehicle = () => {
-    setSellConfirmVisible(false);
-    setVehicleToSell(null);
-  };
-
-  const handleDeleteVehicle = (vehicleId: string) => {
-    const vehicle = vehicles.find(v => v.id === vehicleId) ||
-      soldVehicles.find(v => v.id === vehicleId);
-    if (!vehicle) return;
-
+  const handleSell = (vehicle: Vehicle) => {
     Modal.confirm({
-      title: 'Excluir veículo',
-      icon: <ExclamationCircleOutlined />,
-      content: (
-        <div>
-          <p>Tem certeza que deseja excluir este veículo?</p>
-          <p><strong>{VehicleService.getVehicleSummary(vehicle)}</strong></p>
-          <p style={{ color: 'var(--error-color)', fontSize: '12px' }}>
-            <strong>Atenção:</strong> Esta ação não pode ser desfeita e todos os dados do veículo serão perdidos.
-          </p>
-        </div>
-      ),
-      okText: 'Sim, excluir',
-      okType: 'danger',
-      cancelText: 'Cancelar',
+      title: 'Confirmar venda',
+      content: `Deseja marcar o veículo ${vehicle.brand} ${vehicle.model} como vendido?`,
       onOk: async () => {
         try {
-          await VehicleService.deleteVehicle(vehicleId);
-
-          if (VehicleService.isActive(vehicle)) {
-            setVehicles(prevVehicles => prevVehicles.filter(v => v.id !== vehicleId));
-            await loadVehicleStats();
-          } else {
-            setSoldVehicles(prevSoldVehicles => prevSoldVehicles.filter(v => v.id !== vehicleId));
-          }
-
-          message.success('Veículo excluído com sucesso!');
-        } catch (error: any) {
-          console.error('Erro ao excluir veículo:', error);
-          const errorMessage = error?.response?.data?.message || 'Erro ao excluir veículo';
-          message.error(errorMessage);
+          await VehicleService.markVehicleAsSold(vehicle.id);
+          message.success('Veículo marcado como vendido');
+          loadVehicles(); // Recarregar para atualizar as listas
+        } catch (error) {
+          console.error('Erro ao marcar veículo como vendido:', error);
+          message.error('Erro ao marcar veículo como vendido');
         }
       }
     });
   };
 
-  const canAddNewVehicle = React.useMemo(() => {
-    if (!vehicleStats) {
-      return vehicles.length < 2;
+  const handleDelete = (vehicle: Vehicle) => {
+    Modal.confirm({
+      title: 'Confirmar exclusão',
+      content: `Deseja excluir o veículo ${vehicle.brand} ${vehicle.model}? Esta ação não pode ser desfeita.`,
+      onOk: async () => {
+        try {
+          await VehicleService.deleteVehicle(vehicle.id);
+          message.success('Veículo excluído com sucesso');
+          loadVehicles();
+        } catch (error) {
+          message.error('Erro ao excluir veículo');
+        }
+      }
+    });
+  };
+
+  const handleFormSubmit = async (values: CreateVehicleData) => {
+    console.log('Formulário submetido:', values); // Debug
+    try {
+      setFormLoading(true);
+      
+      if (selectedVehicle) {
+        // Modo edição
+        await VehicleService.updateVehicle(selectedVehicle.id, values);
+        message.success('Veículo atualizado com sucesso!');
+      } else {
+        // Modo criação
+        await VehicleService.createVehicle(values);
+        message.success('Veículo cadastrado com sucesso!');
+      }
+      
+      setFormVisible(false);
+      setSelectedVehicle(null);
+      loadVehicles(); // Recarregar a lista de veículos
+    } catch (error) {
+      console.error('Erro ao salvar veículo:', error);
+      message.error(selectedVehicle ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo');
+    } finally {
+      setFormLoading(false);
     }
-    
-    const canAddByStats = vehicleStats.canAddMore;
-    const canAddByCount = vehicles.length < (vehicleStats.limit || 2);
-    
-    return canAddByStats && canAddByCount;
-  }, [vehicleStats, vehicles.length]);
+  };
 
-  const StatsCard: React.FC<{
-    title: string;
-    value: number;
-    icon: React.ReactNode;
-    color: string;
-    suffix?: string;
-  }> = ({ title, value, icon, color, suffix }) => (
-    <div 
-      className={styles.statsCard}
-      style={{ '--stats-color': color } as React.CSSProperties}
-    >
-      <div className={styles.statsContent}>
-        <div className={styles.statsHeader}>
-          <Text className={styles.statsTitle}>{title}</Text>
-          <div className={styles.statsIcon} style={{ background: `${color}15`, color: color }}>
-            {icon}
-          </div>
-        </div>
-        <div>
-          <Text className={styles.statsValue}>
-            {value}
-          </Text>
-          {suffix && (
-            <Text className={styles.statsSuffix}>
-              {suffix}
-            </Text>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const handleFormCancel = () => {
+    console.log('Fechando modal de formulário'); // Debug
+    setFormVisible(false);
+    setSelectedVehicle(null);
+  };
 
-  if (loading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingIcon}>
-          <CarOutlined style={{ fontSize: '48px', color: 'var(--text-light)' }} />
-        </div>
-        <Spin size="large" />
-        <Text className={styles.loadingText}>
-          Carregando seus veículos...
-        </Text>
-      </div>
-    );
-  }
+  // Usar os veículos separados diretamente do estado
+  const { active: activeVehicles, sold: soldVehicles } = vehicles;
+  const totalVehicles = activeVehicles.length + soldVehicles.length;
 
-  return (
-    <div className={styles.vehiclesPage}>
-      {/* Header com gradiente */}
-      <div className={styles.heroHeader}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <div className={styles.heroContent}>
-              <Space align="center" size="large">
-                <div className={styles.heroIcon}>
-                  <CarOutlined style={{ fontSize: '36px', color: 'var(--text-light)' }} />
-                </div>
-                <div>
-                  <Title level={1} className={styles.heroTitle}>
-                    Meus Veículos
-                  </Title>
-                  <Text className={styles.heroSubtitle}>
-                    Gerencie sua frota e acompanhe manutenções
-                  </Text>
-                </div>
-              </Space>
+  // Debug: verificar estado do formVisible
+  console.log('Estado formVisible:', formVisible);
 
-              {vehicleStats && (
-                <div className={styles.progressContainer}>
-                  <Progress
-                    percent={Math.round((vehicleStats.count || vehicles.length) / (vehicleStats.limit || 2) * 100)}
-                    strokeColor={{
-                      '0%': 'var(--accent-color)',
-                      '100%': 'var(--success-color)'
-                    }}
-                    trailColor="rgba(255, 255, 255, 0.2)"
-                    showInfo={false}
-                    size="small"
-                  />
-                  <Text className={styles.progressText}>
-                    {vehicleStats.count || vehicles.length} de {vehicleStats.limit || 2} veículos utilizados
-                  </Text>
-                </div>
-              )}
+  const renderVehiclesList = (vehicleList: Vehicle[], showSoldBadge: boolean = false) => {
+    if (vehicleList.length === 0) {
+      return (
+        <Empty
+          description={
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>
+                {showSoldBadge ? 'Nenhum veículo vendido' : 'Nenhum veículo cadastrado'}
+              </Text>
+              <Text style={{ color: 'var(--text-secondary)' }}>
+                {showSoldBadge 
+                  ? 'Os veículos vendidos aparecerão aqui quando você marcar algum como vendido.'
+                  : 'Adicione seu primeiro veículo para começar a gerenciar sua frota com inteligência'
+                }
+              </Text>
             </div>
-          </Col>
-          <Col>
+          }
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        >
+          {!showSoldBadge && (
             <Button
               type="primary"
-              size="large"
-              onClick={handleCreateVehicle}
-              disabled={!canAddNewVehicle}
-              loading={submitting}
-              className={styles.heroButton}
+              icon={<PlusOutlined />}
+              onClick={() => setFormVisible(true)}
+              className={componentStyles.professionalButton}
             >
-              Adicionar Veículo
+              Cadastrar Primeiro Veículo
             </Button>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Cards de estatísticas */}
-      <Row gutter={[24, 24]} className={styles.statsGrid}>
-        <Col xs={24} sm={12} lg={6}>
-          <StatsCard
-            title="Veículos Ativos"
-            value={vehicles.length}
-            icon={<CarOutlined />}
-            color="var(--primary-color)"
-            suffix="veículos"
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatsCard
-            title="Veículos Vendidos"
-            value={soldVehicles.length}
-            icon={<TrophyOutlined />}
-            color="var(--success-color)"
-            suffix="vendidos"
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatsCard
-            title="Total Gerenciado"
-            value={vehicles.length + soldVehicles.length}
-            icon={<DashboardOutlined />}
-            color="var(--accent-color)"
-            suffix="total"
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatsCard
-            title="Tempo no Sistema"
-            value={vehicles.length > 0 ? Math.ceil((Date.now() - new Date(vehicles[0]?.createdAt || Date.now()).getTime()) / (1000 * 60 * 60 * 24)) : 0}
-            icon={<CalendarOutlined />}
-            color="var(--secondary-color)"
-            suffix="dias"
-          />
-        </Col>
-      </Row>
-
-      {/* Warning de limite */}
-      {!canAddNewVehicle && vehicleStats && (
-        <Card className={styles.warningCard}>
-          <Space>
-            <ExclamationCircleOutlined style={{ color: 'var(--warning-color)', fontSize: '20px' }} />
-            <div>
-              <Text strong style={{ color: 'var(--warning-color)' }}>
-                Limite atingido
-              </Text>
-              <br />
-              <Text style={{ color: 'var(--gray-6)' }}>
-                Você pode ter no máximo {vehicleStats.limit || 2} veículos ativos.
-                Marque um veículo como vendido para adicionar um novo.
-              </Text>
-            </div>
-          </Space>
-        </Card>
-      )}
-
-      {/* Tabs modernos */}
-      <div className={styles.tabsContainer}>
-        <Tabs
-          defaultActiveKey="active"
-          size="large"
-          items={[
-            {
-              key: 'active',
-              label: (
-                <Space>
-                  <CarOutlined />
-                  <Text strong>Veículos Ativos</Text>
-                  <Badge
-                    count={vehicles.length}
-                    showZero
-                    style={{
-                      backgroundColor: 'var(--success-color)',
-                      color: 'var(--text-light)'
-                    }}
-                  />
-                </Space>
-              ),
-              children: (
-                <div className={styles.tabsContent}>
-                  {vehicles.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={
-                          <Space direction="vertical" size="large">
-                            <div>
-                              <Text className={styles.emptyTitle}>
-                                Nenhum veículo cadastrado
-                              </Text>
-                              <br />
-                              <Text className={styles.emptyDescription}>
-                                Adicione seu primeiro veículo para começar a gerenciar sua frota
-                              </Text>
-                            </div>
-                            <Button
-                              type="primary"
-                              size="large"
-                              icon={<PlusOutlined />}
-                              onClick={handleCreateVehicle}
-                              disabled={!canAddNewVehicle}
-                              className={styles.emptyButton}
-                            >
-                              Cadastrar Primeiro Veículo
-                            </Button>
-                          </Space>
-                        }
-                      />
-                    </div>
-                  ) : (
-                    <Row gutter={[24, 24]} className={styles.vehicleGrid}>
-                      {vehicles.map(vehicle => (
-                        <Col xs={24} sm={12} lg={8} xl={6} key={vehicle.id}>
-                          <VehicleCard
-                            vehicle={vehicle}
-                            onView={() => handleViewVehicle(vehicle)}
-                            onEdit={() => handleEditVehicle(vehicle)}
-                            onSell={() => handleSellVehicle(vehicle.id)}
-                            onDelete={() => handleDeleteVehicle(vehicle.id)}
-                          />
-                        </Col>
-                      ))}
-                    </Row>
-                  )}
-                </div>
-              )
-            },
-            {
-              key: 'sold',
-              label: (
-                <Space>
-                  <HistoryOutlined />
-                  <Text strong>Veículos Anteriores</Text>
-                  <Badge
-                    count={soldVehicles.length}
-                    showZero
-                    style={{
-                      backgroundColor: 'var(--gray-5)',
-                      color: 'var(--text-light)'
-                    }}
-                  />
-                </Space>
-              ),
-              children: (
-                <div className={styles.tabsContent}>
-                  {soldVehicles.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={
-                          <Text style={{ color: 'var(--gray-5)' }}>
-                            Nenhum veículo vendido ainda
-                          </Text>
-                        }
-                      />
-                    </div>
-                  ) : (
-                    <Row gutter={[24, 24]} className={styles.vehicleGrid}>
-                      {soldVehicles.map(vehicle => (
-                        <Col xs={24} sm={12} lg={8} xl={6} key={vehicle.id}>
-                          <VehicleCard
-                            vehicle={vehicle}
-                            onView={() => handleViewVehicle(vehicle)}
-                            onDelete={() => handleDeleteVehicle(vehicle.id)}
-                            showSoldBadge
-                          />
-                        </Col>
-                      ))}
-                    </Row>
-                  )}
-                </div>
-              )
-            }
-          ]}
-        />
-      </div>
-
-      {/* Modal de Confirmação de Venda Personalizado */}
-      <Modal
-        open={sellConfirmVisible}
-        onCancel={cancelSellVehicle}
-        footer={null}
-        width={500}
-        className={styles.sellModal}
-      >
-        <div className={styles.sellModalHeader}>
-          <div className={styles.sellModalIcon}>
-            <ExclamationCircleOutlined style={{ fontSize: '36px' }} />
-          </div>
-          <Title level={3} className={styles.sellModalTitle}>
-            Marcar como Vendido
-          </Title>
-        </div>
-
-        <div className={styles.sellModalContent}>
-          {vehicleToSell && (
-            <>
-              <Text className={styles.sellModalText}>
-                Tem certeza que deseja marcar este veículo como vendido?
-              </Text>
-
-              <div className={styles.sellModalVehicleInfo}>
-                <Text className={styles.sellModalVehicleName}>
-                  {vehicleToSell.brand} {vehicleToSell.model} {vehicleToSell.year}
-                </Text>
-                <br />
-                <Text className={styles.sellModalVehicleDetails}>
-                  Placa: {vehicleToSell.plate}
-                </Text>
-              </div>
-
-              <Text className={styles.sellModalWarning}>
-                Esta ação moverá o veículo para a aba "Veículos Anteriores".
-              </Text>
-
-              <div className={styles.sellModalActions}>
-                <Button
-                  size="large"
-                  onClick={cancelSellVehicle}
-                  className={styles.sellModalButton}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  size="large"
-                  onClick={confirmSellVehicle}
-                  loading={sellLoading}
-                  className={`${styles.sellModalButton} ${styles.sellModalConfirmButton}`}
-                >
-                  Confirmar Venda
-                </Button>
-              </div>
-            </>
           )}
+        </Empty>
+      );
+    }
+
+    return (
+      <div className={styles.vehicleGrid}>
+        {vehicleList.map(vehicle => (
+          <div key={vehicle.id} className={styles.vehicleCardWrapper}>
+            <VehicleCard
+              vehicle={vehicle}
+              onView={() => handleView(vehicle)}
+              onEdit={() => handleEdit(vehicle)}
+              onSell={() => handleSell(vehicle)}
+              onDelete={() => handleDelete(vehicle)}
+              showSoldBadge={showSoldBadge}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <DefaultFrame title="Meus Veículos">
+      {/* Header da página */}
+      <div className={styles.pageHeader}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            console.log('Botão Adicionar Veículo clicado'); // Debug
+            setFormVisible(true);
+          }}
+          className={componentStyles.professionalButton}
+        >
+          Adicionar Veículo
+        </Button>
+      </div>
+
+      <div style={{ padding: '0' }}>
+        {/* Estatísticas */}
+        <div className={styles.statsSection}>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} sm={8}>
+              <Card className={componentStyles.professionalStatistic}>
+                <Statistic
+                  title="Veículos Ativos"
+                  value={activeVehicles.length}
+                  prefix={<CarOutlined style={{ color: 'var(--primary-color)' }} />}
+                  valueStyle={{ color: 'var(--text-primary)' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Card className={componentStyles.professionalStatistic}>
+                <Statistic
+                  title="Veículos Vendidos"
+                  value={soldVehicles.length}
+                  prefix={<CheckCircleOutlined style={{ color: 'var(--success-color)' }} />}
+                  valueStyle={{ color: 'var(--text-primary)' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Card className={componentStyles.professionalStatistic}>
+                <Statistic
+                  title="Taxa de Rotatividade"
+                  value={totalVehicles > 0 ? ((soldVehicles.length / totalVehicles) * 100).toFixed(1) : 0}
+                  suffix="%"
+                  prefix={<FireOutlined style={{ color: 'var(--warning-color)' }} />}
+                  valueStyle={{ color: 'var(--text-primary)' }}
+                />
+              </Card>
+            </Col>
+          </Row>
         </div>
-      </Modal>
 
-      <VehicleForm
-        visible={isFormVisible}
-        vehicle={editingVehicle}
-        onSubmit={handleFormSubmit}
-        onCancel={() => {
-          setIsFormVisible(false);
-          setEditingVehicle(null);
-        }}
-        loading={submitting}
-      />
+        {/* Abas de Veículos */}
+        <div className={styles.vehiclesSection}>
+          <Card className={componentStyles.professionalCard}>
+            <Tabs 
+              defaultActiveKey="active" 
+              className={styles.vehiclesTabs}
+              items={[
+                {
+                  key: 'active',
+                  label: (
+                    <Space>
+                      <CarOutlined style={{ color: 'var(--primary-color)' }} />
+                      Veículos Ativos
+                      <span className={styles.tabBadge}>{activeVehicles.length}</span>
+                    </Space>
+                  ),
+                  children: renderVehiclesList(activeVehicles, false)
+                },
+                {
+                  key: 'sold',
+                  label: (
+                    <Space>
+                      <CheckCircleOutlined style={{ color: 'var(--success-color)' }} />
+                      Veículos Vendidos
+                      <span className={styles.tabBadge}>{soldVehicles.length}</span>
+                    </Space>
+                  ),
+                  children: renderVehiclesList(soldVehicles, true)
+                }
+              ]}
+            />
+          </Card>
+        </div>
+      </div>
 
+      {/* Modal de detalhes do veículo */}
       <VehicleModal
-        visible={isModalVisible}
+        visible={modalVisible}
         vehicle={selectedVehicle}
         onClose={() => {
-          setIsModalVisible(false);
+          setModalVisible(false);
           setSelectedVehicle(null);
         }}
       />
-    </div>
-  );
-};
 
-export default VehiclesPage;
+      {/* Modal de cadastro/edição de veículo */}
+      <VehicleForm
+        visible={formVisible}
+        vehicle={selectedVehicle}
+        onSubmit={handleFormSubmit}
+        onCancel={handleFormCancel}
+        loading={formLoading}
+      />
+    </DefaultFrame>
+  );
+}

@@ -1,0 +1,269 @@
+/* Estilos para a página de manutenções com espaçamentos melhorados */
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.statsSection {
+  margin-bottom: 48px;
+}
+
+.filtersSection {
+  margin-bottom: 48px;
+}
+
+.maintenanceTableSection {
+  margin-bottom: 32px;
+}
+
+/* Estilos para filtros integrados */
+.filtersContainer {
+  margin-bottom: 24px;
+  padding: 20px 0;
+}
+
+.filterField {
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.filterField :global(.ant-typography) {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.filterField :global(.ant-select),
+.filterField :global(.ant-input),
+.filterField :global(.ant-picker),
+.filterField :global(.ant-input-affix-wrapper) {
+  width: 100% !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  backdrop-filter: none !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  background: rgba(139, 92, 246, 0.03) !important;
+}
+
+.filterField :global(.ant-select .ant-select-selector) {
+  height: 40px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(138, 92, 246, 0) !important;
+  background: rgba(138, 92, 246, 0) !important;
+}
+
+.filterField :global(.ant-select .ant-select-selection-item) {
+  line-height: 38px !important;
+  font-size: 14px !important;
+  color: var(--text-primary) !important;
+}
+
+.filterField :global(.ant-select .ant-select-arrow) {
+  color: #bfbfbf !important;
+}
+
+.filterField :global(.ant-picker) {
+  height: 40px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  background: rgba(139, 92, 246, 0.03) !important;
+}
+
+.filterField :global(.ant-picker .ant-picker-input > input) {
+  margin: 8px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  font-size: 14px !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.filterField :global(.ant-input) {
+  height: 40px !important;
+  line-height: 40px !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  background: rgba(139, 92, 246, 0.03) !important;
+}
+
+.filterField :global(.ant-input-affix-wrapper) {
+  height: 40px !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: 8px !important;
+  background: rgba(139, 92, 246, 0.03) !important;
+  box-sizing: border-box !important;
+}
+
+.filterField :global(.ant-input-affix-wrapper .ant-input) {
+  height: 38px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 0 0 8px !important;
+  box-shadow: none !important;
+}
+
+.filterField :global(.ant-input-affix-wrapper .ant-input-prefix) {
+  color: #bfbfbf !important;
+  margin: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.filterField :global(.ant-input:focus),
+.filterField :global(.ant-select-focused .ant-select-selector),
+.filterField :global(.ant-picker-focused),
+.filterField :global(.ant-input-affix-wrapper-focused) {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+  background: rgba(139, 92, 246, 0.05) !important;
+  backdrop-filter: none !important;
+}
+
+.filterField :global(.ant-input:hover),
+.filterField :global(.ant-select:hover .ant-select-selector),
+.filterField :global(.ant-picker:hover),
+.filterField :global(.ant-input-affix-wrapper:hover) {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  background: rgba(139, 92, 246, 0.05) !important;
+  backdrop-filter: none !important;
+}
+
+.tableSeparator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.2) 50%, transparent 100%);
+  margin: 24px 0;
+  border-radius: 1px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.2);
+}
+
+.filterRow {
+  margin-bottom: 24px;
+}
+
+.filterLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.filterInput {
+  margin-top: 8px;
+}
+
+.tableContainer {
+  margin-top: 24px;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 24px;
+}
+
+.emptyStateIcon {
+  font-size: 64px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.emptyStateTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.emptyStateDescription {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .statsSection {
+    margin-bottom: 32px;
+  }
+
+  .filtersSection {
+    margin-bottom: 32px;
+  }
+
+  .maintenanceTableSection {
+    margin-bottom: 24px;
+  }
+
+  .filtersContainer {
+    margin-bottom: 20px;
+    padding: 16px 0;
+  }
+
+  .tableSeparator {
+    margin: 20px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageHeader {
+    margin-bottom: 24px;
+    padding: 16px 0;
+  }
+
+  .statsSection {
+    margin-bottom: 24px;
+  }
+
+  .filtersContainer {
+    margin-bottom: 16px;
+    padding: 12px 0;
+  }
+
+  .tableSeparator {
+    margin: 16px 0;
+  }
+}

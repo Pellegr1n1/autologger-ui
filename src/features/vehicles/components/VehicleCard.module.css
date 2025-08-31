@@ -1,0 +1,203 @@
+/* Vehicle Card Container */
+.vehicleCard {
+  background: var(--surface-color) !important;
+  border: 1px solid rgba(139, 92, 246, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+  height: 100% !important;
+}
+
+.vehicleCard:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.2) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.vehicleCard :global(.ant-card-body) {
+  padding: 0 !important;
+}
+
+/* Card Header */
+.cardHeader {
+  position: relative;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.05) 100%);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.vehicleImage {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vehicleImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-background);
+  border: 2px dashed rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+}
+
+.soldBadge {
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  z-index: 10 !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Vehicle Info */
+.vehicleInfo {
+  padding: 20px;
+}
+
+.vehicleTitle {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  line-height: 1.3 !important;
+  font-size: 18px !important;
+}
+
+.vehicleDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vehicleYear,
+.vehicleColor,
+.vehicleMileage {
+  color: var(--text-secondary) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 6px 12px !important;
+  background: var(--card-background) !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(139, 92, 246, 0.1) !important;
+}
+
+.vehiclePlate {
+  margin-bottom: 20px;
+}
+
+.plateTag {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Card Actions */
+.cardActions {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px 20px 20px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  padding-top: 20px;
+}
+
+.cardActions :global(.ant-btn-primary) {
+  height: 40px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cardActions :global(.ant-btn-primary:hover) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3) !important;
+}
+
+.cardActions :global(.ant-btn-text) {
+  width: 40px !important;
+  height: 40px !important;
+  border: 1px solid rgba(139, 92, 246, 0.2) !important;
+  border-radius: 8px !important;
+  color: var(--text-secondary) !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.cardActions :global(.ant-btn-text:hover) {
+  border-color: var(--primary-color) !important;
+  background: rgba(139, 92, 246, 0.1) !important;
+  color: var(--primary-color) !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .vehicleInfo {
+    padding: 16px;
+  }
+  
+  .cardActions {
+    padding: 0 16px 16px 16px;
+    padding-top: 16px;
+  }
+  
+  .vehicleTitle {
+    font-size: 16px !important;
+  }
+  
+  .vehicleDetails {
+    gap: 8px;
+  }
+  
+  .vehicleYear,
+  .vehicleColor,
+  .vehicleMileage {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardHeader {
+    padding: 12px;
+  }
+  
+  .vehicleInfo {
+    padding: 12px;
+  }
+  
+  .cardActions {
+    padding: 0 12px 12px 12px;
+    padding-top: 12px;
+    flex-direction: column;
+  }
+  
+  .cardActions :global(.ant-btn-primary) {
+    width: 100% !important;
+  }
+  
+  .cardActions :global(.ant-btn-text) {
+    width: 100% !important;
+    height: 40px !important;
+  }
+}

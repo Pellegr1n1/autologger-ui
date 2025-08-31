@@ -8,7 +8,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import ReportsPage from "../pages/reports/ReportsPage";
 import VehiclesPage from "../pages/vehicles/VehiclesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
-import EventsPage from "../pages/events/MaintenancePage";
+import VehicleDetailsPage from "../pages/vehicles/VehicleDetailsPage";
+import MaintenancePage from "../pages/maintenance/MaintenancePage";
 
 interface RouteType {
   path: string;
@@ -23,7 +24,9 @@ const routes: RouteType[] = [
   { path: "/login", component: LoginPage },
   { path: "/profile", component: ProfilePage, isProtected: true },
   { path: "/vehicles", component: VehiclesPage, isProtected: true },
-  { path: "/events", component: EventsPage, isProtected: true },
+  { path: "/vehicles/:vehicleId", component: VehicleDetailsPage, isProtected: true },
+  { path: "/maintenance", component: MaintenancePage, isProtected: true },
+  { path: "/events", component: VehicleDetailsPage, isProtected: true },
   { path: "/reports", component: ReportsPage, isProtected: true },
 ];
 

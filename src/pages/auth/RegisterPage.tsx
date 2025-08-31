@@ -4,10 +4,7 @@ import {
   UserOutlined,
   LockOutlined,
   MailOutlined,
-  PhoneOutlined,
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-  CheckOutlined,
+  PhoneOutlined
 } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/AuthContext"
@@ -253,7 +250,6 @@ export default function RegisterPage() {
         <Button
           type="primary"
           onClick={nextStep}
-          icon={<ArrowRightOutlined />}
           size="large"
           block
           className={styles.authButton}
@@ -270,7 +266,6 @@ export default function RegisterPage() {
             type="primary"
             htmlType="submit"
             loading={loading}
-            icon={<CheckOutlined />}
             size="large"
             block
             className={styles.authButton}
@@ -280,7 +275,6 @@ export default function RegisterPage() {
 
           <Button
             onClick={prevStep}
-            icon={<ArrowLeftOutlined />}
             size="large"
             block
           >

@@ -1,4 +1,4 @@
-import { VehicleFormData, VehicleFormErrors } from '../@types/vehicle.types';
+import { VehicleFormData, VehicleFormErrors } from '../features/vehicles/types/vehicle.types';
 
 export class VehicleValidation {
   /**

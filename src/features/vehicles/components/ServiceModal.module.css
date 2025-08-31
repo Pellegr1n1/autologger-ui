@@ -1,0 +1,522 @@
+/* ServiceModal.module.css */
+
+.serviceModal {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.serviceModal .ant-modal-content {
+  background: #1F2937;
+  border-radius: 16px;
+  border: 1px solid #374151;
+}
+
+.serviceModal .ant-modal-header {
+  background: #1F2937;
+  border-bottom: 1px solid #374151;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 24px 20px;
+}
+
+.serviceModal .ant-modal-title {
+  color: #F9FAFB;
+}
+
+.serviceModal .ant-modal-body {
+  padding: 0 24px 24px;
+  background: #1F2937;
+}
+
+.serviceModal .ant-modal-close {
+  color: #9CA3AF;
+}
+
+.serviceModal .ant-modal-close:hover {
+  color: #F9FAFB;
+  background: rgba(156, 163, 175, 0.1);
+}
+
+/* Progress Steps */
+.serviceModal .ant-steps .ant-steps-item-title {
+  color: #F9FAFB;
+}
+
+.serviceModal .ant-steps .ant-steps-item-description {
+  color: #9CA3AF;
+}
+
+.serviceModal .ant-steps .ant-steps-item-process .ant-steps-item-icon {
+  background: #8B5CF6;
+  border-color: #8B5CF6;
+}
+
+.serviceModal .ant-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background: #10B981;
+  border-color: #10B981;
+}
+
+.serviceModal .ant-steps .ant-steps-item-wait .ant-steps-item-icon {
+  background: #374151;
+  border-color: #6B7280;
+}
+
+/* Progress Bar */
+.serviceModal .ant-progress-bg {
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+}
+
+.serviceModal .ant-progress-text {
+  color: #8B5CF6;
+}
+
+/* Form Sections */
+.formSection {
+  background: #1F2937;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.formSection:hover {
+  border-color: #8B5CF6;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+.formSection .ant-card-body {
+  background: #1F2937;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sectionIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sectionIcon:hover {
+  transform: scale(1.05);
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #F9FAFB;
+  display: block;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.sectionDescription {
+  font-size: 14px;
+  color: #9CA3AF;
+  display: block;
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Form Items */
+.formSection .ant-form-item-label > label {
+  color: #F9FAFB;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.formSection .ant-form-item-label > label.ant-form-item-required::before {
+  color: #EF4444;
+}
+
+.formSection .ant-form-item-explain-error {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Inputs */
+.formSection .ant-input,
+.formSection .ant-input-number,
+.formSection .ant-select-selector,
+.formSection .ant-picker {
+  background: #374151 !important;
+  border: 1px solid #4B5563 !important;
+  color: #F9FAFB !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.formSection .ant-input:hover,
+.formSection .ant-input-number:hover,
+.formSection .ant-select-selector:hover,
+.formSection .ant-picker:hover {
+  border-color: #8B5CF6 !important;
+}
+
+.formSection .ant-input:focus,
+.formSection .ant-input-number:focus,
+.formSection .ant-select-selector:focus,
+.formSection .ant-picker:focus,
+.formSection .ant-input-focused,
+.formSection .ant-input-number-focused,
+.formSection .ant-select-focused .ant-select-selector,
+.formSection .ant-picker-focused {
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+
+.formSection .ant-input::placeholder,
+.formSection .ant-input-number::placeholder {
+  color: #6B7280;
+}
+
+.formSection .ant-select-selection-placeholder {
+  color: #6B7280 !important;
+}
+
+.formSection .ant-select-arrow {
+  color: #9CA3AF;
+}
+
+.formSection .ant-picker-suffix {
+  color: #9CA3AF;
+}
+
+/* Switch */
+.formSection .ant-switch {
+  background: #4B5563;
+}
+
+.formSection .ant-switch-checked {
+  background: #8B5CF6;
+}
+
+/* Upload Area */
+.formSection .ant-upload-drag {
+  background: #374151 !important;
+  border: 2px dashed #6B7280 !important;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.formSection .ant-upload-drag:hover {
+  border-color: #8B5CF6 !important;
+  background: #4B5563 !important;
+}
+
+.formSection .ant-upload-drag.ant-upload-drag-hover {
+  border-color: #8B5CF6 !important;
+  background: #4B5563 !important;
+}
+
+.formSection .ant-upload-text {
+  color: #F9FAFB !important;
+}
+
+.formSection .ant-upload-hint {
+  color: #9CA3AF !important;
+}
+
+/* Alert */
+.formSection .ant-alert {
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.formSection .ant-alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3B82F6;
+}
+
+.formSection .ant-alert-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: #F59E0B;
+}
+
+/* Review Card */
+.formSection .ant-card {
+  background: #374151;
+  border: 1px solid #4B5563;
+  border-radius: 8px;
+}
+
+.formSection .ant-card-head {
+  background: #374151;
+  border-bottom: 1px solid #4B5563;
+}
+
+.formSection .ant-card-head-title {
+  color: #F9FAFB;
+}
+
+.formSection .ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 24px;
+  border-top: 1px solid #374151;
+  background: #1F2937;
+  margin: 24px -24px -24px;
+  padding: 24px;
+  border-radius: 0 0 16px 16px;
+}
+
+.cancelButton {
+  height: 44px;
+  padding-left: 24px;
+  padding-right: 24px;
+  border-color: #6B7280;
+  color: #9CA3AF;
+  border-radius: 8px;
+  font-weight: 500;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  border-color: #9CA3AF;
+  color: #F9FAFB;
+  background: rgba(156, 163, 175, 0.1);
+}
+
+.submitButton {
+  height: 44px;
+  padding-left: 24px;
+  padding-right: 24px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  color: white;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 100%);
+}
+
+.submitButton:active {
+  transform: translateY(0);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .actionButtons {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .submitButton,
+  .cancelButton {
+    width: 100%;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .sectionIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  .serviceModal .ant-modal {
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .serviceModal .ant-modal-body {
+    padding: 0 16px 16px;
+  }
+  
+  .actionButtons {
+    margin: 16px -16px -16px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .serviceModal .ant-modal {
+    width: calc(100vw - 32px) !important;
+  }
+  
+  .formSection .ant-card-body {
+    padding: 16px;
+  }
+  
+  .sectionHeader {
+    margin-bottom: 16px;
+  }
+}
+
+/* Estados de loading */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loading .sectionIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Melhorias para acessibilidade */
+.formSection:focus-within {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.formSection .ant-upload-drag:focus-within {
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* Scrollbar personalizada */
+.formSection::-webkit-scrollbar {
+  width: 6px;
+}
+
+.formSection::-webkit-scrollbar-track {
+  background: #1F2937;
+  border-radius: 3px;
+}
+
+.formSection::-webkit-scrollbar-thumb {
+  background: #6B7280;
+  border-radius: 3px;
+}
+
+.formSection::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
+}
+
+/* Estilos específicos para o modal */
+.serviceModal .ant-modal-mask {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.serviceModal .ant-modal-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Melhorias nos campos de formulário */
+.formSection .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.formSection .ant-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.formSection .ant-row {
+  margin-bottom: 0;
+}
+
+.formSection .ant-col {
+  margin-bottom: 0;
+}
+
+/* Estilos para o switch de quilometragem automática */
+.formSection .ant-form-item-control-input-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.formSection .ant-form-item-control-input-content .ant-space {
+  align-items: center;
+}
+
+/* Estilos para mensagens de erro */
+.formSection .ant-form-item-explain {
+  margin-top: 4px;
+}
+
+.formSection .ant-form-item-explain-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.formSection .ant-form-item-explain-error::before {
+  content: "⚠️";
+  font-size: 12px;
+}

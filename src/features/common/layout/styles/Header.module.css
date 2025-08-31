@@ -1,0 +1,77 @@
+.header {
+  background: linear-gradient(135deg, var(--surface-color) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(139, 92, 246, 0.1);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user {
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.user:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+.divider {
+  margin: 0 12px;
+  border-color: rgba(139, 92, 246, 0.25);
+  height: 24px;
+}
+
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.logout span {
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.logout:hover span {
+  color: var(--primary-color);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .header {
+    left: 80px;
+    padding: 0 24px;
+    height: 64px;
+  }
+}
+
+@media (max-width: 576px) {
+  .header {
+    left: 0;
+    padding: 0 20px;
+    height: 60px;
+  }
+}

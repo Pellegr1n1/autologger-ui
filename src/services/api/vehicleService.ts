@@ -6,7 +6,7 @@ import {
   MarkVehicleSoldData,
   VehicleStats,
   UserVehicles
-} from '../../@types/vehicle.types';
+} from '../../features/vehicles/types/vehicle.types';
 
 export class VehicleService {
   private static readonly BASE_PATH = '/vehicles';
@@ -15,7 +15,28 @@ export class VehicleService {
    * Criar novo veículo
    */
   static async createVehicle(data: CreateVehicleData): Promise<Vehicle> {
-    const response = await apiBase.api.post<Vehicle>(this.BASE_PATH, data);
+    const formData = new FormData();
+    
+    // Adicionar campos de texto
+    Object.keys(data).forEach(key => {
+      if (key !== 'photo' && data[key as keyof CreateVehicleData] !== undefined) {
+        const value = data[key as keyof CreateVehicleData];
+        if (value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+    
+    // Adicionar foto se existir
+    if (data.photo) {
+      formData.append('photo', data.photo);
+    }
+
+    const response = await apiBase.api.post<Vehicle>(this.BASE_PATH, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 
@@ -39,7 +60,28 @@ export class VehicleService {
    * Atualizar dados do veículo
    */
   static async updateVehicle(id: string, data: UpdateVehicleData): Promise<Vehicle> {
-    const response = await apiBase.api.put<Vehicle>(`${this.BASE_PATH}/${id}`, data);
+    const formData = new FormData();
+    
+    // Adicionar campos de texto
+    Object.keys(data).forEach(key => {
+      if (key !== 'photo' && data[key as keyof UpdateVehicleData] !== undefined) {
+        const value = data[key as keyof UpdateVehicleData];
+        if (value !== undefined) {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+    
+    // Adicionar foto se existir
+    if (data.photo) {
+      formData.append('photo', data.photo);
+    }
+
+    const response = await apiBase.api.put<Vehicle>(`${this.BASE_PATH}/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 

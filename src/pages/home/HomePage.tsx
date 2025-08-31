@@ -1,8 +1,7 @@
 import styles from './Home.module.css';
-import { Row, Col, Card, Typography, Button, Space, Divider, List } from 'antd';
-import GlobalWireframe from "../../components/common/three/GlobalWireframe";
+import { Row, Col, Card, Typography, Button, Space, List } from 'antd';
+import GlobalWireframe from "../../features/common/three/GlobalWireframe";
 import {
-  ArrowRightOutlined,
   CheckCircleOutlined,
   EyeOutlined,
   RobotOutlined,
@@ -11,7 +10,7 @@ import {
   LockOutlined,
   SyncOutlined
 } from '@ant-design/icons';
-import Footer from '../../components/common/layout/Footer';
+import Footer from '../../features/common/layout/Footer';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -27,7 +26,7 @@ export default function HomePage() {
             <Col span={12} style={{ textAlign: 'right' }}>
               <Space>
                 <Button type="text" href='/login'>Login</Button>
-                <Button type="primary" href='/register'>Registrar</Button>
+                <Button className='btn-primary' type="primary" href='/register'>Registrar</Button>
               </Space>
             </Col>
           </Row>
@@ -45,10 +44,7 @@ export default function HomePage() {
             </Paragraph>
 
             <Space size="large" className={styles.heroButtons}>
-              <Button type="primary" size="large">
-                Comece Agora <ArrowRightOutlined />
-              </Button>
-              <Button size="large">Saiba Mais</Button>
+              <Button className='btn-primary' size="large">Saiba Mais</Button>
             </Space>
 
             <Row gutter={[24, 24]}>
@@ -87,7 +83,6 @@ export default function HomePage() {
           <Title level={2} className={styles.sectionTitle}>
             Como a <span className={styles.sectionTitleHighlight}>AutoLogger</span> Transforma a Gestão Veicular
           </Title>
-
           <Row gutter={[48, 48]}>
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
@@ -202,16 +197,6 @@ export default function HomePage() {
             </Col>
           </Row>
         </div>
-      </section>
-
-      <section className={styles.ctaSection}>
-        <Title level={2} className={styles.ctaTitle}>Pronto para transformar sua gestão veicular?</Title>
-        <Paragraph className={styles.ctaDescription}>
-          Cadastre-se agora e comece a registrar o histórico do seu veículo com a segurança da blockchain.
-        </Paragraph>
-        <Button type="primary" size="large" className={styles.ctaButton}>
-          Comece Grátis
-        </Button>
       </section>
       <Footer />
     </div>

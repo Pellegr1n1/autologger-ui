@@ -1,503 +1,148 @@
-.vehiclesPage {
-  min-height: 100vh;
-  background-color: var(--background-color);
-  padding: var(--space-xxl);
-  animation: fadeIn 0.5s ease-out;
-}
+/* Estilos para a página de veículos com layout padronizado */
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Header com gradiente */
-.heroHeader {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-xxl);
-  margin-bottom: var(--space-xxl);
-  color: var(--text-light);
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-lg);
-}
-
-.heroHeader::before {
-  content: '';
-  position: absolute;
-  top: -100px;
-  right: -100px;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  opacity: 0.6;
-}
-
-.heroHeader::after {
-  content: '';
-  position: absolute;
-  bottom: -50px;
-  left: -50px;
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
-}
-
-.heroContent {
-  position: relative;
-  z-index: 1;
-}
-
-.heroIcon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  margin-right: var(--space-lg);
-}
-
-.heroTitle {
-  color: var(--text-light) !important;
-  margin: 0 !important;
-  font-size: 36px !important;
-  font-weight: 700 !important;
-}
-
-.heroSubtitle {
-  color: rgba(255, 255, 255, 0.8) !important;
-  font-size: 18px !important;
-  margin: 0 !important;
-}
-
-.progressContainer {
-  margin-top: var(--space-lg);
-  max-width: 300px;
-}
-
-.progressText {
-  color: rgba(255, 255, 255, 0.8) !important;
-  font-size: 14px !important;
-  display: block !important;
-  margin-top: var(--space-xs) !important;
-}
-
-.heroButton {
-  height: 56px !important;
-  padding-left: var(--space-xxl) !important;
-  padding-right: var(--space-xxl) !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  color: var(--text-light) !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  backdrop-filter: blur(10px);
-  transition: all var(--transition-fast) !important;
-}
-
-.heroButton:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-lg) !important;
-}
-
-/* Cards de estatísticas */
-.statsGrid {
-  margin-bottom: var(--space-xxl);
-}
-
-.statsCard {
-  background: var(--card-background);
-  border: 1px solid var(--gray-2);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-lg);
-  transition: all var(--transition-normal);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  box-shadow: var(--shadow-sm);
-}
-
-.statsCard:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--stats-color, var(--primary-color));
-}
-
-.statsCard::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 80px;
-  height: 80px;
-  background: var(--stats-color, var(--primary-color))10;
-  border-radius: 50%;
-  opacity: 0.8;
-  z-index: 0;
-}
-
-.statsContent {
-  position: relative;
-  z-index: 1;
-}
-
-.statsHeader {
+.pageHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-sm);
+  margin-bottom: 40px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 }
 
-.statsTitle {
-  color: var(--gray-5) !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  margin: 0 !important;
+.pageTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
-.statsIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.statsSection {
+  margin-bottom: 48px;
 }
 
-.statsValue {
-  font-size: 28px !important;
-  font-weight: 700 !important;
-  color: var(--text-dark) !important;
-  margin: 0 !important;
+.vehiclesSection {
+  margin-bottom: 32px;
 }
 
-.statsSuffix {
-  font-size: 14px !important;
-  color: var(--gray-5) !important;
-  margin-left: var(--space-xs) !important;
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.2);
 }
 
-/* Warning card */
-.warningCard {
-  margin-bottom: var(--space-lg) !important;
-  border-color: var(--warning-color) !important;
-  border-width: 2px !important;
-  background: #fff7e6 !important;
-  border-radius: var(--border-radius-md) !important;
+/* Estilos para as abas */
+.vehiclesTabs {
+  margin-top: 16px;
 }
 
-/* Tabs container */
-.tabsContainer {
-  background: var(--card-background);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
+.vehiclesTabs :global(.ant-tabs-tab) {
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
 }
 
-.tabsContent {
-  padding: var(--space-lg);
+.vehiclesTabs :global(.ant-tabs-tab:hover) {
+  color: var(--primary-color);
 }
 
-/* Override do Ant Design Tabs */
-.tabsContainer :global(.ant-tabs-nav) {
-  margin-bottom: 0 !important;
-  padding: 0 var(--space-lg) !important;
-  padding-top: var(--space-lg) !important;
+.vehiclesTabs :global(.ant-tabs-tab-active) {
+  color: var(--primary-color);
 }
 
-.tabsContainer :global(.ant-tabs-tab) {
-  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0 !important;
-  border: 1px solid var(--gray-2) !important;
-  background: var(--gray-1) !important;
-  margin-right: var(--space-sm) !important;
-  transition: all var(--transition-fast) !important;
-  padding: var(--space-md) var(--space-lg) !important;
+.vehiclesTabs :global(.ant-tabs-ink-bar) {
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  height: 3px;
+  border-radius: 2px;
 }
 
-.tabsContainer :global(.ant-tabs-tab:hover) {
-  background: var(--card-background) !important;
-  border-color: var(--primary-color) !important;
+.vehiclesTabs :global(.ant-tabs-content-holder) {
+  padding: 24px 0;
 }
 
-.tabsContainer :global(.ant-tabs-tab-active) {
-  background: var(--card-background) !important;
-  border-color: var(--primary-color) !important;
-  border-bottom-color: var(--card-background) !important;
+/* Badge das abas */
+.tabBadge {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--primary-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
-.tabsContainer :global(.ant-tabs-content-holder) {
-  border-top: 1px solid var(--gray-2);
-}
-
-.tabsContainer :global(.ant-badge-count) {
-  border-radius: var(--border-radius-sm) !important;
-  font-weight: 600 !important;
-  font-size: 12px !important;
-  min-width: 24px !important;
-  height: 24px !important;
-  line-height: 22px !important;
-}
-
-/* Empty states */
-.emptyState {
-  text-align: center;
-  padding: var(--space-xxl);
-  background: var(--gray-1);
-  border-radius: var(--border-radius-md);
-}
-
-.emptyTitle {
-  font-size: 18px !important;
-  color: var(--text-dark) !important;
-  margin-bottom: var(--space-xs) !important;
-}
-
-.emptyDescription {
-  color: var(--gray-5) !important;
-  margin-bottom: var(--space-lg) !important;
-}
-
-.emptyButton {
-  height: 48px !important;
-  padding-left: var(--space-lg) !important;
-  padding-right: var(--space-lg) !important;
-  background: var(--primary-color) !important;
-  border-color: var(--primary-color) !important;
-  border-radius: var(--border-radius-sm) !important;
-}
-
-/* Grid de veículos */
+/* Vehicle Grid */
 .vehicleGrid {
-  gap: var(--space-lg) !important;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
-/* Loading state */
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  background: var(--background-color);
+/* Wrapper do card do veículo */
+.vehicleCardWrapper {
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.loadingIcon {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--space-lg);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { 
-    transform: scale(1); 
-    opacity: 1;
-  }
-  50% { 
-    transform: scale(1.05); 
-    opacity: 0.8;
-  }
-}
-
-.loadingText {
-  margin-top: var(--space-md) !important;
-  color: var(--gray-5) !important;
-  font-size: 16px !important;
-}
-
-/* Modal de venda customizado */
-.sellModal :global(.ant-modal-content) {
-  padding: 0 !important;
-  border-radius: var(--border-radius-lg) !important;
-  overflow: hidden !important;
-}
-
-.sellModalHeader {
-  background: linear-gradient(135deg, var(--warning-color), var(--error-color));
-  padding: var(--space-xxl);
-  text-align: center;
-  color: var(--text-light);
-}
-
-.sellModalIcon {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--space-lg);
-  backdrop-filter: blur(10px);
-}
-
-.sellModalTitle {
-  color: var(--text-light) !important;
-  margin: 0 !important;
-  font-size: 24px !important;
-  font-weight: 700 !important;
-}
-
-.sellModalContent {
-  padding: var(--space-xxl);
-}
-
-.sellModalText {
-  font-size: 16px !important;
-  color: var(--text-dark) !important;
-  display: block !important;
-  margin-bottom: var(--space-lg) !important;
-}
-
-.sellModalVehicleInfo {
-  background: var(--gray-1);
-  padding: var(--space-lg);
-  border-radius: var(--border-radius-md);
-  border: 1px solid var(--gray-2);
-  margin-bottom: var(--space-lg);
-}
-
-.sellModalVehicleName {
-  font-size: 18px !important;
-  color: var(--text-dark) !important;
-  font-weight: 600 !important;
-  margin-bottom: var(--space-xs) !important;
-}
-
-.sellModalVehicleDetails {
-  color: var(--gray-6) !important;
-}
-
-.sellModalWarning {
-  color: var(--gray-5) !important;
-  font-size: 14px !important;
-  display: block !important;
-  margin-bottom: var(--space-lg) !important;
-}
-
-.sellModalActions {
-  display: flex;
-  gap: var(--space-md);
-  justify-content: flex-end;
-}
-
-.sellModalButton {
-  height: 48px !important;
-  padding-left: var(--space-lg) !important;
-  padding-right: var(--space-lg) !important;
-  border-radius: var(--border-radius-sm) !important;
-  font-weight: 600 !important;
-}
-
-.sellModalConfirmButton {
-  background: var(--warning-color) !important;
-  border-color: var(--warning-color) !important;
+.vehicleCardWrapper:hover {
+  transform: translateY(-4px);
 }
 
 /* Responsividade */
-@media (max-width: 1200px) {
-  .heroTitle {
-    font-size: 28px !important;
-  }
-  
-  .vehiclesPage {
-    padding: var(--space-lg);
-  }
-}
-
 @media (max-width: 768px) {
-  .vehiclesPage {
-    padding: var(--space-md);
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
   }
   
-  .heroHeader {
-    padding: var(--space-lg);
-    text-align: center;
+  .statsSection {
+    margin-bottom: 32px;
   }
   
-  .heroTitle {
-    font-size: 24px !important;
+  .vehiclesSection {
+    margin-bottom: 24px;
   }
   
-  .heroSubtitle {
-    font-size: 16px !important;
+  .vehicleGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   
-  .heroIcon {
-    margin: 0 auto var(--space-md);
+  .vehiclesTabs :global(.ant-tabs-tab) {
+    padding: 8px 16px;
+    font-size: 14px;
   }
   
-  .statsGrid {
-    margin-bottom: var(--space-lg);
-  }
-  
-  .statsCard {
-    margin-bottom: var(--space-md);
-  }
-  
-  .sellModalContent {
-    padding: var(--space-lg);
-  }
-  
-  .sellModalHeader {
-    padding: var(--space-lg);
-  }
-  
-  .sellModalActions {
-    flex-direction: column-reverse;
-  }
-  
-  .sellModalButton {
-    width: 100% !important;
-    justify-content: center !important;
+  .tabBadge {
+    font-size: 11px;
+    padding: 1px 6px;
   }
 }
 
 @media (max-width: 480px) {
-  .vehiclesPage {
-    padding: var(--space-sm);
+  .pageHeader {
+    margin-bottom: 24px;
+    padding: 16px 0;
   }
   
-  .heroHeader {
-    padding: var(--space-md);
+  .statsSection {
+    margin-bottom: 24px;
   }
   
-  .heroTitle {
-    font-size: 20px !important;
+  .vehicleGrid {
+    gap: 12px;
   }
   
-  .heroSubtitle {
-    font-size: 14px !important;
-  }
-  
-  .heroButton {
-    font-size: 14px !important;
-    height: 44px !important;
-  }
-  
-  .statsValue {
-    font-size: 24px !important;
-  }
-  
-  .emptyState {
-    padding: var(--space-lg);
+  .vehiclesTabs :global(.ant-tabs-tab) {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 }
+

@@ -94,36 +94,45 @@ export class FipeService {
      * Buscar marcas com cache local (otimização)
      */
     static async getBrandsWithCache(): Promise<FipeBrand[]> {
-        const cacheKey = 'fipe_brands';
-        const cached = localStorage.getItem(cacheKey);
+        try {
+            const cacheKey = 'fipe_brands';
+            const cached = localStorage.getItem(cacheKey);
 
-        if (cached) {
-            try {
-                const { data, timestamp } = JSON.parse(cached);
-                const isExpired = Date.now() - timestamp > 24 * 60 * 60 * 1000;
+            if (cached) {
+                try {
+                    const { data, timestamp } = JSON.parse(cached);
+                    const isExpired = Date.now() - timestamp > 24 * 60 * 60 * 1000;
 
-                if (!isExpired) {
-                    return data;
+                    if (!isExpired) {
+                        return data;
+                    }
+                } catch (error) {
+                    localStorage.removeItem(cacheKey);
                 }
-            } catch (error) {
-                localStorage.removeItem(cacheKey);
             }
+
+            const brands = await this.getBrands();
+            localStorage.setItem(cacheKey, JSON.stringify({
+                data: brands,
+                timestamp: Date.now()
+            }));
+
+            return brands;
+        } catch (error) {
+            console.warn('Erro no cache, buscando diretamente:', error);
+            return await this.getBrands();
         }
-
-        const brands = await this.getBrands();
-        localStorage.setItem(cacheKey, JSON.stringify({
-            data: brands,
-            timestamp: Date.now()
-        }));
-
-        return brands;
     }
 
     /**
      * Limpar cache (útil para debug ou atualização forçada)
      */
     static clearCache(): void {
-        localStorage.removeItem('fipe_brands');
+        try {
+            localStorage.removeItem('fipe_brands');
+        } catch (error) {
+            console.warn('Erro ao limpar cache:', error);
+        }
     }
 
     /**
