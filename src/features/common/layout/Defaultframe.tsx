@@ -1,5 +1,5 @@
-import React, { ReactNode, useState } from "react";
-import { Layout } from "antd";
+import React, { ReactNode, useState, useEffect } from "react";
+import { Layout, Spin } from "antd";
 import HeaderPage from "./Header";
 import VehicleSider from "./VehicleSider";
 import styles from "./styles/Defaultframe.module.css";
@@ -10,6 +10,7 @@ interface DefaultFrameProps {
   breadcrumb?: ReactNode;
   showSider?: boolean;
   showHeader?: boolean;
+  loading?: boolean;
 }
 
 export default function DefaultFrame({
@@ -17,13 +18,32 @@ export default function DefaultFrame({
   title,
   breadcrumb,
   showSider = true,
-  showHeader = true
+  showHeader = true,
+  loading = false
 }: DefaultFrameProps): React.JSX.Element {
   const [siderCollapsed, setSiderCollapsed] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
 
   const handleSiderCollapse = (collapsed: boolean) => {
     setSiderCollapsed(collapsed);
   };
+
+  const handleMenuToggle = () => {
+    setSiderCollapsed(!siderCollapsed);
+  };
+
+  // Efeito para gerenciar o estado de carregamento do conteúdo
+  useEffect(() => {
+    if (loading) {
+      setContentLoading(true);
+    } else {
+      // Delay pequeno para transição suave
+      const timer = setTimeout(() => {
+        setContentLoading(false);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   return (
     <Layout className={styles.mainLayout}>
@@ -41,7 +61,16 @@ export default function DefaultFrame({
           {breadcrumb && <div className={styles.breadcrumb}>{breadcrumb}</div>}
           {title && <h1 className={styles.title}>{title}</h1>}
           <div className={styles.content}>
-            {children}
+            <div className={styles.contentWrapper}>
+              <Spin 
+                spinning={contentLoading} 
+                size="large"
+                tip="Carregando..."
+                className={styles.contentSpin}
+              >
+                {children}
+              </Spin>
+            </div>
           </div>
         </Layout>
       </Layout>

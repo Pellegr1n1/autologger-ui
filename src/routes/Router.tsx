@@ -10,6 +10,7 @@ import VehiclesPage from "../pages/vehicles/VehiclesPage";
 import ProfilePage from "../pages/profile/ProfilePage";
 import VehicleDetailsPage from "../pages/vehicles/VehicleDetailsPage";
 import MaintenancePage from "../pages/maintenance/MaintenancePage";
+import BlockchainPage from "../pages/blockchain/BlockchainPage";
 
 interface RouteType {
   path: string;
@@ -28,6 +29,7 @@ const routes: RouteType[] = [
   { path: "/maintenance", component: MaintenancePage, isProtected: true },
   { path: "/events", component: VehicleDetailsPage, isProtected: true },
   { path: "/reports", component: ReportsPage, isProtected: true },
+  { path: "/blockchain", component: BlockchainPage, isProtected: true },
 ];
 
 const Router: React.FC = () => {

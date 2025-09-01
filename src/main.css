@@ -20,6 +20,8 @@
   --error-color: #EF4444;
   --info-color: #A78BFA;
   
+  --border-color: #374151;
+  
   --gray-1: #1F2937;
   --gray-2: #374151;
   --gray-3: #4B5563;
@@ -79,6 +81,23 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Animações simples para conteúdo */
+.content-fade-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {

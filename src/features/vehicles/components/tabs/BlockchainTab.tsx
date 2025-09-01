@@ -1,5 +1,5 @@
 import React from "react"
-import { Badge, Button, Card, Col, Divider, Flex, Row, Space, Tag, Typography, Statistic, Progress, Timeline } from "antd"
+import { Button, Card, Col, Divider, Row, Space, Tag, Typography, Statistic, Progress, Timeline } from "antd"
 import { 
   LinkOutlined, 
   CheckCircleOutlined, 
@@ -12,7 +12,7 @@ import type { VehicleEvent } from "../../types/vehicle.types"
 import { getChainStatusConfig } from "../../utils/helpers"
 import { formatBRDate } from "../../../../utils/format"
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 interface BlockchainTabProps {
   events: VehicleEvent[]

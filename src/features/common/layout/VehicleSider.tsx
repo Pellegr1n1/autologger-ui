@@ -47,9 +47,9 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
     const items: MenuItem[] = [
         getItem("Veículos", "/vehicles", <CarOutlined />),
         getItem("Manutenções", "/maintenance", <ToolOutlined />),
+        getItem("Blockchain", "/blockchain", <BlockOutlined />),
         getItem("Relatórios", "/reports", <BarChartOutlined />),
-        getItem("Perfil", "/profile", <UserOutlined />),
-        getItem("Blockchain", "/blockchain", <BlockOutlined />)
+        getItem("Perfil", "/profile", <UserOutlined />)
     ];
 
     // Determinar qual item está ativo baseado na rota atual

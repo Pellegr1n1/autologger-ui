@@ -1,14 +1,13 @@
 import React from 'react';
-import { Tag, Tooltip, Space } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined,
-  SafetyCertificateOutlined
+  SyncOutlined
 } from '@ant-design/icons';
-import { ChainStatus, TransactionStatus } from '../types/blockchain.types';
+import { ChainStatus } from '../types/blockchain.types';
 
 interface BlockchainStatusBadgeProps {
   status: ChainStatus;

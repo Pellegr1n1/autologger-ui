@@ -11,15 +11,12 @@ import {
   Card,
   Tag,
   Divider,
-  message,
-  Spin
+  message
 } from 'antd';
 import {
   SafetyCertificateOutlined,
   LockOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  WarningOutlined,
   BlockOutlined
 } from '@ant-design/icons';
 import { VehicleEvent } from '../types/vehicle.types';
@@ -27,7 +24,6 @@ import { BlockchainService } from '../../../services/api/blockchainService';
 import { ServiceSubmissionResult } from '../types/blockchain.types';
 
 const { Text, Title } = Typography;
-const { Step } = Steps;
 
 interface BlockchainConfirmationModalProps {
   visible: boolean;

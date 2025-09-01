@@ -1,6 +1,5 @@
-import { Layout, Divider, Dropdown, MenuProps } from "antd";
+import { Layout, Dropdown, MenuProps } from "antd";
 import { FaUserAlt } from "react-icons/fa";
-import { CiLogout } from "react-icons/ci";
 import styles from "./styles/Header.module.css";
 
 const { Header } = Layout;

@@ -5,8 +5,7 @@ import {
   ToolOutlined, 
   HistoryOutlined, 
   FileTextOutlined,
-  PlusOutlined,
-  EyeOutlined
+  PlusOutlined
 } from "@ant-design/icons"
 import type { Vehicle } from "../types/vehicle.types"
 import { kmFormat } from "../../../utils/format"

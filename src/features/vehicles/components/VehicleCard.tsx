@@ -1,14 +1,11 @@
-import React from 'react';
-import { Card, Button, Typography, Tag, Image, Dropdown, Space, Tooltip } from 'antd';
+import { Card, Button, Typography, Tag, Image, Dropdown, Space } from 'antd';
 import { 
-  RightOutlined, 
   EditOutlined, 
   ToolOutlined, 
   HistoryOutlined, 
   FileTextOutlined, 
   MoreOutlined,
-  CarOutlined,
-  EyeOutlined
+  CarOutlined
 } from '@ant-design/icons';
 import { Vehicle } from '../types/vehicle.types';
 import styles from './VehicleCard.module.css';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Button, 
   DatePicker, 
@@ -42,7 +42,6 @@ import styles from './ServiceModal.module.css';
 const { Text, Title } = Typography;
 const { Dragger } = Upload;
 const { TextArea } = Input;
-const { Step } = Steps;
 
 interface ServiceModalProps {
   open: boolean;

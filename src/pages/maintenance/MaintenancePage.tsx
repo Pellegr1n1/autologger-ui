@@ -33,6 +33,7 @@ export default function MaintenancePage() {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  
   const [serviceModalLoading, setServiceModalLoading] = useState(false);
 
   useEffect(() => {
@@ -373,29 +374,8 @@ export default function MaintenancePage() {
     navigate('/vehicles');
   };
 
-  // Estado de loading
-  if (loading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        padding: '48px',
-        background: 'var(--background-color)',
-        color: 'var(--text-primary)'
-      }}>
-        <Spin size="large" />
-        <Text style={{ marginTop: '24px', color: 'var(--text-secondary)' }}>
-          Carregando manutenções...
-        </Text>
-      </div>
-    );
-  }
-
   return (
-    <DefaultFrame title="Manutenções">
+    <DefaultFrame title="Manutenções" loading={loading}>
       {/* Header da página */}
       <div className={styles.pageHeader}>
         <Button

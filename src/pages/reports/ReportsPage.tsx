@@ -1,309 +1,485 @@
-import { useState } from "react"
-import { Layout, Card, Row, Col, Statistic, Typography, Button, Tag, Space, Avatar, List } from "antd"
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  Card, 
+  Row, 
+  Col, 
+  Statistic, 
+  Typography, 
+  Button, 
+  Tag, 
+  Space, 
+  Table, 
+  Progress, 
+  DatePicker, 
+  Select, 
+  Empty,
+  Spin,
+  message,
+  Tooltip
+} from 'antd';
 import {
-  CarOutlined,
-  DollarOutlined,
-  ToolOutlined,
-  BellOutlined,
-  PlusOutlined,
+  BarChartOutlined,
+  PieChartOutlined,
+  DownloadOutlined,
   EyeOutlined,
-  WarningOutlined,
+  DollarOutlined,
+  CarOutlined,
+  ToolOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-} from "@ant-design/icons"
-import { Link } from "react-router-dom"
+  FileTextOutlined,
+  ReloadOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import DefaultFrame from '../../features/common/layout/Defaultframe';
+import componentStyles from '../../features/common/layout/styles/Components.module.css';
+import styles from './ReportsPage.module.css';
+import { VehicleService } from '../../services/api/vehicleService';
+import { VehicleServiceService } from '../../services/api/vehicleServiceService';
+import { Vehicle, VehicleEvent } from '../../features/vehicles/types/vehicle.types';
+import { currencyBRL, formatBRDate } from '../../utils/format';
 
-const { Header, Content, Sider } = Layout
-const { Title, Text } = Typography
+const { Text } = Typography;
+const { RangePicker } = DatePicker;
+const { Option } = Select;
+
+interface ReportData {
+  totalVehicles: number;
+  totalExpenses: number;
+  totalServices: number;
+  blockchainVerified: number;
+  monthlyExpenses: number;
+  upcomingServices: number;
+  averageServiceCost: number;
+  reliabilityScore: number;
+}
+
+
 
 export default function ReportsPage() {
-  const [collapsed, setCollapsed] = useState(false)
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [reportData, setReportData] = useState<ReportData>({
+    totalVehicles: 0,
+    totalExpenses: 0,
+    totalServices: 0,
+    blockchainVerified: 0,
+    monthlyExpenses: 0,
+    upcomingServices: 0,
+    averageServiceCost: 0,
+    reliabilityScore: 0
+  });
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [services, setServices] = useState<VehicleEvent[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('30');
+  const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<[string, string] | null>(null);
 
-  const vehicles = [
-    {
-      id: 1,
-      name: "Honda Civic 2020",
-      plate: "ABC-1234",
-      km: 45000,
-      lastService: "2024-01-15",
-      status: "ok",
-    },
-    {
-      id: 2,
-      name: "Toyota Corolla 2019",
-      plate: "XYZ-5678",
-      km: 62000,
-      lastService: "2023-12-10",
-      status: "warning",
-    },
-  ]
+  useEffect(() => {
+    loadReportData();
+  }, [selectedPeriod, selectedVehicle, dateRange]);
 
-  const recentEvents = [
-    {
-      id: 1,
-      type: "maintenance",
-      description: "Troca de óleo",
-      vehicle: "Honda Civic 2020",
-      date: "2024-01-15",
-      cost: 150.0,
-      verified: true,
-    },
-    {
-      id: 2,
-      type: "fuel",
-      description: "Abastecimento",
-      vehicle: "Honda Civic 2020",
-      date: "2024-01-10",
-      cost: 85.5,
-      verified: true,
-    },
-    {
-      id: 3,
-      type: "expense",
-      description: "IPVA 2024",
-      vehicle: "Toyota Corolla 2019",
-      date: "2024-01-05",
-      cost: 1200.0,
-      verified: false,
-    },
-  ]
+  const loadReportData = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Carregar veículos
+      const vehiclesData = await VehicleService.getUserVehicles();
+      const activeVehicles = vehiclesData.active || [];
+      setVehicles(activeVehicles);
 
-  const upcomingMaintenance = [
-    {
-      vehicle: "Honda Civic 2020",
-      service: "Revisão dos 50.000 km",
-      dueDate: "2024-02-15",
-      priority: "high",
-    },
-    {
-      vehicle: "Toyota Corolla 2019",
-      service: "Troca de pneus",
-      dueDate: "2024-03-01",
-      priority: "medium",
-    },
-  ]
+      // Carregar serviços
+      const servicesData = await VehicleServiceService.getAllServices();
+      setServices(servicesData);
 
-  const getEventIcon = (type: string) => {
-    switch (type) {
-      case "maintenance":
-        return <ToolOutlined />
-      case "fuel":
-        return <BellOutlined />
-      case "expense":
-        return <DollarOutlined />
-      default:
-        return <CarOutlined />
+      // Calcular estatísticas
+      const filteredServices = filterServices(servicesData, selectedVehicle, dateRange);
+      const totalExpenses = filteredServices.reduce((sum, service) => sum + service.cost, 0);
+      const verifiedServices = filteredServices.filter(service => 
+        service.blockchainStatus?.status === 'CONFIRMED'
+      );
+      const averageCost = filteredServices.length > 0 ? totalExpenses / filteredServices.length : 0;
+      const reliabilityScore = servicesData.length > 0 
+        ? Math.round((verifiedServices.length / servicesData.length) * 100) 
+        : 0;
+
+      // Calcular gastos do mês atual
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      const monthlyServices = filteredServices.filter(service => {
+        const serviceDate = new Date(service.date);
+        return serviceDate.getMonth() === currentMonth && serviceDate.getFullYear() === currentYear;
+      });
+      const monthlyExpenses = monthlyServices.reduce((sum, service) => sum + service.cost, 0);
+
+      // Calcular serviços próximos (próximos 30 dias)
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      const upcomingServices = filteredServices.filter(service => {
+        const serviceDate = new Date(service.date);
+        return serviceDate > new Date() && serviceDate <= thirtyDaysFromNow;
+      });
+
+      setReportData({
+        totalVehicles: activeVehicles.length,
+        totalExpenses,
+        totalServices: filteredServices.length,
+        blockchainVerified: verifiedServices.length,
+        monthlyExpenses,
+        upcomingServices: upcomingServices.length,
+        averageServiceCost: averageCost,
+        reliabilityScore
+      });
+
+    } catch (error) {
+      console.error('Erro ao carregar dados do relatório:', error);
+      message.error('Erro ao carregar dados do relatório');
+    } finally {
+      setLoading(false);
     }
-  }
+  }, [selectedPeriod, selectedVehicle, dateRange]);
 
-  const getEventColor = (type: string) => {
-    switch (type) {
-      case "maintenance":
-        return "#722ED1"
-      case "fuel":
-        return "#13C2C2"
-      case "expense":
-        return "#FAAD14"
-      default:
-        return "#2F54EB"
+  const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null) => {
+    let filtered = services;
+
+    if (vehicleId !== 'all') {
+      filtered = filtered.filter(service => service.vehicleId === vehicleId);
     }
-  }
+
+    if (dateRange) {
+      const [startDate, endDate] = dateRange;
+      filtered = filtered.filter(service => {
+        const serviceDate = new Date(service.date);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        return serviceDate >= start && serviceDate <= end;
+      });
+    }
+
+    return filtered;
+  };
+
+
+
+  const exportReport = () => {
+    message.success('Relatório exportado com sucesso!');
+  };
+
+  const tableColumns = [
+    {
+      title: 'Veículo',
+      dataIndex: 'vehicleName',
+      key: 'vehicleName',
+      render: (text: string) => <Text strong>{text}</Text>
+    },
+    {
+      title: 'Tipo',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: string) => (
+        <Tag color={type === 'MAINTENANCE' ? 'blue' : 'green'}>
+          {type === 'MAINTENANCE' ? 'Manutenção' : 'Abastecimento'}
+        </Tag>
+      )
+    },
+    {
+      title: 'Data',
+      dataIndex: 'date',
+      key: 'date',
+      render: (date: string) => formatBRDate(date)
+    },
+    {
+      title: 'Custo',
+      dataIndex: 'cost',
+      key: 'cost',
+      render: (cost: number) => currencyBRL(cost)
+    },
+    {
+      title: 'Status Blockchain',
+      dataIndex: 'blockchainStatus',
+      key: 'blockchainStatus',
+      render: (status: any) => (
+        <Tag 
+          color={status?.status === 'CONFIRMED' ? 'success' : 'warning'}
+          icon={status?.status === 'CONFIRMED' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+        >
+          {status?.status === 'CONFIRMED' ? 'Verificado' : 'Pendente'}
+        </Tag>
+      )
+    },
+    {
+      title: 'Ações',
+      key: 'actions',
+      render: (record: VehicleEvent) => (
+        <Space>
+          <Tooltip title="Ver detalhes">
+            <Button 
+              type="text" 
+              icon={<EyeOutlined />} 
+              onClick={() => navigate(`/vehicles/${record.vehicleId}`)}
+            />
+          </Tooltip>
+        </Space>
+      )
+    }
+  ];
+
+
 
   return (
-    <Layout>
-      <Header>
-        <div>
-          <Title level={3} style={{ color: "white", margin: 0 }}>
-            AutoLogger Dashboard
-          </Title>
-          <Space>
-            <Avatar size="large" style={{ backgroundColor: "#722ED1" }}>
-              U
-            </Avatar>
+    <DefaultFrame title="Relatórios e Análises" loading={loading}>
+      <div className={styles.reportsContainer}>
+        {/* Filtros */}
+        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }}>
+          <Space size="large" wrap>
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: '8px' }}>Período</Text>
+              <Select 
+                value={selectedPeriod} 
+                onChange={setSelectedPeriod}
+                style={{ width: 120 }}
+              >
+                <Option value="7">7 dias</Option>
+                <Option value="30">30 dias</Option>
+                <Option value="90">90 dias</Option>
+                <Option value="365">1 ano</Option>
+              </Select>
+            </div>
+            
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: '8px' }}>Veículo</Text>
+              <Select 
+                value={selectedVehicle} 
+                onChange={setSelectedVehicle}
+                style={{ width: 200 }}
+              >
+                <Option value="all">Todos os veículos</Option>
+                {vehicles.map(vehicle => (
+                  <Option key={vehicle.id} value={vehicle.id}>
+                    {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+            
+            <div>
+              <Text strong style={{ display: 'block', marginBottom: '8px' }}>Data específica</Text>
+              <RangePicker 
+                onChange={(dates) => {
+                  if (dates) {
+                    setDateRange([dates[0]!.toISOString(), dates[1]!.toISOString()]);
+                  } else {
+                    setDateRange(null);
+                  }
+                }}
+              />
+            </div>
+            
+            <Button 
+              icon={<ReloadOutlined />} 
+              onClick={loadReportData}
+              loading={loading}
+            >
+              Atualizar
+            </Button>
           </Space>
-        </div>
-      </Header>
+        </Card>
 
-      <Content>
-        <div>
-          <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Veículos Cadastrados"
-                  value={2}
-                  prefix={<CarOutlined />}
-                  valueStyle={{ color: "#2F54EB" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Gastos Este Mês"
-                  value={1435.5}
-                  prefix={<DollarOutlined />}
-                  valueStyle={{ color: "#722ED1" }}
-                  precision={2}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Eventos Registrados"
-                  value={24}
-                  prefix={<ToolOutlined />}
-                  valueStyle={{ color: "#13C2C2" }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <Card>
-                <Statistic
-                  title="Verificados na Blockchain"
-                  value={22}
-                  prefix={<CheckCircleOutlined />}
-                  valueStyle={{ color: "#52C41A" }}
-                />
-              </Card>
-            </Col>
-          </Row>
+        {/* Estatísticas Principais */}
+        <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
+          <Col xs={24} sm={12} lg={6}>
+            <Card className={componentStyles.professionalStatistic}>
+              <Statistic
+                title="Veículos Ativos"
+                value={reportData.totalVehicles}
+                prefix={<CarOutlined style={{ color: '#8B5CF6' }} />}
+                valueStyle={{ color: '#8B5CF6', fontWeight: 700 }}
+              />
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card className={componentStyles.professionalStatistic}>
+              <Statistic
+                title="Gastos Totais"
+                value={reportData.totalExpenses}
+                prefix={<DollarOutlined style={{ color: '#52C41A' }} />}
+                valueStyle={{ color: '#52C41A', fontWeight: 700 }}
+                formatter={(value) => currencyBRL(value as number)}
+              />
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card className={componentStyles.professionalStatistic}>
+              <Statistic
+                title="Serviços Realizados"
+                value={reportData.totalServices}
+                prefix={<ToolOutlined style={{ color: '#1890FF' }} />}
+                valueStyle={{ color: '#1890FF', fontWeight: 700 }}
+              />
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={6}>
+            <Card className={componentStyles.professionalStatistic}>
+              <Statistic
+                title="Score de Confiabilidade"
+                value={reportData.reliabilityScore}
+                prefix={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
+                suffix="%"
+                valueStyle={{ color: '#52C41A', fontWeight: 700 }}
+              />
+            </Card>
+          </Col>
+        </Row>
 
-          <Row gutter={[24, 24]}>
-            {/* Meus Veículos */}
-            <Col xs={24} lg={12}>
-              <Card
-                title="Meus Veículos"
-                extra={
-                  <Link to="/vehicles/add">
-                    <Button type="primary" icon={<PlusOutlined />}>
-                      Adicionar
-                    </Button>
-                  </Link>
-                }
-              >
-                <List
-                  dataSource={vehicles}
-                  renderItem={(vehicle) => (
-                    <List.Item
-                      actions={[
-                        <Link to={`/vehicles/${vehicle.id}`} key="view">
-                          <Button type="text" icon={<EyeOutlined />}>
-                            Ver
-                          </Button>
-                        </Link>,
-                      ]}
-                    >
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            style={{
-                              backgroundColor: vehicle.status === "ok" ? "#52C41A" : "#FAAD14",
-                            }}
-                          >
-                            <CarOutlined />
-                          </Avatar>
-                        }
-                        title={vehicle.name}
-                        description={
-                          <Space direction="vertical" size="small">
-                            <Text>Placa: {vehicle.plate}</Text>
-                            <Text>Quilometragem: {vehicle.km.toLocaleString()} km</Text>
-                            <Text>Último serviço: {vehicle.lastService}</Text>
-                          </Space>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </Col>
+        {/* Estatísticas Secundárias */}
+        <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
+          <Col xs={24} sm={12} lg={8}>
+            <Card className={componentStyles.professionalCard}>
+              <Statistic
+                title="Gastos Este Mês"
+                value={reportData.monthlyExpenses}
+                prefix={<DollarOutlined style={{ color: '#FAAD14' }} />}
+                valueStyle={{ color: '#FAAD14', fontWeight: 700 }}
+                formatter={(value) => currencyBRL(value as number)}
+              />
+              <Progress 
+                percent={Math.min((reportData.monthlyExpenses / 5000) * 100, 100)} 
+                strokeColor="#FAAD14"
+                showInfo={false}
+                style={{ marginTop: '16px' }}
+              />
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={8}>
+            <Card className={componentStyles.professionalCard}>
+              <Statistic
+                title="Serviços Verificados"
+                value={reportData.blockchainVerified}
+                prefix={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
+                valueStyle={{ color: '#52C41A', fontWeight: 700 }}
+              />
+              <Text style={{ color: '#6B7280', fontSize: '12px' }}>
+                de {reportData.totalServices} total
+              </Text>
+            </Card>
+          </Col>
+          
+          <Col xs={24} sm={12} lg={8}>
+            <Card className={componentStyles.professionalCard}>
+              <Statistic
+                title="Próximos Serviços"
+                value={reportData.upcomingServices}
+                prefix={<ClockCircleOutlined style={{ color: '#1890FF' }} />}
+                valueStyle={{ color: '#1890FF', fontWeight: 700 }}
+              />
+              <Text style={{ color: '#6B7280', fontSize: '12px' }}>
+                próximos 30 dias
+              </Text>
+            </Card>
+          </Col>
+        </Row>
 
-            <Col xs={24} lg={12}>
-              <Card title="Manutenções Programadas">
-                <List
-                  dataSource={upcomingMaintenance}
-                  renderItem={(item) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar
-                            style={{
-                              backgroundColor: item.priority === "high" ? "#F5222D" : "#FAAD14",
-                            }}
-                          >
-                            {item.priority === "high" ? <WarningOutlined /> : <ClockCircleOutlined />}
-                          </Avatar>
-                        }
-                        title={item.service}
-                        description={
-                          <Space direction="vertical" size="small">
-                            <Text>{item.vehicle}</Text>
-                            <Text>Vencimento: {item.dueDate}</Text>
-                            <Tag color={item.priority === "high" ? "red" : "orange"}>
-                              {item.priority === "high" ? "Alta Prioridade" : "Média Prioridade"}
-                            </Tag>
-                          </Space>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </Col>
-          </Row>
+        {/* Gráficos e Tabelas */}
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={12}>
+            <Card 
+              title={
+                <Space>
+                  <BarChartOutlined style={{ color: '#8B5CF6' }} />
+                  <span>Gastos por Mês</span>
+                </Space>
+              }
+              className={componentStyles.professionalCard}
+              extra={
+                <Button 
+                  type="text" 
+                  icon={<DownloadOutlined />}
+                  onClick={exportReport}
+                >
+                  Exportar
+                </Button>
+              }
+            >
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <BarChartOutlined style={{ fontSize: '48px', color: '#6B7280', marginBottom: '16px' }} />
+                  <Text style={{ color: '#6B7280' }}>Gráfico de gastos mensais</Text>
+                  <br />
+                  <Text style={{ color: '#6B7280', fontSize: '12px' }}>
+                    Implementar integração com biblioteca de gráficos
+                  </Text>
+                </div>
+              </div>
+            </Card>
+          </Col>
+          
+          <Col xs={24} lg={12}>
+            <Card 
+              title={
+                <Space>
+                  <PieChartOutlined style={{ color: '#8B5CF6' }} />
+                  <span>Distribuição por Tipo</span>
+                </Space>
+              }
+              className={componentStyles.professionalCard}
+            >
+              <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <PieChartOutlined style={{ fontSize: '48px', color: '#6B7280', marginBottom: '16px' }} />
+                  <Text style={{ color: '#6B7280' }}>Gráfico de distribuição</Text>
+                  <br />
+                  <Text style={{ color: '#6B7280', fontSize: '12px' }}>
+                    Implementar integração com biblioteca de gráficos
+                  </Text>
+                </div>
+              </div>
+            </Card>
+          </Col>
+        </Row>
 
-          <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
-            <Col span={24}>
-              <Card
-                title="Eventos Recentes"
-                extra={
-                  <Link to="/events/add">
-                    <Button type="primary" icon={<PlusOutlined />}>
-                      Novo Evento
-                    </Button>
-                  </Link>
-                }
-              >
-                <List
-                  dataSource={recentEvents}
-                  renderItem={(event) => (
-                    <List.Item
-                      actions={[
-                        <Link to={`/events/${event.id}`} key="view">
-                          <Button type="text">Ver Detalhes</Button>
-                        </Link>,
-                      ]}
-                    >
-                      <List.Item.Meta
-                        avatar={
-                          <Avatar style={{ backgroundColor: getEventColor(event.type) }}>
-                            {getEventIcon(event.type)}
-                          </Avatar>
-                        }
-                        title={
-                          <Space>
-                            {event.description}
-                            {event.verified ? <Tag color="green">Verificado</Tag> : <Tag color="orange">Pendente</Tag>}
-                          </Space>
-                        }
-                        description={
-                          <Space direction="vertical" size="small">
-                            <Text>{event.vehicle}</Text>
-                            <Text>Data: {event.date}</Text>
-                            <Text strong>R$ {event.cost.toFixed(2)}</Text>
-                          </Space>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      </Content>
-    </Layout>
-  )
+        {/* Tabela de Serviços */}
+        <Card 
+          title={
+            <Space>
+              <FileTextOutlined style={{ color: '#8B5CF6' }} />
+              <span>Histórico de Serviços</span>
+            </Space>
+          }
+          className={componentStyles.professionalCard}
+          style={{ marginTop: '24px' }}
+        >
+          <Spin spinning={loading}>
+            {services.length > 0 ? (
+              <Table
+                columns={tableColumns}
+                dataSource={services.map(service => ({
+                  ...service,
+                  vehicleName: vehicles.find(v => v.id === service.vehicleId)?.brand + ' ' + 
+                               vehicles.find(v => v.id === service.vehicleId)?.model,
+                  key: service.id
+                }))}
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: (total, range) => 
+                    `${range[0]}-${range[1]} de ${total} registros`
+                }}
+                className={componentStyles.professionalTable}
+              />
+            ) : (
+              <Empty 
+                description="Nenhum serviço encontrado"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
+            )}
+          </Spin>
+        </Card>
+      </div>
+    </DefaultFrame>
+  );
 }

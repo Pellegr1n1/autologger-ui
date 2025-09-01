@@ -180,7 +180,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleBrandChange = (value: string, option: any) => {
+  const handleBrandChange = (_: string, option: any) => {
     const brandCode = option.key;
     const brandName = option.children;
 
@@ -193,7 +193,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleModelChange = (value: string, option: any) => {
+  const handleModelChange = (_: string, option: any) => {
     const modelCode = option.key;
     const modelName = option.children;
 
@@ -205,7 +205,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleYearChange = (value: string, option: any) => {
+  const handleYearChange = (_: string, option: any) => {
     const yearName = option.children;
     const year = FipeService.extractYear(yearName);
     form.setFieldsValue({ year });

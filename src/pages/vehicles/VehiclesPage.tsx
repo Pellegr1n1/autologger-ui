@@ -231,7 +231,7 @@ export default function VehiclesPage() {
   };
 
   return (
-    <DefaultFrame title="Meus Veículos">
+    <DefaultFrame title="Meus Veículos" loading={loading}>
       {/* Header da página */}
       <div className={styles.pageHeader}>
         <Button
