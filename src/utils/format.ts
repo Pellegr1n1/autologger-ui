@@ -1,5 +1,13 @@
 export function currencyBRL(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value || 0)
+  // Garantir que o valor seja um número válido
+  const numValue = Number(value) || 0;
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numValue);
 }
 
 export function kmFormat(value: number) {

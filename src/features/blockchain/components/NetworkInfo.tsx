@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Space, Typography, Row, Col, Tag, Divider, Button, Alert } from 'antd';
+import { Card, Space, Typography, Row, Col, Tag, Divider, Button } from 'antd';
 import { 
   GlobalOutlined,
   CheckCircleOutlined,
@@ -8,30 +8,29 @@ import {
   SettingOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
+import { BlockchainService } from '../../../services/api/blockchainService';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
-interface NetworkInfo {
+interface NetworkInfoData {
   name: string;
   chainId: number;
-  rpcUrl: string;
-  explorerUrl: string;
+  rpcUrl?: string;
+  explorerUrl?: string;
   status: 'connected' | 'disconnected' | 'connecting';
   lastBlock: number;
   gasPrice: string;
-  networkType: 'testnet' | 'mainnet';
+  networkType: 'private' | 'testnet' | 'mainnet';
 }
 
 export default function NetworkInfo() {
-  const [networkInfo, setNetworkInfo] = useState<NetworkInfo>({
-    name: 'Sepolia Testnet',
-    chainId: 11155111,
-    rpcUrl: 'https://sepolia.infura.io/v3/YOUR-PROJECT-ID',
-    explorerUrl: 'https://sepolia.etherscan.io',
-    status: 'connected',
-    lastBlock: 12345678,
-    gasPrice: '0.000000000000000001',
-    networkType: 'testnet'
+  const [networkInfo, setNetworkInfo] = useState<NetworkInfoData>({
+    name: 'Besu Private Network',
+    chainId: 0,
+    status: 'connecting',
+    lastBlock: 0,
+    gasPrice: '-',
+    networkType: 'private'
   });
 
   const [loading, setLoading] = useState(false);
@@ -39,19 +38,33 @@ export default function NetworkInfo() {
   const handleRefreshConnection = async () => {
     setLoading(true);
     try {
-      // Simular verificação de conexão
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const [status, info] = await Promise.all([
+        BlockchainService.getBesuConnectionStatus(),
+        BlockchainService.getBesuNetworkInfo().catch(() => null),
+      ]);
+
       setNetworkInfo(prev => ({
         ...prev,
-        lastBlock: prev.lastBlock + 1,
-        gasPrice: '0.000000000000000002'
+        name: 'Besu Private Network',
+        chainId: info?.chainId ?? 0,
+        lastBlock: info?.blockNumber ?? 0,
+        gasPrice: info?.gasPrice ?? '-',
+        status: status.connected ? 'connected' : 'disconnected',
+        networkType: 'private'
       }));
     } catch (error) {
-      console.error('Erro ao atualizar conexão:', error);
+      setNetworkInfo(prev => ({
+        ...prev,
+        status: 'disconnected'
+      }));
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    handleRefreshConnection();
+  }, []);
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -60,7 +73,7 @@ export default function NetworkInfo() {
           color: 'success',
           icon: <CheckCircleOutlined />,
           text: 'Conectado',
-          description: 'Conexão ativa e funcionando normalmente'
+          description: 'Conexão ativa com a rede Besu'
         };
       case 'connecting':
         return {
@@ -74,7 +87,7 @@ export default function NetworkInfo() {
           color: 'error',
           icon: <ExclamationCircleOutlined />,
           text: 'Desconectado',
-          description: 'Sem conexão com a rede blockchain'
+          description: 'Sem conexão com a rede Besu'
         };
       default:
         return {
@@ -128,10 +141,10 @@ export default function NetworkInfo() {
                 {networkInfo.name}
               </Text>
               <Tag 
-                color={networkInfo.networkType === 'testnet' ? 'blue' : 'green'}
+                color={networkInfo.networkType === 'private' ? 'purple' : networkInfo.networkType === 'testnet' ? 'blue' : 'green'}
                 style={{ marginLeft: '8px' }}
               >
-                {networkInfo.networkType === 'testnet' ? 'Testnet' : 'Mainnet'}
+                {networkInfo.networkType === 'private' ? 'Private' : networkInfo.networkType === 'testnet' ? 'Testnet' : 'Mainnet'}
               </Tag>
             </div>
             <Tag 
@@ -175,17 +188,7 @@ export default function NetworkInfo() {
                 <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Gas Price</Text>
                 <div style={{ marginTop: '4px' }}>
                   <Text style={{ color: 'var(--text-primary)', fontSize: '14px' }}>
-                    {networkInfo.gasPrice} ETH
-                  </Text>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} sm={12}>
-              <div>
-                <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>RPC URL</Text>
-                <div style={{ marginTop: '4px' }}>
-                  <Text code style={{ color: 'var(--text-primary)', fontSize: '12px' }}>
-                    {networkInfo.rpcUrl}
+                    {networkInfo.gasPrice}
                   </Text>
                 </div>
               </div>
@@ -216,71 +219,15 @@ export default function NetworkInfo() {
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
-            <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Explorer da Rede</Text>
-            <div style={{ marginTop: '8px' }}>
-              <Button 
-                type="link" 
-                icon={<LinkOutlined />}
-                style={{ padding: '0', color: 'var(--primary-color)' }}
-                onClick={() => window.open(networkInfo.explorerUrl, '_blank')}
-              >
-                {networkInfo.explorerUrl}
-              </Button>
-            </div>
-          </div>
-          
-          <div>
-            <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Contrato Inteligente</Text>
+            <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>RPC HTTP</Text>
             <div style={{ marginTop: '8px' }}>
               <Text code style={{ color: 'var(--text-primary)', fontSize: '12px' }}>
-                0x1234567890abcdef1234567890abcdef12345678
+                http://localhost:8545
               </Text>
-              <Button 
-                type="link" 
-                size="small"
-                icon={<LinkOutlined />}
-                style={{ marginLeft: '8px', padding: '0', color: 'var(--primary-color)' }}
-                onClick={() => window.open(`${networkInfo.explorerUrl}/address/0x1234567890abcdef1234567890abcdef12345678`, '_blank')}
-              >
-                Ver contrato
-              </Button>
             </div>
           </div>
         </Space>
       </Card>
-
-      {/* Alertas e Informações */}
-      <Alert
-        message="Informações Importantes"
-        description={
-          <div>
-            <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-              Esta funcionalidade integra com sua API/contrato inteligente para mostrar status em tempo real das transações.
-              Configure a rede (Sepolia, por exemplo) e as chaves de API necessárias.
-            </Text>
-            <div style={{ marginTop: '12px' }}>
-              <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                • Certifique-se de que sua chave de API está configurada corretamente
-              </Text>
-              <br />
-              <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                • A rede Sepolia é recomendada para testes
-              </Text>
-              <br />
-              <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                • Monitore o gas price para otimizar custos de transação
-              </Text>
-            </div>
-          </div>
-        }
-        type="info"
-        showIcon
-        style={{ 
-          borderRadius: '12px',
-          border: '1px solid var(--border-color)',
-          background: 'var(--surface-color)'
-        }}
-      />
     </Space>
   );
 }

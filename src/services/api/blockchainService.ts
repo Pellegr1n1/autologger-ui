@@ -1,195 +1,247 @@
 import { apiBase } from './api';
-import type { 
-  BlockchainService as BlockchainServiceType,
-  ServiceMetadata,
-  ChainStatus,
-  BlockchainNetwork,
-  TransactionStatus,
-  BlockchainConfig,
-  ServiceSubmissionResult,
-  BlockchainHealth
-} from '../../features/vehicles/types/blockchain.types';
+
+export interface BlockchainTransaction {
+  hash: string;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  blockNumber?: number;
+  gasUsed?: string;
+  timestamp?: number;
+}
+
+export interface ServiceSubmissionResult {
+  success: boolean;
+  transactionHash?: string;
+  error?: string;
+  status: 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED';
+  serviceId?: string;
+  message?: string;
+}
+
+export interface BlockchainService {
+  id: string;
+  vehicleId: string;
+  type: string;
+  category: string;
+  description: string;
+  serviceDate: string;
+  mileage: number;
+  cost: number;
+  location: string;
+  technician: string;
+  warranty: boolean;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NetworkHealth {
+  status: string;
+  blockNumber?: number;
+  gasPrice?: string;
+  network?: string;
+  peers?: number;
+  totalServices?: number;
+}
+
+export interface BesuNetworkInfo {
+  chainId: number;
+  blockNumber: number;
+  gasPrice: string;
+  networkName: string;
+}
+
+export interface BesuContractStats {
+  totalHashes: number;
+  contractBalance: string;
+}
+
+export interface BesuHashInfo {
+  exists: boolean;
+  info?: {
+    owner: string;
+    timestamp: number;
+    vehicleId: string;
+    eventType: string;
+    verificationCount: number;
+  };
+}
+
+export interface BesuConnectionStatus {
+  connected: boolean;
+}
 
 export class BlockchainService {
-  static async getNetworkHealth(): Promise<BlockchainHealth> {
-    try {
-      const response = await apiBase.api.get('/blockchain/network/health');
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao obter saúde da rede:', error);
-      return {
-        network: 'Unknown',
-        status: 'DOWN',
-        lastBlock: 0,
-        peers: 0,
-        latency: 0,
-        lastUpdate: new Date()
-      };
-    }
-  }
+  private static readonly BASE_PATH = '/blockchain';
 
-  static async getNetworkConfig(): Promise<BlockchainConfig> {
-    try {
-      const response = await apiBase.api.get('/blockchain/network/config');
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao obter configuração da rede:', error);
-      return {
-        network: {
-          name: 'ethereum',
-          chainId: '11155111',
-          endpoint: 'https://sepolia.infura.io'
-        },
-        channel: 'main',
-        chaincode: 'vehicleservice',
-        organization: 'org1',
-        mspId: 'Org1MSP',
-        adminCert: '',
-        adminKey: '',
-        peerEndpoints: ['localhost:7051'],
-        ordererEndpoint: 'localhost:7050'
-      };
-    }
-  }
-
-  static async submitServiceToBlockchain(serviceData: {
-    type: string;
-    category: string;
-    description: string;
-    cost: number;
-    location: string;
+  // Submeter serviço para blockchain
+  static async submitService(serviceData: {
+    serviceId: string;
+    vehicleId: string;
     mileage: number;
-    date: Date;
-    attachments?: string[];
+    cost: number;
+    description: string;
+    location?: string;
+    type?: string;
   }): Promise<ServiceSubmissionResult> {
-    try {
-      const serviceId = `service-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      const response = await apiBase.api.post('/blockchain/services/submit', {
-        serviceId,
-        vehicleId: 'unknown',
-        mileage: serviceData.mileage,
-        cost: serviceData.cost,
-        description: serviceData.description,
-        location: serviceData.location,
-        type: serviceData.type
-      });
-
-      return response.data;
-    } catch (error: any) {
-      console.error('Erro ao submeter serviço para blockchain:', error);
-      return {
-        success: false,
-        serviceId: `service-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        hash: '0x0',
-        error: error.response?.data?.message || 'Erro ao submeter para blockchain'
-      };
-    }
+    const response = await apiBase.api.post<ServiceSubmissionResult>(
+      `${this.BASE_PATH}/services/submit`,
+      serviceData
+    );
+    return response.data;
   }
 
+  // Confirmar serviço
   static async confirmService(serviceId: string): Promise<ServiceSubmissionResult> {
-    try {
-      const response = await apiBase.api.post(`/blockchain/services/${serviceId}/confirm`);
-      return response.data;
-    } catch (error: any) {
-      console.error('Erro ao confirmar serviço:', error);
-      return {
-        success: false,
-        serviceId,
-        hash: '0x0',
-        error: error.response?.data?.message || 'Erro ao confirmar serviço'
-      };
-    }
+    const response = await apiBase.api.post<ServiceSubmissionResult>(
+      `${this.BASE_PATH}/services/${serviceId}/confirm`
+    );
+    return response.data;
   }
 
-  static async getServiceStatus(serviceId: string): Promise<TransactionStatus> {
-    try {
-      const response = await apiBase.api.get(`/blockchain/services/${serviceId}/status`);
-      return response.data.status;
-    } catch (error) {
-      console.error('Erro ao obter status do serviço:', error);
-      return 'FAILED';
-    }
+  // Obter status de um serviço
+  static async getServiceStatus(serviceId: string): Promise<BlockchainTransaction> {
+    const response = await apiBase.api.get<BlockchainTransaction>(
+      `${this.BASE_PATH}/services/${serviceId}/status`
+    );
+    return response.data;
   }
 
-  static async getVehicleTransactionHistory(vehicleId: string): Promise<TransactionStatus[]> {
-    try {
-      // Esta funcionalidade precisaria ser implementada no backend
-      const response = await apiBase.api.get(`/blockchain/vehicles/${vehicleId}/transactions`);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao obter histórico de transações:', error);
-      return [];
-    }
+  // Obter todos os serviços
+  static async getAllServices(): Promise<BlockchainService[]> {
+    const response = await apiBase.api.get<BlockchainService[]>(
+      `${this.BASE_PATH}/services`
+    );
+    return response.data;
   }
 
-  static async canEditService(serviceId: string): Promise<boolean> {
-    try {
-      const status = await this.getServiceStatus(serviceId);
-      return status === 'PENDING';
-    } catch (error) {
-      console.error('Erro ao verificar se pode editar:', error);
-      return false;
-    }
+  // Forçar verificação de todos os serviços
+  static async forceVerifyAllServices(): Promise<BlockchainService[]> {
+    const response = await apiBase.api.post<BlockchainService[]>(
+      `${this.BASE_PATH}/services/verify`
+    );
+    return response.data;
   }
 
-  static async getImmutabilityProof(serviceId: string): Promise<string> {
-    try {
-      const status = await this.getServiceStatus(serviceId);
-      if (status === 'CONFIRMED') {
-        return `Service ${serviceId} confirmed on blockchain`;
-      }
-      return 'Service not yet confirmed';
-    } catch (error) {
-      console.error('Erro ao obter prova de imutabilidade:', error);
-      return 'Unable to verify immutability';
-    }
+  // Registrar todos os hashes existentes no contrato
+  static async registerAllExistingHashes(): Promise<{ success: boolean; message: string; successCount: number; errorCount: number }> {
+    const response = await apiBase.api.post<{ success: boolean; message: string; successCount: number; errorCount: number }>(
+      `${this.BASE_PATH}/services/register-hashes`
+    );
+    return response.data;
   }
 
-  static async revertTransaction(serviceId: string): Promise<boolean> {
-    try {
-      // Esta funcionalidade precisaria ser implementada no backend
-      const response = await apiBase.api.post(`/blockchain/services/${serviceId}/revert`);
-      return response.data.success;
-    } catch (error) {
-      console.error('Erro ao reverter transação:', error);
-      return false;
-    }
+  // Corrigir hashes inválidos (pending-hash)
+  static async fixInvalidHashes(): Promise<{ success: boolean; message: string; successCount: number; errorCount: number }> {
+    const response = await apiBase.api.post<{ success: boolean; message: string; successCount: number; errorCount: number }>(
+      `${this.BASE_PATH}/services/fix-invalid-hashes`
+    );
+    return response.data;
   }
 
-  static async getNetworkStats(): Promise<{
-    totalTransactions: number;
-    averageBlockTime: number;
-    activeNodes: number;
-  }> {
-    try {
-      const response = await apiBase.api.get('/blockchain/network/stats');
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao obter estatísticas da rede:', error);
-      return {
-        totalTransactions: 0,
-        averageBlockTime: 0,
-        activeNodes: 0
-      };
-    }
+  // Limpar hashes órfãos do contrato
+  static async cleanOrphanHashes(): Promise<{ success: boolean; message: string; orphanCount: number }> {
+    const response = await apiBase.api.post<{ success: boolean; message: string; orphanCount: number }>(
+      `${this.BASE_PATH}/services/clean-orphan-hashes`
+    );
+    return response.data;
   }
 
-  static async simulateTransaction(serviceData: ServiceMetadata): Promise<{
-    estimatedGas: string;
-    estimatedCost: string;
-    success: boolean;
-  }> {
-    try {
-      const response = await apiBase.api.post('/blockchain/transactions/simulate', serviceData);
-      return response.data;
-    } catch (error) {
-      console.error('Erro ao simular transação:', error);
-      return {
-        estimatedGas: '0',
-        estimatedCost: '0',
-        success: false
-      };
-    }
+  // Obter saúde da rede
+  static async getNetworkHealth(): Promise<NetworkHealth> {
+    const response = await apiBase.api.get<NetworkHealth>(
+      `${this.BASE_PATH}/network/health`
+    );
+    return response.data;
+  }
+
+  // Obter serviços por veículo
+  static async getServicesByVehicle(vehicleId: string): Promise<BlockchainService[]> {
+    const response = await apiBase.api.get<BlockchainService[]>(
+      `${this.BASE_PATH}/services/vehicle/${vehicleId}`
+    );
+    return response.data;
+  }
+
+  // Obter serviços por tipo
+  static async getServicesByType(type: string): Promise<BlockchainService[]> {
+    const response = await apiBase.api.get<BlockchainService[]>(
+      `${this.BASE_PATH}/services/type/${type}`
+    );
+    return response.data;
+  }
+
+  // Obter serviços por intervalo de data
+  static async getServicesByDateRange(startDate: string, endDate: string): Promise<BlockchainService[]> {
+    const response = await apiBase.api.get<BlockchainService[]>(
+      `${this.BASE_PATH}/services/date-range?startDate=${startDate}&endDate=${endDate}`
+    );
+    return response.data;
+  }
+
+  // ========== ENDPOINTS ESPECÍFICOS BESU ==========
+
+  // Verificar status de conexão com Besu
+  static async getBesuConnectionStatus(): Promise<BesuConnectionStatus> {
+    const response = await apiBase.api.get<BesuConnectionStatus>(
+      `${this.BASE_PATH}/besu/connection/status`
+    );
+    return response.data;
+  }
+
+  // Obter informações da rede Besu
+  static async getBesuNetworkInfo(): Promise<BesuNetworkInfo> {
+    const response = await apiBase.api.get<BesuNetworkInfo>(
+      `${this.BASE_PATH}/besu/network/info`
+    );
+    return response.data;
+  }
+
+  // Obter estatísticas do contrato
+  static async getBesuContractStats(): Promise<BesuContractStats> {
+    const response = await apiBase.api.get<BesuContractStats>(
+      `${this.BASE_PATH}/besu/contract/stats`
+    );
+    return response.data;
+  }
+
+  // Registrar hash na blockchain Besu
+  static async registerHash(hash: string, vehicleId: string, eventType: string): Promise<ServiceSubmissionResult> {
+    const response = await apiBase.api.post<ServiceSubmissionResult>(
+      `${this.BASE_PATH}/besu/hash/register`,
+      { hash, vehicleId, eventType }
+    );
+    return response.data;
+  }
+
+  // Verificar hash na blockchain Besu
+  static async verifyHash(hash: string): Promise<BesuHashInfo> {
+    const response = await apiBase.api.get<BesuHashInfo>(
+      `${this.BASE_PATH}/besu/hash/verify/${hash}`
+    );
+    return response.data;
+  }
+
+  // Verificar e contar hash
+  static async verifyAndCount(hash: string): Promise<ServiceSubmissionResult> {
+    const response = await apiBase.api.post<ServiceSubmissionResult>(
+      `${this.BASE_PATH}/besu/hash/verify/${hash}`
+    );
+    return response.data;
+  }
+
+  // Obter hashes de um veículo
+  static async getVehicleHashes(vehicleId: string): Promise<string[]> {
+    const response = await apiBase.api.get<string[]>(
+      `${this.BASE_PATH}/besu/vehicle/${vehicleId}/hashes`
+    );
+    return response.data;
+  }
+
+  // Obter hashes de um proprietário
+  static async getOwnerHashes(address: string): Promise<string[]> {
+    const response = await apiBase.api.get<string[]>(
+      `${this.BASE_PATH}/besu/owner/${address}/hashes`
+    );
+    return response.data;
   }
 }

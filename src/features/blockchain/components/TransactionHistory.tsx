@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Space, Typography, Timeline, Button, Tag, Empty, Spin } from 'antd';
+import { useState, useEffect } from 'react';
+import { Space, Typography, Timeline, Button, Tag, Spin, message } from 'antd';
 import { 
   LinkOutlined, 
   CheckCircleOutlined, 
@@ -7,12 +7,13 @@ import {
   ExclamationCircleOutlined,
   BlockOutlined
 } from '@ant-design/icons';
+import { BlockchainService } from '../../../services/api/blockchainService';
 
 const { Text } = Typography;
 
 interface Transaction {
   id: string;
-  hash: string;
+  hash: string | null;
   status: 'CONFIRMED' | 'PENDING' | 'FAILED' | 'SUBMITTED';
   category: string;
   location: string;
@@ -25,80 +26,46 @@ interface Transaction {
 export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      const services = await BlockchainService.getAllServices();
+
+      const mapped: Transaction[] = (services || [])
+        .map((s: any) => ({
+          id: s.id || s.serviceId,
+          hash: s.transactionHash || s.blockchainHash || null,
+          status: (s.status || 'PENDING') as Transaction['status'],
+          category: s.category || s.type || 'SERVICO',
+          location: s.location || '—',
+          date: s.serviceDate || s.createdAt,
+          mileage: s.mileage || 0,
+          gasPrice: s.gasPrice || '-',
+          blockNumber: s.blockNumber,
+        }))
+        .filter((tx: Transaction) => tx.hash); // Apenas transações com hash real
+
+      setTransactions(mapped);
+    } catch (error) {
+      console.error('Erro ao carregar transações:', error);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simular carregamento de transações
-    const loadTransactions = async () => {
-      try {
-        setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Dados simulados
-        const mockTransactions: Transaction[] = [
-          {
-            id: '1',
-            hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-            status: 'CONFIRMED',
-            category: 'Abastecimento',
-            location: 'Posto Ipiranga - SP',
-            date: '2024-01-15T10:30:00Z',
-            mileage: 45000,
-            gasPrice: '0.000000000000000001',
-            blockNumber: 12345678
-          },
-          {
-            id: '2',
-            hash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-            status: 'PENDING',
-            category: 'Manutenção',
-            location: 'Oficina Mecânica - RJ',
-            date: '2024-01-14T15:45:00Z',
-            mileage: 44800,
-            gasPrice: '0.000000000000000002'
-          },
-          {
-            id: '3',
-            hash: '0x7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456',
-            status: 'CONFIRMED',
-            category: 'Troca de Óleo',
-            location: 'Auto Center - MG',
-            date: '2024-01-13T09:15:00Z',
-            mileage: 44500,
-            gasPrice: '0.000000000000000001',
-            blockNumber: 12345675
-          },
-          {
-            id: '4',
-            hash: '0x4567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123',
-            status: 'FAILED',
-            category: 'Abastecimento',
-            location: 'Posto Shell - SP',
-            date: '2024-01-12T14:20:00Z',
-            mileage: 44200,
-            gasPrice: '0.000000000000000003'
-          },
-          {
-            id: '5',
-            hash: '0xdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abc',
-            status: 'SUBMITTED',
-            category: 'Inspeção',
-            location: 'DETRAN - SP',
-            date: '2024-01-11T11:00:00Z',
-            mileage: 44000,
-            gasPrice: '0.000000000000000001'
-          }
-        ];
-        
-        setTransactions(mockTransactions);
-      } catch (error) {
-        console.error('Erro ao carregar transações:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadTransactions();
   }, []);
+
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadTransactions();
+    setRefreshing(false);
+    message.success('Transações atualizadas');
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -190,8 +157,10 @@ export default function TransactionHistory() {
           type="link" 
           icon={<LinkOutlined />}
           style={{ color: 'var(--primary-color)' }}
+          loading={refreshing}
+          onClick={refresh}
         >
-          Ver todas
+          Atualizar
         </Button>
       </div>
 
@@ -228,32 +197,49 @@ export default function TransactionHistory() {
                   
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <Text code style={{ fontSize: '11px', color: 'var(--primary-color)' }}>
-                        {shortenHash(tx.hash)}
-                      </Text>
-                      {tx.blockNumber && (
-                        <Text style={{ color: 'var(--text-secondary)', fontSize: '11px', marginLeft: '8px' }}>
-                          Bloco #{tx.blockNumber}
+                      {tx.hash ? (
+                        <>
+                          <Text code style={{ fontSize: '11px', color: 'var(--primary-color)' }}>
+                            {shortenHash(tx.hash)}
+                          </Text>
+                          {tx.blockNumber && (
+                            <Text style={{ color: 'var(--text-secondary)', fontSize: '11px', marginLeft: '8px' }}>
+                              Bloco #{tx.blockNumber}
+                            </Text>
+                          )}
+                        </>
+                      ) : (
+                        <Text style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          Sem hash blockchain
                         </Text>
                       )}
                     </div>
-                    <Button 
-                      type="link" 
-                      size="small" 
-                      icon={<LinkOutlined />}
-                      style={{ 
-                        color: 'var(--primary-color)',
-                        padding: '0 8px',
-                        height: 'auto'
-                      }}
-                      onClick={() => window.open(`https://sepolia.etherscan.io/tx/${tx.hash}`, '_blank')}
-                    >
-                      Ver no explorer
-                    </Button>
+                    {tx.hash && (
+                      <Button 
+                        type="link" 
+                        size="small" 
+                        icon={<LinkOutlined />}
+                        style={{ 
+                          color: 'var(--primary-color)',
+                          padding: '0 8px',
+                          height: 'auto'
+                        }}
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(tx.hash!);
+                            message.success('Hash copiado');
+                          } catch {
+                            message.info(tx.hash!);
+                          }
+                        }}
+                      >
+                        Copiar hash
+                      </Button>
+                    )}
                   </div>
                   
                   <Text style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
-                    Gas Price: {tx.gasPrice} ETH
+                    Gas Price: {tx.gasPrice}
                   </Text>
                 </Space>
               </div>

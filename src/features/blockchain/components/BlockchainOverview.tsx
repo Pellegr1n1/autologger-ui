@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, Space, Row, Col, Typography, Progress, Tag, Divider } from 'antd';
 import { 
   CheckCircleOutlined, 
@@ -18,11 +17,19 @@ interface BlockchainData {
   networkStatus: string;
 }
 
-interface BlockchainOverviewProps {
-  data: BlockchainData;
+interface BesuData {
+  connectionStatus: boolean;
+  networkInfo: any;
+  contractStats: any;
+  error: string | null;
 }
 
-export default function BlockchainOverview({ data }: BlockchainOverviewProps) {
+interface BlockchainOverviewProps {
+  data: BlockchainData;
+  besuData?: BesuData;
+}
+
+export default function BlockchainOverview({ data, besuData }: BlockchainOverviewProps) {
   const { 
     totalTransactions, 
     confirmedTransactions, 
@@ -227,6 +234,96 @@ export default function BlockchainOverview({ data }: BlockchainOverviewProps) {
           </Col>
         </Row>
       </Card>
+
+      {/* Informações da Rede Besu */}
+      {besuData && (
+        <>
+          <Divider orientation="left" style={{ color: 'var(--text-primary)' }}>
+            Informações da Rede Besu
+          </Divider>
+          
+          <Card>
+            <Row gutter={[24, 24]}>
+              <Col xs={24} lg={12}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  <div>
+                    <Text strong style={{ color: 'var(--text-primary)' }}>
+                      Status da Conexão
+                    </Text>
+                    <div style={{ marginTop: '8px' }}>
+                      <Tag 
+                        color={besuData.connectionStatus ? 'success' : 'error'}
+                        icon={besuData.connectionStatus ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+                      >
+                        {besuData.connectionStatus ? 'Conectado' : 'Desconectado'}
+                      </Tag>
+                    </div>
+                  </div>
+                  
+                  {besuData.networkInfo && (
+                    <div>
+                      <Text strong style={{ color: 'var(--text-primary)' }}>
+                        Informações da Rede
+                      </Text>
+                      <div style={{ marginTop: '8px' }}>
+                        <Space direction="vertical" size="small">
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Chain ID:</strong> {besuData.networkInfo.chainId}
+                          </Text>
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Bloco Atual:</strong> {besuData.networkInfo.blockNumber.toLocaleString()}
+                          </Text>
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Gas Price:</strong> {besuData.networkInfo.gasPrice} gwei
+                          </Text>
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Rede:</strong> {besuData.networkInfo.networkName}
+                          </Text>
+                        </Space>
+                      </div>
+                    </div>
+                  )}
+                </Space>
+              </Col>
+              
+              <Col xs={24} lg={12}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  {besuData.contractStats && (
+                    <div>
+                      <Text strong style={{ color: 'var(--text-primary)' }}>
+                        Estatísticas do Contrato
+                      </Text>
+                      <div style={{ marginTop: '8px' }}>
+                        <Space direction="vertical" size="small">
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Total de Hashes:</strong> {besuData.contractStats.totalHashes.toLocaleString()}
+                          </Text>
+                          <Text style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Saldo do Contrato:</strong> {besuData.contractStats.contractBalance} ETH
+                          </Text>
+                        </Space>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {besuData.error && (
+                    <div>
+                      <Text strong style={{ color: 'var(--error-color)' }}>
+                        Erro de Conexão
+                      </Text>
+                      <div style={{ marginTop: '8px' }}>
+                        <Tag color="error" icon={<ExclamationCircleOutlined />}>
+                          {besuData.error}
+                        </Tag>
+                      </div>
+                    </div>
+                  )}
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+        </>
+      )}
     </Space>
   );
 }

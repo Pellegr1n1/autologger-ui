@@ -87,7 +87,7 @@ export class VehicleServiceService {
    */
   static async updateBlockchainStatus(
     id: string,
-    hash: string,
+    hash: string | undefined,
     confirmedBy: string
   ): Promise<VehicleEvent> {
     const response = await apiBase.api.patch<VehicleEvent>(`${this.BASE_PATH}/${id}/blockchain-status`, {

@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, Card, Col, Divider, Row, Space, Tag, Typography, Statistic, Progress, Timeline } from "antd"
+import { Button, Card, Col, Divider, Row, Space, Tag, Typography, Statistic, Progress, Timeline, message } from "antd"
 import { 
   LinkOutlined, 
   CheckCircleOutlined, 
@@ -328,9 +328,16 @@ export default function BlockchainTab({ events }: BlockchainTabProps) {
                               padding: '0 8px',
                               height: 'auto'
                             }}
-                            onClick={() => window.open(`https://sepolia.etherscan.io/tx/${e.hash}`, '_blank')}
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(e.hash)
+                                message.success('Hash copiado')
+                              } catch {
+                                message.info(e.hash)
+                              }
+                            }}
                           >
-                            Ver no explorer
+                            Copiar hash
                           </Button>
                         </div>
                       </Space>
@@ -374,24 +381,13 @@ export default function BlockchainTab({ events }: BlockchainTabProps) {
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <Text style={{ color: '#6B7280', fontSize: '14px' }}>
-            Esta funcionalidade integra com sua API/contrato inteligente para mostrar status em tempo real das transações.
-            Configure a rede (Sepolia, por exemplo) e as chaves de API necessárias.
+            Integra com sua API/contrato inteligente (Besu privado) para status em tempo real das transações.
           </Text>
-          
           <div>
-            <Text style={{ color: '#6B7280', fontSize: '12px' }}>Rede configurada</Text>
+            <Text style={{ color: '#6B7280', fontSize: '12px' }}>RPC HTTP</Text>
             <div>
-              <Tag color="blue" style={{ margin: 0, fontSize: '12px' }}>
-                Sepolia Testnet
-              </Tag>
-            </div>
-          </div>
-          
-          <div>
-            <Text style={{ color: '#6B7280', fontSize: '12px' }}>Status da conexão</Text>
-            <div>
-              <Tag color="success" icon={<CheckCircleOutlined />} style={{ margin: 0, fontSize: '12px' }}>
-                Conectado
+              <Tag color="purple" style={{ margin: 0, fontSize: '12px' }}>
+                http://localhost:8545
               </Tag>
             </div>
           </div>

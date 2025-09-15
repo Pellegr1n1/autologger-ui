@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Button, 
-  DatePicker, 
-  Form, 
-  Input, 
-  InputNumber, 
-  Select, 
-  Row, 
-  Col, 
+import {
+  Button,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Row,
+  Col,
   Modal,
   Typography,
   Upload,
@@ -16,12 +16,12 @@ import {
   Space,
   Card,
   Tag,
-  Progress,
   Alert,
   Switch,
-  Steps
+  Steps,
+  Spin
 } from "antd";
-import { 
+import {
   CloseOutlined,
   InfoCircleOutlined,
   CarOutlined,
@@ -53,18 +53,20 @@ interface ServiceModalProps {
   currentMileage?: number;
 }
 
-const FormSection: React.FC<{ 
-  title: string; 
-  icon: React.ReactNode; 
+const FormSection: React.FC<{
+  title: string;
+  icon: React.ReactNode;
   children: React.ReactNode;
   noPadding?: boolean;
   description?: string;
 }> = ({ title, icon, children, noPadding = false, description }) => (
   <Card
     className={styles.formSection}
-    bodyStyle={{ 
-      padding: noPadding ? '0' : '24px',
-      background: '#1F2937'
+    styles={{
+      body: {
+        padding: noPadding ? '0' : '24px',
+        background: '#1F2937'
+      }
     }}
   >
     <div className={styles.sectionHeader}>
@@ -86,7 +88,7 @@ const FormSection: React.FC<{
   </Card>
 );
 
-const ServiceModal: React.FC<ServiceModalProps> = ({
+const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   open,
   onClose,
   onAdd,
@@ -95,12 +97,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   loading = false,
   currentMileage = 0
 }) => {
+  // Estados consolidados (versão com spinner)
+  const [modalState, setModalState] = useState({
+    isLoadingData: true,
+    currentStep: 0,
+    autoMileage: true,
+    estimatedNextService: null as number | null,
+    formProgress: 0
+  });
+
   const [form] = Form.useForm();
-  const [currentStep, setCurrentStep] = useState(0);
   const [fileList, setFileList] = useState<any[]>([]);
-  const [autoMileage, setAutoMileage] = useState(true);
-  const [estimatedNextService, setEstimatedNextService] = useState<number | null>(null);
-  const [formProgress, setFormProgress] = useState(0);
 
   const steps = [
     {
@@ -120,101 +127,38 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     }
   ];
 
-  // Campos obrigatórios para validação
-  const requiredFields = ['type', 'category', 'description', 'date', 'mileage', 'cost', 'location'];
+  // Remover variáveis não utilizadas
 
-  // Função para calcular o progresso do formulário
-  const calculateProgress = () => {
-    const values = form.getFieldsValue();
-    let filledCount = 0;
-
-    requiredFields.forEach(field => {
-      const value = values[field];
-      let isFilled = false;
-
-      if (field === 'date') {
-        isFilled = value && value.isValid && value.isValid();
-      } else if (field === 'mileage' || field === 'cost') {
-        isFilled = value !== undefined && value !== null && value !== '' && !isNaN(Number(value));
-      } else {
-        isFilled = value !== undefined && value !== null && value !== '';
-      }
-
-      if (isFilled) filledCount++;
-    });
-
-    // Na primeira etapa, não considera anexos - apenas os campos obrigatórios
-    const totalFields = requiredFields.length;
-    const progress = Math.round((filledCount / totalFields) * 100);
-    
-    setFormProgress(progress);
-  };
-
-  // Reset do modal quando abre
+  // EFEITO PRINCIPAL: Reset apenas quando modal abre/fecha
   useEffect(() => {
     if (open) {
-      // Evita múltiplas execuções
+      // Reset completo quando abre
+      setModalState({
+        isLoadingData: true,
+        currentStep: 0,
+        autoMileage: true,
+        estimatedNextService: null,
+        formProgress: 0
+      });
+
+      setFileList([]);
+      form.resetFields();
+
+      // Simular loading
       const timer = setTimeout(() => {
-        setCurrentStep(0);
-        form.resetFields();
-        setFileList([]);
-        setAutoMileage(true);
-        setEstimatedNextService(null);
-        setFormProgress(0);
-      }, 50);
+        setModalState(prev => ({ ...prev, isLoadingData: false }));
+
+        // Definir quilometragem inicial se necessário
+        if (currentMileage > 0) {
+          form.setFieldsValue({ mileage: currentMileage });
+        }
+      }, 300);
 
       return () => clearTimeout(timer);
     }
-  }, [open, form]);
+  }, [open]); // APENAS quando open muda
 
-  // Atualiza quilometragem automática
-  useEffect(() => {
-    if (autoMileage && currentMileage && open) {
-      // Aguarda um pouco para garantir que o form foi resetado
-      setTimeout(() => {
-        form.setFieldsValue({ mileage: currentMileage });
-      }, 100);
-    }
-  }, [autoMileage, currentMileage, form, open]);
-
-  // Atualiza progresso quando fileList muda
-  useEffect(() => {
-    if (open && currentStep === 0) {
-      calculateProgress();
-    }
-  }, [open, currentStep]);
-
-  // Atualiza progresso periodicamente (mais responsivo)
-  useEffect(() => {
-    if (!open || currentStep !== 0) return;
-
-    // Calcula o progresso inicial
-    calculateProgress();
-
-    // Atualiza a cada 300ms para ser muito responsivo
-    const interval = setInterval(() => {
-      calculateProgress();
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [open, currentStep]);
-
-  // Reset do progresso quando mudar de etapa
-  useEffect(() => {
-    if (currentStep !== 0) {
-      setFormProgress(0);
-    }
-  }, [currentStep]);
-
-  // Função para lidar com mudanças nos campos (mais responsiva)
-  const handleFieldChange = () => {
-    // Atualiza o progresso apenas na primeira etapa
-    if (currentStep === 0) {
-      setTimeout(() => {
-        calculateProgress();
-      }, 30);
-    }
-  };
+  // Remover useEffect de progresso que pode estar causando re-renders
 
   const calculateNextService = (eventType: string, currentMileage: number) => {
     const serviceIntervals: { [key: string]: number } = {
@@ -233,21 +177,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   };
 
   const handleEventTypeChange = (value: string) => {
-    if (autoMileage && currentMileage) {
+    if (modalState.autoMileage && currentMileage) {
       const nextService = calculateNextService(value, currentMileage);
-      setEstimatedNextService(nextService);
+      setModalState(prev => ({ ...prev, estimatedNextService: nextService }));
     }
   };
 
+  // Remover handler não utilizado
+
   const canGoToNextStep = async () => {
-    if (currentStep === 0) {
+    if (modalState.currentStep === 0) {
       try {
-        // Valida apenas os campos do primeiro step
         const step1Fields = ['type', 'category', 'description', 'date', 'mileage', 'cost', 'location'];
         await form.validateFields(step1Fields);
         return true;
       } catch (error) {
-        console.log('Validation error:', error);
         return false;
       }
     }
@@ -257,67 +201,40 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const handleNextStep = async () => {
     const canAdvance = await canGoToNextStep();
     if (canAdvance) {
-      setCurrentStep(currentStep + 1);
+      setModalState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
     } else {
       message.warning('Preencha todos os campos obrigatórios antes de continuar');
     }
   };
 
+  const handlePrevStep = () => {
+    setModalState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
+  };
+
   const handleSubmit = async () => {
     console.log('🚀 handleSubmit iniciado');
-    
-    // Debug: verificar campos individuais
-    console.log('🔍 Debug campos individuais:');
-    const type = form.getFieldValue('type');
-    const category = form.getFieldValue('category');
-    const description = form.getFieldValue('description');
-    const date = form.getFieldValue('date');
-    const mileage = form.getFieldValue('mileage');
-    const cost = form.getFieldValue('cost');
-    const location = form.getFieldValue('location');
-    const technician = form.getFieldValue('technician');
-    const warranty = form.getFieldValue('warranty');
-    const nextServiceDate = form.getFieldValue('nextServiceDate');
-    const notes = form.getFieldValue('notes');
-    
-    console.log('- type:', type);
-    console.log('- category:', category);
-    console.log('- description:', description);
-    console.log('- date:', date);
-    console.log('- mileage:', mileage);
-    console.log('- cost:', cost);
-    console.log('- location:', location);
-    console.log('- technician:', technician);
-    console.log('- warranty:', warranty);
-    console.log('- nextServiceDate:', nextServiceDate);
-    console.log('- notes:', notes);
-    
-    // Validação manual dos campos obrigatórios usando valores individuais
-    if (!date || !type || !category || !description || 
-        mileage === undefined || cost === undefined || !location) {
-      console.log('❌ Validação falhou:', { 
-        date, 
-        type, 
-        category, 
-        description, 
-        mileage, 
-        cost, 
-        location 
-      });
+
+    // Capturar valores do formulário de uma vez
+    const formValues = form.getFieldsValue();
+    const {
+      type, category, description, date, mileage, cost, location,
+      technician, warranty, nextServiceDate, notes
+    } = formValues;
+
+    // Validação consolidada
+    if (!date || !type || !category || !description ||
+      mileage === undefined || cost === undefined || !location) {
       message.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
 
-    console.log('✅ Validação passou, valores capturados individualmente');
-
-    // Verificar se vehicleId está definido (seja do prop ou do formulário)
-    const finalVehicleId = vehicleId || form.getFieldValue('selectedVehicleId');
+    const finalVehicleId = vehicleId || formValues.selectedVehicleId;
     if (!finalVehicleId) {
       message.error('Selecione um veículo para continuar');
       return;
     }
 
-    // Preparar dados para salvar no banco usando valores individuais
+    // Preparar dados
     const serviceData: CreateVehicleServiceData = {
       vehicleId: finalVehicleId,
       type,
@@ -336,43 +253,39 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 
     console.log('📝 Dados preparados:', serviceData);
 
-    // Salvar no banco primeiro
-    console.log('💾 Tentando salvar no banco...');
+    // Salvar no banco
     message.loading('Salvando serviço no banco de dados...', 0);
-    
+
     try {
       const savedService = await VehicleServiceService.createService(serviceData);
       console.log('✅ Serviço salvo no banco:', savedService);
-      
+
       message.destroy();
       message.success('Serviço salvo no banco de dados!');
 
-      // Agora enviar para blockchain
+      // Tentar enviar para blockchain
       try {
         console.log('🔗 Tentando enviar para blockchain...');
         message.loading('Enviando para blockchain...', 0);
-        
-        // Enviar para blockchain via backend
+
         const blockchainResult = await VehicleServiceService.updateBlockchainStatus(
           savedService.id,
-          'pending-hash',
+          undefined,
           'user'
         );
-        
+
         console.log('✅ Enviado para blockchain:', blockchainResult);
         message.destroy();
         message.success('Serviço enviado para blockchain com sucesso!');
-        
-        // Fechar modal e atualizar lista
+
         onAdd(savedService);
         onClose();
-        
+
       } catch (blockchainError) {
         console.error('❌ Erro blockchain:', blockchainError);
         message.destroy();
         message.warning('Serviço salvo no banco, mas erro ao enviar para blockchain. Tente novamente mais tarde.');
-        
-        // Mesmo com erro na blockchain, o serviço foi salvo no banco
+
         onAdd(savedService);
         onClose();
       }
@@ -385,93 +298,75 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   };
 
   return (
-    <>
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '18px'
-            }}>
-              <ToolOutlined />
-            </div>
-            <div>
-              <Title level={4} style={{ margin: 0, color: '#F9FAFB' }}>
-                Adicionar Serviço
-              </Title>
-              <Text style={{ color: '#9CA3AF', fontSize: '14px' }}>
-                Registre um novo serviço para este veículo
-              </Text>
-            </div>
+    <Modal
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '18px'
+          }}>
+            <ToolOutlined />
           </div>
-        }
-        open={open}
-        onCancel={onClose}
-        width={900}
-        footer={null}
-        destroyOnClose={false}
-        style={{ top: 20 }}
-        className={styles.serviceModal}
-      >
+          <div>
+            <Title level={4} style={{ margin: 0, color: '#F9FAFB' }}>
+              Adicionar Serviço
+            </Title>
+            <Text style={{ color: '#9CA3AF', fontSize: '14px' }}>
+              Registre um novo serviço para este veículo
+            </Text>
+          </div>
+        </div>
+      }
+      open={open}
+      onCancel={onClose}
+      width={900}
+      footer={null}
+      destroyOnHidden={false} // Voltar para o comportamento original
+      style={{ top: 20 }}
+      className={styles.serviceModal}
+    >
+      {modalState.isLoadingData ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '60px 20px',
+          minHeight: '400px'
+        }}>
+          <Spin size="large" />
+          <Text style={{ marginTop: '16px', fontSize: '16px', color: '#9CA3AF' }}>
+            Carregando dados...
+          </Text>
+        </div>
+      ) : (
         <Form
           form={form}
           layout="vertical"
-          onValuesChange={handleFieldChange}
-          preserve={true}
-          initialValues={{
-            type: undefined,
-            category: undefined,
-            description: '',
-            date: undefined,
-            mileage: autoMileage ? currentMileage : undefined,
-            cost: undefined,
-            location: '',
-            technician: '',
-            warranty: false,
-            nextServiceDate: undefined,
-            notes: ''
-          }}
+          preserve={false} // Não preservar dados entre renders
         >
           <div style={{ padding: '20px 0' }}>
             {/* Progress Steps */}
-            <Steps current={currentStep} items={steps} style={{ marginBottom: '24px' }} />
-            
-            {/* Progress Bar - Apenas na primeira etapa */}
-            {currentStep === 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <Text style={{ color: '#9CA3AF', fontSize: '13px' }}>Progresso do Formulário</Text>
-                  <Text style={{ color: '#8B5CF6', fontWeight: 500 }}>{formProgress}%</Text>
-                </div>
-                <Progress 
-                  percent={formProgress} 
-                  strokeColor={{
-                    '0%': '#8B5CF6',
-                    '100%': '#A78BFA',
-                  }}
-                  showInfo={false}
-                  size="small"
-                  trailColor="#374151"
-                />
-              </div>
-            )}
+            <Steps current={modalState.currentStep} items={steps} style={{ marginBottom: '24px' }} />
+
+            {/* Remover barra de progresso que pode causar re-renders */}
 
             {/* Step 1: Dados do Serviço */}
-            {currentStep === 0 && (
+            {modalState.currentStep === 0 && (
               <>
                 <FormSection
                   title="Informações Básicas"
                   icon={<CarOutlined />}
                   description="Dados principais do serviço realizado"
                 >
-                  {/* Campo de seleção de veículo - apenas quando não há vehicleId específico */}
+                  {/* Campo de seleção de veículo */}
                   {!vehicleId && vehicles.length > 0 && (
                     <Form.Item
                       name="selectedVehicleId"
@@ -611,29 +506,29 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                     </Col>
                   </Row>
 
-                  {/* Auto Mileage Switch */}
-                  <Form.Item label="Quilometragem Automática">
-                    <Space>
-                      <Switch
-                        checked={autoMileage}
-                        onChange={setAutoMileage}
-                        checkedChildren="Automática"
-                        unCheckedChildren="Manual"
-                      />
-                      <Text style={{ color: '#9CA3AF', fontSize: '12px' }}>
-                        {autoMileage 
-                          ? `Usando quilometragem atual: ${currentMileage.toLocaleString()} km`
-                          : 'Digite a quilometragem manualmente'
-                        }
-                      </Text>
-                    </Space>
-                  </Form.Item>
+                   {/* Auto Mileage Switch */}
+                   <Form.Item label="Quilometragem Automática">
+                     <Space>
+                       <Switch
+                         checked={modalState.autoMileage}
+                         onChange={(checked) => setModalState(prev => ({ ...prev, autoMileage: checked }))}
+                         checkedChildren="Automática"
+                         unCheckedChildren="Manual"
+                       />
+                       <Text style={{ color: '#9CA3AF', fontSize: '12px' }}>
+                         {modalState.autoMileage
+                           ? `Usando quilometragem atual: ${currentMileage.toLocaleString()} km`
+                           : 'Digite a quilometragem manualmente'
+                         }
+                       </Text>
+                     </Space>
+                   </Form.Item>
 
-                  {/* Estimated Next Service */}
-                  {estimatedNextService && (
+                   {/* Estimated Next Service */}
+                   {modalState.estimatedNextService && (
                     <Alert
                       message="📅 Próximo Serviço Recomendado"
-                      description={`Baseado no tipo de serviço selecionado, o próximo serviço similar deve ser realizado em aproximadamente ${estimatedNextService.toLocaleString()} km`}
+                      description={`Baseado no tipo de serviço selecionado, o próximo serviço similar deve ser realizado em aproximadamente ${modalState.estimatedNextService.toLocaleString()} km`}
                       type="info"
                       showIcon
                       style={{ marginTop: '16px' }}
@@ -696,8 +591,8 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               </>
             )}
 
-            {/* Step 2: Anexos */}
-            {currentStep === 1 && (
+             {/* Step 2: Anexos */}
+             {modalState.currentStep === 1 && (
               <FormSection
                 title="Documentos e Fotos"
                 icon={<PaperClipOutlined />}
@@ -707,7 +602,6 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                   fileList={fileList}
                   onChange={({ fileList: newFileList }) => {
                     setFileList(newFileList);
-                    calculateProgress();
                   }}
                   multiple
                   accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx"
@@ -738,7 +632,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
             )}
 
             {/* Step 3: Revisão */}
-            {currentStep === 2 && (
+            {modalState.currentStep === 2 && (
               <FormSection
                 title="Revisão Final"
                 icon={<CheckCircleOutlined />}
@@ -828,9 +722,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               </Button>
 
               <Space>
-                {currentStep > 0 && (
+                {modalState.currentStep > 0 && (
                   <Button
-                    onClick={() => setCurrentStep(currentStep - 1)}
+                    onClick={handlePrevStep}
                     size="large"
                     style={{
                       borderColor: '#6B7280',
@@ -842,12 +736,12 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                   </Button>
                 )}
 
-                {currentStep < 2 ? (
+                {modalState.currentStep < 2 ? (
                   <Button
                     type="primary"
                     onClick={handleNextStep}
                     size="large"
-                    style={{ 
+                    style={{
                       background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
                       border: 'none',
                       borderRadius: '8px',
@@ -874,9 +768,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
             </div>
           </div>
         </Form>
-      </Modal>
-    </>
+      )}
+    </Modal>
   );
-};
+});
 
 export default ServiceModal;
