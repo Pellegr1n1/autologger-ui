@@ -4,10 +4,9 @@ import {
   LinkOutlined, 
   CheckCircleOutlined, 
   ClockCircleOutlined, 
-  ExclamationCircleOutlined,
   BlockOutlined
 } from '@ant-design/icons';
-import { BlockchainService } from '../../../services/api/blockchainService';
+import { BlockchainService } from '../services/blockchainService';
 
 const { Text } = Typography;
 
@@ -19,7 +18,6 @@ interface Transaction {
   location: string;
   date: string;
   mileage: number;
-  gasPrice: string;
   blockNumber?: number;
 }
 
@@ -42,7 +40,6 @@ export default function TransactionHistory() {
           location: s.location || '—',
           date: s.serviceDate || s.createdAt,
           mileage: s.mileage || 0,
-          gasPrice: s.gasPrice || '-',
           blockNumber: s.blockNumber,
         }))
         .filter((tx: Transaction) => tx.hash); // Apenas transações com hash real
@@ -66,6 +63,7 @@ export default function TransactionHistory() {
     setRefreshing(false);
     message.success('Transações atualizadas');
   };
+
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -93,7 +91,7 @@ export default function TransactionHistory() {
       case 'FAILED':
         return {
           color: '#ff4d4f',
-          icon: <ExclamationCircleOutlined />,
+          icon: <BlockOutlined />,
           label: 'Falhou',
           timelineColor: '#ff4d4f'
         };
@@ -109,6 +107,10 @@ export default function TransactionHistory() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    // Verificar se a data é válida
+    if (isNaN(date.getTime())) {
+      return 'Data inválida';
+    }
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -237,10 +239,6 @@ export default function TransactionHistory() {
                       </Button>
                     )}
                   </div>
-                  
-                  <Text style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
-                    Gas Price: {tx.gasPrice}
-                  </Text>
                 </Space>
               </div>
             ),

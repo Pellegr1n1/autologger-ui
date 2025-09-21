@@ -11,7 +11,7 @@ import {
 } from "@ant-design/icons"
 import type { TableColumnsType } from "antd"
 import type { VehicleEvent, VehicleDocument, ChainStatus, VehicleEventType } from "../types/vehicle.types"
-import { currencyBRL, formatBRDate, kmFormat } from "../../../utils/format"
+import { currencyBRL, formatBRDate, kmFormat } from "../../../shared/utils/format"
 import { getChainStatusConfig, getVehicleEventTypeLabel } from "./helpers"
 
 const { Text } = Typography

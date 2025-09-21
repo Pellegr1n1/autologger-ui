@@ -1,0 +1,441 @@
+le .reportsContainer {
+  padding: 24px;
+  background: var(--background-color);
+  min-height: calc(100vh - 72px);
+}
+
+.reportsContainer .ant-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reportsContainer .ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+.reportsContainer .ant-statistic-title {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.reportsContainer .ant-statistic-content {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.reportsContainer .ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.reportsContainer .ant-table-thead > tr > th {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reportsContainer .ant-table-tbody > tr:hover > td {
+  background: rgba(139, 92, 246, 0.03);
+}
+
+.reportsContainer .ant-select {
+  border-radius: 8px;
+}
+
+.reportsContainer .ant-select-selector {
+  border-radius: 8px !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  background: rgba(139, 92, 246, 0.03) !important;
+}
+
+.reportsContainer .ant-select-focused .ant-select-selector {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+}
+
+.reportsContainer .ant-picker {
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  background: rgba(139, 92, 246, 0.03);
+}
+
+.reportsContainer .ant-picker:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.reportsContainer .ant-picker-focused {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.reportsContainer .ant-btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reportsContainer .ant-btn-primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.reportsContainer .ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+}
+
+.reportsContainer .ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.reportsContainer .ant-progress-bg {
+  border-radius: 4px;
+}
+
+.reportsContainer .ant-empty {
+  padding: 48px 0;
+}
+
+.reportsContainer .ant-empty-description {
+  color: var(--text-secondary);
+}
+
+/* Animações */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reportsContainer > * {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reportsContainer > *:nth-child(1) { animation-delay: 0.1s; }
+.reportsContainer > *:nth-child(2) { animation-delay: 0.2s; }
+.reportsContainer > *:nth-child(3) { animation-delay: 0.3s; }
+.reportsContainer > *:nth-child(4) { animation-delay: 0.4s; }
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .reportsContainer {
+    padding: 16px;
+  }
+  
+  .reportsContainer .ant-space {
+    gap: 16px !important;
+  }
+  
+  .reportsContainer .ant-select {
+    width: 100% !important;
+  }
+  
+  .reportsContainer .ant-picker {
+    width: 100%;
+  }
+}
+
+/* Scrollbar personalizada */
+.reportsContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reportsContainer::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 4px;
+}
+
+.reportsContainer::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  border-radius: 4px;
+}
+
+.reportsContainer::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color) 100%);
+}
+
+/* Estilos para gráficos */
+.chartContainer {
+  position: relative;
+  background: linear-gradient(135deg, 
+    var(--surface-color) 0%, 
+    rgba(22, 27, 34, 0.95) 50%,
+    var(--surface-color) 100%);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 
+    0 4px 20px rgba(139, 92, 246, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(139, 92, 246, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.chartContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    #8B5CF6 0%, 
+    #A855F7 25%, 
+    #C084FC 50%, 
+    #A855F7 75%, 
+    #8B5CF6 100%);
+  opacity: 0.8;
+}
+
+.chartContainer:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 
+    0 20px 40px rgba(139, 92, 246, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.chartTitle {
+  color: var(--text-primary);
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.chartLegend {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.chartTooltip {
+  background: linear-gradient(135deg, 
+    var(--surface-color) 0%, 
+    rgba(22, 27, 34, 0.95) 100%) !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 20px 40px rgba(139, 92, 246, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(20px) !important;
+  padding: 12px 16px !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+}
+
+.chartAxis {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.chartGrid {
+  stroke: rgba(139, 92, 246, 0.08);
+  stroke-dasharray: 2 4;
+  stroke-width: 1;
+}
+
+/* Estilos específicos para elementos dos gráficos */
+.chartBar {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+}
+
+.chartBar:hover {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.chartLine {
+  filter: drop-shadow(0 2px 4px rgba(139, 92, 246, 0.2));
+}
+
+.chartPie {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Animações de entrada para elementos do gráfico */
+@keyframes chartElementFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chartContainer .recharts-bar,
+.chartContainer .recharts-line,
+.chartContainer .recharts-pie {
+  animation: chartElementFadeIn 0.6s ease-out;
+}
+
+/* Efeito de brilho nos gráficos */
+.chartContainer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, 
+    rgba(139, 92, 246, 0.03) 0%, 
+    transparent 70%);
+  pointer-events: none;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Animações para gráficos */
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.chartContainer > div {
+  animation: chartFadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Responsividade para gráficos */
+@media (max-width: 768px) {
+  .chartContainer {
+    padding: 16px;
+    border-radius: 16px;
+  }
+  
+  .chartTitle {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+}
+
+/* Estilos adicionais para melhorar a aparência */
+.chartContainer .recharts-legend-item {
+  margin-right: 20px !important;
+  margin-bottom: 8px !important;
+}
+
+.chartContainer .recharts-legend-item-text {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+}
+
+.chartContainer .recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+.chartContainer .recharts-tooltip-content {
+  margin: 0 !important;
+}
+
+.chartContainer .recharts-tooltip-label {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+}
+
+.chartContainer .recharts-tooltip-item {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+
+/* Efeitos de hover nos elementos dos gráficos */
+.chartContainer .recharts-bar:hover {
+  filter: brightness(1.1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+
+.chartContainer .recharts-line:hover {
+  filter: brightness(1.1) drop-shadow(0 4px 8px rgba(139, 92, 246, 0.3));
+  transition: all 0.3s ease;
+}
+
+.chartContainer .recharts-pie:hover {
+  filter: brightness(1.05) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  transition: all 0.3s ease;
+}
+
+/* Animações de entrada escalonadas */
+.chartContainer .recharts-bar:nth-child(1) { animation-delay: 0.1s; }
+.chartContainer .recharts-bar:nth-child(2) { animation-delay: 0.2s; }
+.chartContainer .recharts-bar:nth-child(3) { animation-delay: 0.3s; }
+.chartContainer .recharts-bar:nth-child(4) { animation-delay: 0.4s; }
+
+/* Efeito de loading sutil */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.chartContainer.loading {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Melhorias na tipografia */
+.chartContainer .recharts-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Efeito de profundidade nos containers */
+.chartContainer {
+  position: relative;
+}
+
+.chartContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    transparent 50%, 
+    rgba(139, 92, 246, 0.05) 100%);
+  pointer-events: none;
+  border-radius: 20px;
+}

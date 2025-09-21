@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   Typography,
@@ -12,14 +12,15 @@ import {
   CalendarOutlined,
   DashboardOutlined,
   HistoryOutlined,
-  FileTextOutlined,
   SettingOutlined,
   CloseOutlined,
   IdcardOutlined,
   CheckCircleOutlined,
   StopOutlined
 } from '@ant-design/icons';
-import { Vehicle, VehicleStatus } from '../types/vehicle.types';
+import { Vehicle, VehicleStatus, VehicleEventType } from '../types/vehicle.types';
+import { VehicleServiceService } from '../services/vehicleServiceService';
+import { BlockchainService } from '../../blockchain/services/blockchainService';
 
 const { Title, Text } = Typography;
 
@@ -34,6 +35,88 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
   vehicle,
   onClose
 }) => {
+  const [maintenanceCount, setMaintenanceCount] = useState<number>(0);
+  const [loadingCount, setLoadingCount] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (visible && vehicle) {
+      loadMaintenanceCount();
+    }
+  }, [visible, vehicle]);
+
+  const loadMaintenanceCount = async () => {
+    if (!vehicle) return;
+    
+    setLoadingCount(true);
+    
+    try {
+      // Usar o mesmo serviço da tela de manutenções
+      const allServices = await BlockchainService.getAllServices();
+      
+      // Mapear tipo do backend para frontend (igual à tela de manutenções)
+      const mapServiceType = (backendType: string): VehicleEventType => {
+        switch (backendType) {
+          case 'maintenance': return VehicleEventType.MAINTENANCE;
+          case 'fuel': return VehicleEventType.FUEL;
+          case 'repair': return VehicleEventType.REPAIR;
+          case 'inspection': return VehicleEventType.INSPECTION;
+          case 'expense': return VehicleEventType.EXPENSE;
+          case 'other': return VehicleEventType.OTHER;
+          default: return VehicleEventType.MAINTENANCE;
+        }
+      };
+      
+      // Processar serviços igual à tela de manutenções
+      const processedServices = allServices.map((event: any) => {
+        // Se é do blockchain, fazer conversão
+        if (event.serviceDate) {
+          return {
+            ...event,
+            type: mapServiceType(event.type), // Mapear tipo corretamente
+            date: new Date(event.serviceDate || event.createdAt),
+            createdAt: new Date(event.createdAt),
+            updatedAt: new Date(event.updatedAt),
+            attachments: [],
+            blockchainStatus: {
+              status: event.status as any,
+              lastUpdate: new Date(),
+              retryCount: 0,
+              maxRetries: 3
+            },
+            isImmutable: event.status === 'CONFIRMED',
+            canEdit: event.status !== 'CONFIRMED',
+            requiresConfirmation: false
+          };
+        }
+        // Se é do método antigo, já vem no formato correto
+        return event;
+      });
+      
+      // Filtrar todos os serviços do veículo (igual à tela de manutenções)
+      const vehicleServices = processedServices.filter(service => {
+        return service.vehicleId === vehicle.id;
+      });
+      
+      setMaintenanceCount(vehicleServices.length);
+      
+    } catch (error) {
+      console.error('Erro ao carregar contagem de manutenções:', error);
+      // Fallback para VehicleServiceService se blockchain falhar
+      try {
+        const allServices = await VehicleServiceService.getAllServices();
+        const vehicleServices = allServices.filter(service => 
+          service.vehicleId === vehicle.id
+        );
+        setMaintenanceCount(vehicleServices.length);
+      } catch (fallbackError) {
+        console.error('Erro no fallback:', fallbackError);
+        setMaintenanceCount(0);
+      }
+    } finally {
+      setLoadingCount(false);
+    }
+  };
+
   if (!vehicle) return null;
 
   const formatMileage = (mileage: number): string => {
@@ -137,7 +220,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           display: 'block'
         }}
       >
-        {value} {suffix && <span style={{ fontSize: '14px', color: 'var(--gray-5)' }}>{suffix}</span>}
+        {value} {suffix && value !== '...' && <span style={{ fontSize: '14px', color: 'var(--gray-5)' }}>{suffix}</span>}
       </Text>
     </div>
   );
@@ -352,9 +435,9 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           <Col span={6}>
             <StatCard
               icon={<SettingOutlined />}
-              title="Eventos"
-              value={0}
-              suffix="registrados"
+              title="Manutenções"
+              value={loadingCount ? '...' : maintenanceCount}
+              suffix="registradas"
               color="var(--warning-color)"
             />
           </Col>
@@ -492,58 +575,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
               }
             />
           )}
-        </div>
-
-        {/* Ações */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 'var(--space-md)',
-            justifyContent: 'center',
-            paddingTop: 'var(--space-lg)',
-            borderTop: '1px solid var(--gray-2)'
-          }}
-        >
-          <Button
-            type="primary"
-            icon={<SettingOutlined />}
-            size="large"
-            style={{
-              background: 'var(--primary-color)',
-              borderColor: 'var(--primary-color)',
-              borderRadius: 'var(--border-radius-sm)',
-              height: '48px',
-              paddingLeft: 'var(--space-lg)',
-              paddingRight: 'var(--space-lg)',
-              fontWeight: 600
-            }}
-          >
-            Ver Eventos
-          </Button>
-
-          <Button
-            icon={<FileTextOutlined />}
-            size="large"
-            style={{
-              borderColor: 'var(--gray-3)',
-              color: 'var(--text-dark)',
-              borderRadius: 'var(--border-radius-sm)',
-              height: '48px',
-              paddingLeft: 'var(--space-lg)',
-              paddingRight: 'var(--space-lg)',
-              fontWeight: 600
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-color)';
-              e.currentTarget.style.color = 'var(--accent-color)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--gray-3)';
-              e.currentTarget.style.color = 'var(--text-dark)';
-            }}
-          >
-            Gerar Relatório
-          </Button>
         </div>
       </div>
     </Modal>

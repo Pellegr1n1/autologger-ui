@@ -15,6 +15,8 @@ interface BlockchainData {
   failedTransactions: number;
   reliabilityScore: number;
   networkStatus: string;
+  averageConfirmationTime?: number;
+  lastSyncTime?: Date;
 }
 
 interface BesuData {
@@ -35,7 +37,9 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
     confirmedTransactions, 
     pendingTransactions, 
     failedTransactions, 
-    reliabilityScore 
+    reliabilityScore,
+    averageConfirmationTime,
+    lastSyncTime
   } = data;
 
   const confirmedPercentage = totalTransactions > 0 ? (confirmedTransactions / totalTransactions) * 100 : 0;
@@ -207,7 +211,7 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
               <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Tempo médio de confirmação</Text>
               <div style={{ marginTop: '8px' }}>
                 <Text strong style={{ color: 'var(--text-primary)', fontSize: '18px' }}>
-                  2.3s
+                  {averageConfirmationTime ? `${averageConfirmationTime.toFixed(1)}s` : 'N/A'}
                 </Text>
               </div>
             </div>
@@ -217,7 +221,7 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
               <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Última sincronização</Text>
               <div style={{ marginTop: '8px' }}>
                 <Text strong style={{ color: 'var(--text-primary)', fontSize: '18px' }}>
-                  Agora
+                  {lastSyncTime ? lastSyncTime.toLocaleTimeString('pt-BR') : 'Agora'}
                 </Text>
               </div>
             </div>
@@ -226,8 +230,11 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
             <div style={{ textAlign: 'center' }}>
               <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>Status da conexão</Text>
               <div style={{ marginTop: '8px' }}>
-                <Tag color="success" icon={<CheckCircleOutlined />}>
-                  Ativo
+                <Tag 
+                  color={besuData?.connectionStatus ? "success" : "error"} 
+                  icon={besuData?.connectionStatus ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+                >
+                  {besuData?.connectionStatus ? 'Ativo' : 'Inativo'}
                 </Tag>
               </div>
             </div>

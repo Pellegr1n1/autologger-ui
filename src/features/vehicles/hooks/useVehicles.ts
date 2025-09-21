@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { VehicleService } from '../../../services/api/vehicleService';
+import { VehicleService } from '../services/vehicleService';
 import {
   Vehicle,
   UserVehicles,

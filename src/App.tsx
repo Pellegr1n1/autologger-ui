@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
-import { AuthProvider } from "./contexts/AuthContext";
-import Router from "./routes/Router";
-import "./main.css";
+import { AuthProvider } from "./features/auth";
+import Router from "./app/router/Router";
+import "./styles/globals.css";
 
 const App: React.FC = () => {
   return (

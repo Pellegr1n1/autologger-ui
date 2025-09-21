@@ -8,7 +8,7 @@ import {
   SettingOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
-import { BlockchainService } from '../../../services/api/blockchainService';
+import { BlockchainService } from '../services/blockchainService';
 
 const { Text } = Typography;
 

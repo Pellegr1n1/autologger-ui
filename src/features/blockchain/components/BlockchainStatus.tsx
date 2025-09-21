@@ -8,7 +8,7 @@ import {
   GlobalOutlined,
   SafetyCertificateOutlined
 } from '@ant-design/icons';
-import { BlockchainService, NetworkHealth } from '../../../services/api/blockchainService';
+import { BlockchainService, NetworkHealth } from '../services/blockchainService';
 import componentStyles from '../../common/layout/styles/Components.module.css';
 
 const { Text, Title } = Typography;
@@ -120,10 +120,12 @@ export default function BlockchainStatus({ refreshInterval = 30000 }: Blockchain
               title="Status da Rede"
               value={getStatusText(networkHealth?.status || 'UNKNOWN')}
               prefix={
-                <Badge 
-                  status={getStatusColor(networkHealth?.status || 'UNKNOWN') as any}
-                  icon={getStatusIcon(networkHealth?.status || 'UNKNOWN')}
-                />
+                <Space>
+                  <Badge 
+                    status={getStatusColor(networkHealth?.status || 'UNKNOWN') as any}
+                  />
+                  {getStatusIcon(networkHealth?.status || 'UNKNOWN')}
+                </Space>
               }
               valueStyle={{ 
                 color: networkHealth?.status === 'HEALTHY' ? 'var(--success-color)' : 'var(--error-color)' 

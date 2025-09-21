@@ -20,8 +20,8 @@ import {
   BlockOutlined
 } from '@ant-design/icons';
 import { VehicleEvent } from '../types/vehicle.types';
-import { BlockchainService } from '../../../services/api/blockchainService';
-import { ServiceSubmissionResult } from '../types/blockchain.types';
+import { BlockchainService } from '../../blockchain/services/blockchainService';
+import { ServiceSubmissionResult } from '../../blockchain/types/blockchain.types';
 
 const { Text, Title } = Typography;
 
@@ -71,15 +71,13 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
     setLoading(true);
     try {
       // Enviar para blockchain via backend
-      const result = await BlockchainService.submitServiceToBlockchain({
-        type: service.type,
-        category: service.category,
-        description: service.description,
-        cost: service.cost,
-        location: service.location,
+      const result = await BlockchainService.submitService({
+        serviceId: service.id,
+        vehicleId: service.vehicleId,
         mileage: service.mileage,
-        date: service.date,
-        attachments: service.attachments
+        cost: service.cost,
+        description: service.description,
+        location: service.location
       });
 
       if (result.success) {
@@ -115,7 +113,7 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
         // Simular resultado de sucesso
         const successResult = {
           success: true,
-          hash: result.hash || `hash-${Date.now()}`,
+          hash: result.transactionHash || `hash-${Date.now()}`,
           status: 'CONFIRMED' as const,
           serviceId: service.id
         };

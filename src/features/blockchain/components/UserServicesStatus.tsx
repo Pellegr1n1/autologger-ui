@@ -7,7 +7,9 @@ import {
   ReloadOutlined,
   LinkOutlined
 } from '@ant-design/icons';
-import { BlockchainService } from '../../../services/api/blockchainService';
+import { BlockchainService } from '../services/blockchainService';
+import { VehicleService } from '../../vehicles/services/vehicleService';
+import { Vehicle } from '../../vehicles/types/vehicle.types';
 
 const { Text } = Typography;
 
@@ -29,6 +31,7 @@ interface UserServicesStatusProps {
 
 export default function UserServicesStatus({ userId }: UserServicesStatusProps) {
   const [services, setServices] = useState<ServiceRecord[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -36,11 +39,22 @@ export default function UserServicesStatus({ userId }: UserServicesStatusProps) 
     try {
       setLoading(true);
       
-      // Carregar todos os serviços (em um cenário real, filtraria por userId)
+      // Carregar veículos do usuário primeiro
+      const vehiclesData = await VehicleService.getUserVehicles();
+      const userVehicles = vehiclesData.active || [];
+      setVehicles(userVehicles);
+      
+      // Carregar todos os serviços (agora filtrados por usuário no backend)
       const allServices = await BlockchainService.getAllServices();
       
+      // Filtrar serviços apenas dos veículos do usuário (filtro adicional no frontend)
+      const userVehicleIds = userVehicles.map(v => v.id);
+      const filteredServices = allServices.filter(service => 
+        userVehicleIds.includes(service.vehicleId)
+      );
+      
       // Converter para formato local
-      const formattedServices: ServiceRecord[] = allServices.map((service: any) => ({
+      const formattedServices: ServiceRecord[] = filteredServices.map((service: any) => ({
         id: service.id || service.serviceId,
         vehicleId: service.vehicleId,
         type: service.type || 'MANUTENCAO',
@@ -138,7 +152,20 @@ export default function UserServicesStatus({ userId }: UserServicesStatusProps) 
       title: 'Veículo',
       dataIndex: 'vehicleId',
       key: 'vehicleId',
-      width: 100,
+      width: 150,
+      render: (vehicleId: string) => {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (!vehicle) return <Text type="secondary">Veículo não encontrado</Text>;
+        return (
+          <Text strong>
+            {vehicle.brand} {vehicle.model}
+            <br />
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              {vehicle.plate}
+            </Text>
+          </Text>
+        );
+      },
     },
     {
       title: 'Tipo',
