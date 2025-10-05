@@ -57,7 +57,6 @@ export const mockUser = {
   id: '1',
   name: 'João Silva',
   email: 'joao@test.com',
-  phone: '11999999999',
   isActive: true,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
@@ -73,7 +72,6 @@ export const mockLoginData = {
 export const mockRegisterData = {
   name: 'João Silva',
   email: 'joao@test.com',
-  phone: '11999999999',
   password: '123456',
   confirmPassword: '123456',
 };
@@ -85,7 +83,6 @@ export const mockAuthResponse = {
     id: '1',
     name: 'João Silva',
     email: 'joao@test.com',
-    phone: '11999999999',
   },
 };
 

@@ -20,12 +20,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       if (authService.isAuthenticated()) {
+        console.log('Checking auth status, token exists');
         const userData = await authService.getProfile();
+        console.log('User profile loaded:', userData);
         setUser(userData);
+      } else {
+        console.log('No token found, user not authenticated');
       }
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
       apiBase.removeToken();
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -40,9 +45,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
-  const login = async (data: LoginData) => {
+  const login = async (data: LoginData | User | any) => {
     try {
-      const response = await authService.login(data);
+      // Se é um usuário do Google (já autenticado), apenas define o token e o usuário
+      if ('id' in data && 'authProvider' in data) {
+        console.log('Google user login:', data);
+        setUser(data as User);
+        return;
+      }
+
+      // Login tradicional com email/senha
+      const response = await authService.login(data as LoginData);
       const tempUser = convertAuthUserToUser(response.user);
       setUser(tempUser);
 

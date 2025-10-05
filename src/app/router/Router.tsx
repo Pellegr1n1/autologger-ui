@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { LoginPage, RegisterPage } from "../../pages/Auth";
+import CallbackPage from "../../pages/Auth/CallbackPage";
 import { HomePage } from "../../pages/Home";
 import { NotFoundPage } from "../../pages/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
@@ -9,6 +10,8 @@ import { VehiclesPage } from "../../pages/Vehicles";
 import { ProfilePage } from "../../pages/Profile";
 import { MaintenancePage } from "../../pages/Maintenance";
 import { BlockchainPage } from "../../pages/Blockchain";
+import TermsPage from "../../pages/Terms/TermsPage";
+import PrivacyPage from "../../pages/Privacy/PrivacyPage";
 
 interface RouteType {
   path: string;
@@ -21,6 +24,9 @@ const routes: RouteType[] = [
   { path: "/", component: HomePage },
   { path: "/register", component: RegisterPage },
   { path: "/login", component: LoginPage },
+  { path: "/auth/callback", component: CallbackPage },
+  { path: "/terms", component: TermsPage },
+  { path: "/privacy", component: PrivacyPage },
   { path: "/profile", component: ProfilePage, isProtected: true },
   { path: "/vehicles", component: VehiclesPage, isProtected: true },
   { path: "/maintenance", component: MaintenancePage, isProtected: true },

@@ -18,9 +18,7 @@ import {
 import { 
   UserOutlined, 
   MailOutlined, 
-  PhoneOutlined, 
   SaveOutlined, 
-  LogoutOutlined,
   EditOutlined,
   LockOutlined
 } from '@ant-design/icons';
@@ -34,17 +32,11 @@ const { Text, Title } = Typography;
 interface ProfileFormData {
   name: string;
   email: string;
-  phone: string;
 }
 
-interface PasswordFormData {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
 
 export default function ProfilePage() {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -57,8 +49,7 @@ export default function ProfilePage() {
     if (user) {
       form.setFieldsValue({
         name: user.name,
-        email: user.email,
-        phone: user.phone
+        email: user.email
       });
     }
   }, [user, form]);
@@ -67,8 +58,7 @@ export default function ProfilePage() {
     const currentValues = form.getFieldsValue();
     const initialValues = {
       name: user?.name,
-      email: user?.email,
-      phone: user?.phone
+      email: user?.email
     };
 
     const changed = Object.keys(currentValues).some(
@@ -98,12 +88,8 @@ export default function ProfilePage() {
     setHasChanges(false);
   };
 
-  const handleLogout = () => {
-    message.success('Logout realizado com sucesso!');
-    logout();
-  };
 
-  const handlePasswordChange = async (values: PasswordFormData) => {
+  const handlePasswordChange = async () => {
     try {
       setPasswordLoading(true);
       // Aqui você implementaria a lógica para alterar a senha
@@ -302,24 +288,6 @@ export default function ProfilePage() {
                   </Col>
                 </Row>
 
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="phone" 
-                      label={
-                        <Space>
-                          <PhoneOutlined />
-                          <span>Telefone</span>
-                        </Space>
-                      }
-                    >
-                      <Input 
-                        placeholder="(11) 99999-9999"
-                        className={componentStyles.professionalInput}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
               </Form>
             </Card>
           </Col>
@@ -327,33 +295,60 @@ export default function ProfilePage() {
           {/* Sidebar com ações rápidas */}
           <Col xs={24} lg={8}>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
-              {/* Configurações de Segurança */}
-              <Card 
-                title={
-                  <Space>
-                    <LockOutlined style={{ color: '#8B5CF6' }} />
-                    <span>Segurança</span>
+              {/* Configurações de Segurança - apenas para usuários locais */}
+              {user.authProvider === 'local' && (
+                <Card 
+                  title={
+                    <Space>
+                      <LockOutlined style={{ color: '#8B5CF6' }} />
+                      <span>Segurança</span>
+                    </Space>
+                  }
+                  className={componentStyles.professionalCard}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <Button 
+                      block 
+                      icon={<LockOutlined />}
+                      onClick={() => setPasswordModalVisible(true)}
+                      style={{
+                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
+                        border: '1px solid rgba(139, 92, 246, 0.2)',
+                        color: '#ffffff',
+                        height: '40px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      Alterar Senha
+                    </Button>
                   </Space>
-                }
-                className={componentStyles.professionalCard}
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Button 
-                    block 
-                    icon={<LockOutlined />}
-                    onClick={() => setPasswordModalVisible(true)}
-                    style={{
-                      background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                      border: '1px solid rgba(139, 92, 246, 0.2)',
-                      color: '#ffffff',
-                      height: '40px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Alterar Senha
-                  </Button>
-                </Space>
-              </Card>
+                </Card>
+              )}
+
+              {/* Informações de autenticação para usuários Google */}
+              {user.authProvider === 'google' && (
+                <Card 
+                  title={
+                    <Space>
+                      <LockOutlined style={{ color: '#8B5CF6' }} />
+                      <span>Autenticação</span>
+                    </Space>
+                  }
+                  className={componentStyles.professionalCard}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }}>
+                    <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                      <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                        Sua conta está conectada ao Google
+                      </Text>
+                      <br />
+                      <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                        Para alterar sua senha, acesse sua conta do Google
+                      </Text>
+                    </div>
+                  </Space>
+                </Card>
+              )}
 
               {/* Informações da Conta */}
               <Card 

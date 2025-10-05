@@ -1,13 +1,14 @@
 import { useState } from "react"
-import { Form, Input, Button, Card, Typography, Alert, Checkbox, Steps, Space } from "antd"
+import { Form, Input, Button, Card, Typography, Alert, Checkbox, Steps, Space, Divider } from "antd"
 import {
   UserOutlined,
   LockOutlined,
-  MailOutlined,
-  PhoneOutlined
+  MailOutlined
 } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
+import { GoogleLoginButton } from "../../components/GoogleLoginButton"
+import { googleAuthService } from "../../features/auth/services/googleAuthService"
 import styles from "./Auth.module.css"
 
 const { Title, Text } = Typography
@@ -22,26 +23,6 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
 
-  const formatPhone = (value: string) => {
-    if (!value) return value
-
-    const phoneNumber = value.replace(/[^\d]/g, '')
-
-    if (phoneNumber.length <= 2) {
-      return `(${phoneNumber}`
-    } else if (phoneNumber.length <= 7) {
-      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2)}`
-    } else if (phoneNumber.length <= 11) {
-      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7)}`
-    } else {
-      return `(${phoneNumber.slice(0, 2)}) ${phoneNumber.slice(2, 7)}-${phoneNumber.slice(7, 11)}`
-    }
-  }
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedValue = formatPhone(e.target.value)
-    form.setFieldsValue({ phone: formattedValue })
-  }
 
   const nextStep = async () => {
     try {
@@ -79,7 +60,6 @@ export default function RegisterPage() {
       const registerData = {
         name: allFormData.name,
         email: allFormData.email,
-        phone: allFormData.phone ? allFormData.phone.replace(/[^\d]/g, '') : undefined,
         password: allFormData.password,
         confirmPassword: allFormData.confirmPassword,
       }
@@ -103,6 +83,27 @@ export default function RegisterPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSuccess = async (response: any) => {
+    setLoading(true)
+    setError("")
+
+    try {
+      await googleAuthService.authenticateWithGoogle(response.credential, response.code)
+      
+      // Para login com Google, não precisamos chamar register
+      // O usuário já foi autenticado pelo Google
+      navigate("/vehicles")
+    } catch (err: any) {
+      setError("Erro ao fazer login com Google. Tente novamente.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleError = () => {
+    setError("Erro ao fazer login com Google. Tente novamente.")
   }
 
   const steps = [
@@ -149,23 +150,6 @@ export default function RegisterPage() {
               />
             </Form.Item>
 
-            <Form.Item
-              name="phone"
-              label="Telefone"
-              rules={[
-                {
-                  pattern: /^\(\d{2}\) \d{4,5}-\d{4}$/,
-                  message: "Formato: (11) 99999-9999"
-                }
-              ]}
-            >
-              <Input
-                prefix={<PhoneOutlined />}
-                placeholder="(11) 99999-9999"
-                onChange={handlePhoneChange}
-                maxLength={15}
-              />
-            </Form.Item>
           </>
         )
 
@@ -227,11 +211,11 @@ export default function RegisterPage() {
             >
               <Checkbox>
                 Eu aceito os{" "}
-                <Link to="/terms" className={styles.authLink}>
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className={styles.authLink}>
                   Termos de Uso
                 </Link>{" "}
                 e{" "}
-                <Link to="/privacy" className={styles.authLink}>
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className={styles.authLink}>
                   Política de Privacidade
                 </Link>
               </Checkbox>
@@ -340,6 +324,19 @@ export default function RegisterPage() {
               {renderStepButtons()}
             </Form.Item>
           </Form>
+
+          {currentStep === 0 && (
+            <>
+              <Divider className={styles.divider}>ou</Divider>
+              <div className={styles.googleButtonContainer}>
+                <GoogleLoginButton
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  disabled={loading}
+                />
+              </div>
+            </>
+          )}
 
           <div className={styles.authFooter} style={{ marginTop: 24 }}>
             <Text>

@@ -23,6 +23,8 @@ export default function VehiclesPage() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+  const [sellModalVisible, setSellModalVisible] = useState(false);
+  const [vehicleToSell, setVehicleToSell] = useState<Vehicle | null>(null);
 
   useEffect(() => {
     loadVehicles();
@@ -107,20 +109,39 @@ export default function VehiclesPage() {
   };
 
   const handleSell = (vehicle: Vehicle) => {
-    Modal.confirm({
-      title: 'Confirmar venda',
-      content: `Deseja marcar o veículo ${vehicle.brand} ${vehicle.model} como vendido?`,
-      onOk: async () => {
-        try {
-          await VehicleService.markVehicleAsSold(vehicle.id);
-          message.success('Veículo marcado como vendido');
-          loadVehicles(); // Recarregar para atualizar as listas
-        } catch (error) {
-          console.error('Erro ao marcar veículo como vendido:', error);
-          message.error('Erro ao marcar veículo como vendido');
-        }
-      }
-    });
+    console.log('handleSell chamado para veículo:', vehicle);
+    setVehicleToSell(vehicle);
+    setSellModalVisible(true);
+  };
+
+  const confirmSell = async () => {
+    if (!vehicleToSell) return;
+    
+    console.log('Usuário confirmou a venda do veículo:', vehicleToSell.id);
+    try {
+      console.log('Chamando VehicleService.markVehicleAsSold...');
+      const result = await VehicleService.markVehicleAsSold(vehicleToSell.id);
+      console.log('Veículo marcado como vendido com sucesso:', result);
+      message.success('Veículo marcado como vendido');
+      setSellModalVisible(false);
+      setVehicleToSell(null);
+      loadVehicles(); // Recarregar para atualizar as listas
+    } catch (error) {
+      console.error('Erro ao marcar veículo como vendido:', error);
+      console.error('Detalhes do erro:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+      message.error(`Erro ao marcar veículo como vendido: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const cancelSell = () => {
+    console.log('Usuário cancelou a venda do veículo');
+    setSellModalVisible(false);
+    setVehicleToSell(null);
   };
 
 
@@ -345,6 +366,27 @@ export default function VehiclesPage() {
         onCancel={handleFormCancel}
         loading={formLoading}
       />
+
+      {/* Modal de confirmação de venda */}
+      <Modal
+        title="Confirmar venda"
+        open={sellModalVisible}
+        onOk={confirmSell}
+        onCancel={cancelSell}
+        okText="Confirmar Venda"
+        cancelText="Cancelar"
+        okButtonProps={{
+          danger: true,
+          loading: formLoading
+        }}
+      >
+        <p>
+          Deseja marcar o veículo <strong>{vehicleToSell?.brand} {vehicleToSell?.model}</strong> como vendido?
+        </p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+          Esta ação não pode ser desfeita. O veículo será movido para a lista de veículos vendidos.
+        </p>
+      </Modal>
 
     </DefaultFrame>
   );

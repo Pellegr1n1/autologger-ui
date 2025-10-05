@@ -1,8 +1,9 @@
-import { useState } from "react"
-import { Form, Input, Button, Card, Typography, Checkbox, Alert } from "antd"
+import { useState, useEffect } from "react"
+import { Form, Input, Button, Card, Typography, Checkbox, Alert, Divider } from "antd"
 import { UserOutlined, LockOutlined } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
+import { GoogleLoginButton } from "../../components/GoogleLoginButton"
 import styles from "./Auth.module.css"
 
 const { Title, Text } = Typography
@@ -12,6 +13,27 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    // Listener para mensagens do popup OAuth2
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
+        console.log('OAuth2 success message received:', event.data);
+        handleGoogleSuccess(event.data);
+      } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
+        console.log('OAuth2 error message received:', event.data);
+        handleGoogleError(new Error(event.data.error));
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
 
   const onFinish = async (values: any) => {
     setLoading(true)
@@ -35,6 +57,42 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGoogleSuccess = async (response: any) => {
+    setLoading(true)
+    setError("")
+
+    try {
+      console.log('Google OAuth2 success, response:', response)
+      
+      // O fluxo OAuth2 já foi processado na página de callback
+      // Aqui apenas fazemos o login com os dados recebidos
+      if (response.user && response.token) {
+        localStorage.setItem('autologger_token', response.token)
+        
+        // Importar apiBase para definir o token
+        const { apiBase } = await import('../../shared/services/api')
+        apiBase.setToken(response.token)
+        
+        await login(response.user)
+        navigate("/vehicles")
+      } else {
+        throw new Error('Dados do usuário não recebidos')
+      }
+    } catch (err: any) {
+      console.error('Google login error:', err)
+      const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleError = (error: any) => {
+    console.error('Google login error:', error)
+    const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
+    setError(errorMessage)
   }
 
   return (
@@ -85,6 +143,16 @@ export default function LoginPage() {
               </Button>
             </Form.Item>
           </Form>
+
+          <Divider className={styles.divider}>ou</Divider>
+
+          <div className={styles.googleButtonContainer}>
+            <GoogleLoginButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              disabled={loading}
+            />
+          </div>
 
           <div className={styles.authFooter}>
             <Text>

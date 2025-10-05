@@ -1,0 +1,233 @@
+.privacyContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.3) 0%, transparent 25%),
+    radial-gradient(circle at 90% 80%, rgba(123, 58, 237, 0.3) 0%, transparent 25%),
+    linear-gradient(145deg, var(--background-color) 0%, var(--background-color) 100%, var(--primary-color) 100%);
+  background-size: 100% 100%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+.privacyContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle, rgba(167, 139, 250, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px, 60px 60px;
+  background-position: 0 0, 20px 20px;
+  z-index: 0;
+}
+
+.privacyContainer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: radial-gradient(ellipse at center,
+      rgba(167, 139, 250, 0.25) 0%,
+      rgba(123, 58, 237, 0.2) 30%,
+      transparent 70%);
+  animation: rotate 25s linear infinite;
+  z-index: 0;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.privacyContent {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  justify-content: center;
+}
+
+.privacyCard {
+  width: 100%;
+  background: rgba(22, 27, 34, 0.95);
+  backdrop-filter: blur(15px);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+    0 8px 30px rgba(139, 92, 246, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.privacyCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35),
+    0 10px 35px rgba(139, 92, 246, 0.25);
+}
+
+.privacyHeader {
+  text-align: center;
+  padding: var(--space-xxl) var(--space-xxl) var(--space-lg);
+  position: relative;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(123, 58, 237, 0.1) 100%);
+  border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+
+.privacyTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  background: linear-gradient(90deg, var(--text-primary), var(--accent-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.privacySubtitle {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.lastUpdate {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.contentArea {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  background: rgba(13, 17, 23, 0.3);
+}
+
+.contentArea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contentArea::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.contentArea::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+}
+
+.contentArea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-xs);
+  border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+}
+
+.sectionSubtitle {
+  color: var(--accent-color);
+  font-weight: 600;
+  margin: var(--space-lg) 0 var(--space-md);
+  font-size: 1.1rem;
+}
+
+.sectionContent {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: var(--space-lg);
+}
+
+.sectionList {
+  margin: var(--space-md) 0;
+  padding-left: var(--space-lg);
+}
+
+.sectionList li {
+  margin-bottom: var(--space-sm);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.sectionList strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.footerText {
+  text-align: center;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(107, 114, 128, 0.2);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .privacyContainer {
+    padding: var(--space-md);
+  }
+  
+  .privacyCard {
+    margin: var(--space-sm);
+  }
+  
+  .privacyHeader {
+    padding: var(--space-xl) var(--space-lg) var(--space-md);
+  }
+  
+  .privacyTitle {
+    font-size: 2rem;
+  }
+  
+  .contentArea {
+    padding: var(--space-lg);
+  }
+  
+}
+
+@media (max-width: 480px) {
+  .privacyTitle {
+    font-size: 1.8rem;
+  }
+  
+  .privacySubtitle {
+    font-size: 1rem;
+  }
+  
+  .contentArea {
+    padding: var(--space-md);
+  }
+}

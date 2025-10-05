@@ -2,8 +2,8 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    phone?: string;
     isActive: boolean;
+    authProvider: 'local' | 'google';
     createdAt: string;
     updatedAt: string;
 }
@@ -12,7 +12,7 @@ export interface AuthUser {
     id: string;
     name: string;
     email: string;
-    phone?: string;
+    authProvider: 'local' | 'google';
 }
 
 export interface AuthResponse {
@@ -23,7 +23,6 @@ export interface AuthResponse {
 export interface RegisterData {
     name: string;
     email: string;
-    phone?: string;
     password: string;
     confirmPassword: string;
 }
@@ -36,7 +35,6 @@ export interface LoginData {
 export interface UpdateProfileData {
     name?: string;
     email?: string;
-    phone?: string;
 }
 
 export interface AuthContextType {

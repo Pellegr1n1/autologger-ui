@@ -24,6 +24,7 @@ class ApiBase {
                 const token = this.getToken();
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
+                    console.log('Authorization header set:', config.headers.Authorization);
                 }
                 return config;
             },

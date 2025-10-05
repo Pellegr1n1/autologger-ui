@@ -133,34 +133,37 @@ export default function VehicleCard({
           Visualizar
         </Button>
         
-        <Dropdown
-          menu={{ items: quickActionMenuItems }}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            icon={<MoreOutlined />}
-            style={{
-              width: '40px',
-              height: '40px',
-              border: '1px solid rgba(139, 92, 246, 0.2)',
-              borderRadius: '8px',
-              color: 'var(--text-secondary)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--primary-color)';
-              e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
-              e.currentTarget.style.color = 'var(--primary-color)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'var(--text-secondary)';
-            }}
-          />
-        </Dropdown>
+        {/* Só mostrar dropdown para veículos ativos */}
+        {vehicle.status !== 'sold' && !vehicle.soldAt && (
+          <Dropdown
+            menu={{ items: quickActionMenuItems }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<MoreOutlined />}
+              style={{
+                width: '40px',
+                height: '40px',
+                border: '1px solid rgba(139, 92, 246, 0.2)',
+                borderRadius: '8px',
+                color: 'var(--text-secondary)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary-color)';
+                e.currentTarget.style.background = 'rgba(139, 92, 246, 0.1)';
+                e.currentTarget.style.color = 'var(--primary-color)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.2)';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            />
+          </Dropdown>
+        )}
       </div>
     </Card>
   );

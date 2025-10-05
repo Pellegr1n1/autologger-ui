@@ -17,24 +17,13 @@ export default function Footer() {
                 </Title>
                 <ul className={styles.linksList}>
                   <li>
-                    <a href="#features" className={styles.link}>
-                      Recursos
-                    </a>
-                  </li>
-                  <li>
                     <a href="#about" className={styles.link}>
                       Sobre Nós
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#pricing" className={styles.link}>
-                      Preços
                     </a>
                   </li>
                 </ul>
               </div>
             </Col>
-
             <Col xs={12} sm={8} md={4} lg={4}>
               <div className={styles.linksSection}>
                 <Title level={4} className={styles.sectionTitle}>
@@ -42,23 +31,8 @@ export default function Footer() {
                 </Title>
                 <ul className={styles.linksList}>
                   <li>
-                    <a href="#privacy" className={styles.link}>
-                      Privacidade
-                    </a>
-                  </li>
-                  <li>
                     <a href="#terms" className={styles.link}>
                       Termos de Uso
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#cookies" className={styles.link}>
-                      Cookies
-                    </a>
-                  </li>
-                  <li>
-                    <a href="#security" className={styles.link}>
-                      Segurança
                     </a>
                   </li>
                 </ul>
