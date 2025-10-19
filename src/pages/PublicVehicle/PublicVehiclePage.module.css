@@ -1,0 +1,158 @@
+/* Public Vehicle page styles aligned with project spacing system */
+
+.publicContainer {
+  padding: 0;
+}
+
+.contentWrapper {
+  display: block;
+}
+
+/* Header */
+.headerCard {
+  composes: professionalCard from '../../components/layout/Components.module.css';
+  margin-bottom: 32px;
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vehicleIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%);
+  color: var(--primary-color);
+  font-size: 24px;
+}
+
+.vehicleTitle {
+  margin: 0;
+  padding: 0;
+}
+
+.vehicleInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plateTag {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.statusTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(82, 196, 26, 0.08);
+  border: 1px solid rgba(82, 196, 26, 0.25);
+  color: var(--success-color);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+/* Info Cards and sections */
+.infoCard {
+  composes: professionalCard from '../../components/layout/Components.module.css';
+  margin-bottom: 24px;
+}
+
+.statisticCard {
+  composes: professionalCard from '../../components/layout/Components.module.css';
+  margin-top: 24px;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Remove any entrance animations on cards */
+.infoCard,
+.headerCard,
+.statisticCard,
+.timelineItem,
+.errorCard {
+  animation: none !important;
+}
+
+/* Ensure AntD Card internal spacings are comfortable */
+.infoCard :global(.ant-card-head),
+.headerCard :global(.ant-card-head),
+.statisticCard :global(.ant-card-head) {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.infoCard :global(.ant-card-head-title),
+.headerCard :global(.ant-card-head-title),
+.statisticCard :global(.ant-card-head-title) {
+  padding: 0;
+  margin: 0;
+}
+
+.infoCard :global(.ant-card-body),
+.headerCard :global(.ant-card-body),
+.statisticCard :global(.ant-card-body) {
+  padding: 20px;
+}
+
+/* Timeline item card spacing */
+.timelineItem {
+  composes: professionalCard from '../../components/layout/Components.module.css';
+  margin-bottom: 12px;
+}
+
+/* Loading / Error containers spacing */
+.loadingContainer,
+.errorContainer {
+  padding: 24px 0;
+}
+
+/* Error card styling */
+.errorCard {
+  composes: professionalCard from '../../components/layout/Components.module.css';
+  margin: 0 auto;
+  max-width: 640px;
+  padding: 12px;
+}
+
+.loadingContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loadingSpinner {
+  margin-bottom: 8px;
+}
+
+.loadingText {
+  color: var(--text-secondary);
+}
+
+/* Utilities */
+:root {
+  /* rely on existing CSS variables like --primary-color, --accent-color, etc. */
+}
+
+@media (max-width: 768px) {
+  .headerCard { margin-bottom: 24px; }
+  .infoCard { margin-bottom: 16px; }
+  .statisticCard { margin-top: 16px; }
+}
