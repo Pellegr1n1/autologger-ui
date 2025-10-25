@@ -12,6 +12,7 @@ import { MaintenancePage } from "../../pages/Maintenance";
 import { BlockchainPage } from "../../pages/Blockchain";
 import TermsPage from "../../pages/Terms/TermsPage";
 import PrivacyPage from "../../pages/Privacy/PrivacyPage";
+import PublicVehiclePage from "../../pages/PublicVehicle/PublicVehiclePage";
 
 interface RouteType {
   path: string;
@@ -27,6 +28,7 @@ const routes: RouteType[] = [
   { path: "/auth/callback", component: CallbackPage },
   { path: "/terms", component: TermsPage },
   { path: "/privacy", component: PrivacyPage },
+  { path: "/vehicles/share/:shareToken", component: PublicVehiclePage },
   { path: "/profile", component: ProfilePage, isProtected: true },
   { path: "/vehicles", component: VehiclesPage, isProtected: true },
   { path: "/maintenance", component: MaintenancePage, isProtected: true },

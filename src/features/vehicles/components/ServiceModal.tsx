@@ -33,7 +33,7 @@ import {
   VehicleEvent,
   Vehicle
 } from "../types/vehicle.types";
-import { EVENT_CATEGORIES, EVENT_TYPES } from "../utils/constants";
+import { EVENT_TYPES } from "../utils/constants";
 import { VehicleServiceService, CreateVehicleServiceData } from "../services/vehicleServiceService";
 import { VehicleService } from "../services/vehicleService";
 
@@ -104,30 +104,44 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // Arquivos para upload
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [serviceData, setServiceData] = useState<CreateVehicleServiceData | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [updateVehicleMileage, setUpdateVehicleMileage] = useState(true);
-  const [availableCategories, setAvailableCategories] = useState<any[]>([...EVENT_CATEGORIES]);
+  const [availableCategories, setAvailableCategories] = useState<any[]>([]);
 
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
       form.resetFields();
       setFileList([]);
+      setUploadedFiles([]);
       setShowConfirmModal(false);
       setServiceData(null);
       setSelectedVehicle(null);
       setUpdateVehicleMileage(true);
-      setAvailableCategories([...EVENT_CATEGORIES]);
+      // Inicializar com categorias vazias - as categorias serão carregadas quando o tipo for selecionado
+      setAvailableCategories([]);
       
       // Se há um veículo específico, definir como selecionado
       if (vehicleId) {
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (vehicle) {
           setSelectedVehicle(vehicle);
-          form.setFieldsValue({ mileage: vehicle.mileage });
+          form.setFieldsValue({ 
+            mileage: vehicle.mileage,
+            selectedVehicleId: vehicle.id 
+          });
         }
+      } else if (vehicles.length === 1) {
+        // Se há apenas um veículo cadastrado, selecionar automaticamente
+        const vehicle = vehicles[0];
+        setSelectedVehicle(vehicle);
+        form.setFieldsValue({ 
+          mileage: vehicle.mileage,
+          selectedVehicleId: vehicle.id 
+        });
       } else if (currentMileage > 0) {
         form.setFieldsValue({ mileage: currentMileage });
       }
@@ -137,11 +151,20 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   // Função para lidar com mudança do tipo de serviço
   const handleServiceTypeChange = (serviceType: string) => {
     // Atualizar categorias disponíveis baseadas no tipo
-    const categories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || EVENT_CATEGORIES;
+    const categories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || [];
     setAvailableCategories(categories);
     
-    // Resetar categoria selecionada
+    // Resetar categoria selecionada para forçar o usuário a selecionar novamente
     form.setFieldsValue({ category: undefined });
+    
+    // Limpar completamente o estado do campo categoria
+    form.setFields([{
+      name: 'category',
+      value: undefined,
+      errors: [],
+      touched: false,
+      validating: false
+    }]);
   };
 
   // Validações anti-fraude
@@ -266,22 +289,45 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   };
 
   const validateCategory = (_: any, value: string) => {
+    // Verificar se a categoria foi selecionada
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Selecione uma categoria'));
     }
     
-    // Verificar se a categoria é válida para o tipo de serviço selecionado
+    // Verificar se o tipo de serviço foi selecionado primeiro
     const serviceType = form.getFieldValue('type');
-    if (serviceType) {
-      const validCategories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || [];
-      const isValidCategory = validCategories.some(cat => cat.value === value);
-      
-      if (!isValidCategory) {
-        return Promise.reject(new Error('Categoria não é válida para o tipo de serviço selecionado'));
-      }
+    if (!serviceType) {
+      return Promise.reject(new Error('Selecione primeiro o tipo de serviço'));
+    }
+    
+    // Verificar se a categoria é válida para o tipo de serviço selecionado
+    const validCategories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || [];
+    const isValidCategory = validCategories.some(cat => cat.value === value);
+    
+    if (!isValidCategory) {
+      return Promise.reject(new Error('Categoria não é válida para o tipo de serviço selecionado'));
     }
     
     return Promise.resolve();
+  };
+
+  // Função para fazer upload de arquivo
+  const handleCustomRequest = async ({ file, onSuccess, onError }: any) => {
+    try {
+      // Adicionar o arquivo à lista de arquivos para upload
+      setUploadedFiles(prev => [...prev, file as File]);
+      
+      // Marcar como sucesso
+      onSuccess("ok");
+      
+      console.log('📎 Arquivo adicionado para upload:', file.name);
+      
+      message.success(`Arquivo ${file.name} adicionado!`);
+    } catch (error) {
+      console.error('Erro ao adicionar arquivo:', error);
+      onError(error);
+      message.error(`Erro ao adicionar arquivo ${file.name}`);
+    }
   };
 
   const handleSubmit = async () => {
@@ -301,7 +347,9 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         return;
       }
 
-      // Prepare service data
+      console.log('📎 Arquivos que serão enviados:', uploadedFiles.length);
+
+      // Prepare service data (sem attachments ainda, serão adicionados após upload)
       const preparedServiceData: CreateVehicleServiceData = {
         vehicleId: finalVehicleId,
         type: values.type,
@@ -311,7 +359,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         mileage: values.mileage,
         cost: values.cost,
         location: values.location,
-        attachments: fileList.filter(f => f.status === 'done').map(f => f.name),
         technician: '',
         warranty: false,
         nextServiceDate: undefined,
@@ -341,9 +388,38 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       setSubmitting(true);
       setShowConfirmModal(false);
 
+      // Fazer upload dos arquivos se houver
+      let attachmentUrls: string[] = [];
+      if (uploadedFiles.length > 0) {
+        console.log('📤 Fazendo upload de', uploadedFiles.length, 'arquivo(s)...');
+        try {
+          attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
+          console.log('✅ Arquivos enviados com sucesso:', attachmentUrls);
+          message.success(`${uploadedFiles.length} arquivo(s) enviado(s) com sucesso!`);
+        } catch (uploadError) {
+          console.error('❌ Erro ao fazer upload dos arquivos:', uploadError);
+          message.error('Erro ao fazer upload dos arquivos. O serviço será salvo sem anexos.');
+        }
+      }
+
+      // Adicionar URLs dos anexos aos dados do serviço
+      const serviceDataWithAttachments = {
+        ...serviceData,
+        ...(attachmentUrls.length > 0 && { attachments: attachmentUrls }),
+      };
+
+      console.log('💾 Enviando dados para backend:', serviceDataWithAttachments);
+      console.log('📎 Anexos incluídos:', attachmentUrls);
+
       // Save service
-      const savedService = await VehicleServiceService.createService(serviceData);
-      message.success('Serviço cadastrado com sucesso!');
+      const savedService = await VehicleServiceService.createService(serviceDataWithAttachments);
+      console.log('✅ Serviço salvo com sucesso:', savedService);
+      console.log('📎 Anexos do serviço salvo:', savedService.attachments);
+      
+      message.success({
+        content: 'Serviço cadastrado com sucesso! Aguardando confirmação da blockchain...',
+        duration: 4,
+      });
 
       // Atualizar quilometragem do veículo se solicitado
       if (updateVehicleMileage && serviceData.vehicleId) {
@@ -353,29 +429,38 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           });
           message.success('Quilometragem do veículo atualizada automaticamente!');
         } catch (mileageError) {
-          console.warn('Erro ao atualizar quilometragem:', mileageError);
+          console.warn('⚠️ Erro ao atualizar quilometragem:', mileageError);
           message.warning('Serviço salvo, mas erro ao atualizar quilometragem do veículo');
         }
       }
 
-      // Try to send to blockchain
+      // Try to send to blockchain (não precisa mostrar mensagem, já está processando no backend)
       try {
+        console.log('🔗 Solicitando envio para blockchain...');
         await VehicleServiceService.updateBlockchainStatus(
           savedService.id,
           undefined,
           'user'
         );
-        message.success('Serviço enviado para blockchain!');
+        console.log('✅ Solicitação enviada');
       } catch (blockchainError) {
-        console.warn('Erro ao enviar para blockchain:', blockchainError);
-        message.warning('Serviço salvo, mas erro ao enviar para blockchain');
+        console.warn('⚠️ Erro ao solicitar envio para blockchain:', blockchainError);
+        message.warning({
+          content: 'Serviço salvo! A confirmação na blockchain pode levar alguns segundos. Se falhar, você poderá reenviar.',
+          duration: 5,
+        });
       }
 
       onAdd(savedService);
       onClose();
 
     } catch (error: any) {
-      console.error('Erro ao salvar serviço:', error);
+      console.error('❌ Erro ao salvar serviço:', error);
+      console.error('❌ Detalhes do erro:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       
       // Tratamento específico para diferentes tipos de erro
       if (error.code === 'ECONNABORTED') {
@@ -600,9 +685,20 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                       * Categoria
                     </span>
                   }
+                  validateTrigger="onSubmit"
                   rules={[
                     { required: true, message: 'Selecione a categoria' },
-                    { validator: validateCategory }
+                    { 
+                      validator: (_, value) => {
+                        // Não validar se não houver valor (campo vazio após troca de tipo)
+                        if (!value) {
+                          return Promise.resolve();
+                        }
+                        
+                        // Validar apenas se houver valor
+                        return validateCategory(_, value);
+                      }
+                    }
                   ]}
                 >
                   <Tooltip 
@@ -616,6 +712,10 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                       style={{ borderRadius: 'var(--radius-md)' }}
                       options={availableCategories as any}
                       disabled={!form.getFieldValue('type')}
+                      value={form.getFieldValue('category')}
+                      onChange={(value) => {
+                        form.setFieldsValue({ category: value });
+                      }}
                     />
                   </Tooltip>
                 </Form.Item>
@@ -671,11 +771,16 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                 fileList={fileList}
                 onChange={({ fileList: newFileList }) => {
                   setFileList(newFileList);
+                  // Remover arquivos da lista uploadedFiles quando removidos da UI
+                  if (newFileList.length < fileList.length) {
+                    const removedCount = fileList.length - newFileList.length;
+                    setUploadedFiles(prev => prev.slice(0, -removedCount));
+                  }
                 }}
+                customRequest={handleCustomRequest}
                 multiple
                 accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx"
                 maxCount={10}
-                beforeUpload={() => false}
                 listType="picture"
                 style={{
                   borderRadius: 'var(--radius-md)',
@@ -1135,7 +1240,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
               </div>
             </div>
             
-            {serviceData.attachments && serviceData.attachments.length > 0 && (
+            {uploadedFiles.length > 0 && (
               <div style={{ 
                 marginTop: '16px', 
                 padding: '12px', 
@@ -1147,7 +1252,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   ANEXOS
                 </Text>
                 <div style={{ color: '#F9FAFB', fontSize: '14px', marginTop: '4px' }}>
-                  {serviceData.attachments.length} arquivo(s) selecionado(s)
+                  {uploadedFiles.length} arquivo(s) selecionado(s)
                 </div>
               </div>
             )}

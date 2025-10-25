@@ -46,6 +46,32 @@ export class VehicleServiceService {
   /**
    * Buscar todos os serviços
    */
+  /**
+   * Mapear status do backend para frontend
+   */
+  private static mapBackendStatusToFrontend(backendStatus: string): 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED' | 'REVERTED' {
+    const statusMap: Record<string, 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED' | 'REVERTED'> = {
+      'pending': 'PENDING',
+      'confirmed': 'CONFIRMED',
+      'rejected': 'FAILED',
+      'expired': 'FAILED',
+    };
+    return statusMap[backendStatus?.toLowerCase()] || 'PENDING';
+  }
+
+  /**
+   * Obter mensagem do status
+   */
+  private static getStatusMessage(status: string): string {
+    const messages: Record<string, string> = {
+      'pending': 'Aguardando confirmação na blockchain',
+      'confirmed': 'Transação confirmada na blockchain',
+      'rejected': 'Falha ao registrar na blockchain',
+      'expired': 'Transação expirada',
+    };
+    return messages[status?.toLowerCase()] || 'Status desconhecido';
+  }
+
   static async getAllServices(): Promise<VehicleEvent[]> {
     const response = await apiBase.api.get<any[]>(this.BASE_PATH);
     
@@ -68,9 +94,9 @@ export class VehicleServiceService {
       createdAt: new Date(service.createdAt),
       updatedAt: new Date(service.updatedAt),
       blockchainStatus: {
-        status: service.blockchainConfirmedAt ? 'CONFIRMED' : 'PENDING',
-        message: service.blockchainConfirmedAt ? 'Transação confirmada na blockchain' : 'Aguardando confirmação',
-        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.createdAt),
+        status: this.mapBackendStatusToFrontend(service.status),
+        message: this.getStatusMessage(service.status),
+        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.updatedAt || service.createdAt),
         retryCount: 0,
         maxRetries: 3
       },
@@ -110,9 +136,9 @@ export class VehicleServiceService {
       createdAt: new Date(service.createdAt),
       updatedAt: new Date(service.updatedAt),
       blockchainStatus: {
-        status: service.blockchainConfirmedAt ? 'CONFIRMED' : 'PENDING',
-        message: service.blockchainConfirmedAt ? 'Transação confirmada na blockchain' : 'Aguardando confirmação',
-        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.createdAt),
+        status: this.mapBackendStatusToFrontend(service.status),
+        message: this.getStatusMessage(service.status),
+        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.updatedAt || service.createdAt),
         retryCount: 0,
         maxRetries: 3
       },
@@ -208,5 +234,36 @@ export class VehicleServiceService {
   static async getServicesCountByVehicle(vehicleId: string): Promise<number> {
     const response = await apiBase.api.get<{ count: number }>(`${this.BASE_PATH}/vehicle/${vehicleId}/count`);
     return response.data.count;
+  }
+
+  /**
+   * Fazer upload de anexos
+   */
+  static async uploadAttachments(files: File[]): Promise<string[]> {
+    if (!files || files.length === 0) {
+      return [];
+    }
+
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    try {
+      const response = await apiBase.api.post<{ success: boolean; urls: string[]; count: number }>(
+        `${this.BASE_PATH}/upload-attachments`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      
+      return response.data.urls;
+    } catch (error) {
+      console.error('Erro ao fazer upload de anexos:', error);
+      throw error;
+    }
   }
 }

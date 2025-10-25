@@ -16,11 +16,13 @@ import {
   CloseOutlined,
   IdcardOutlined,
   CheckCircleOutlined,
-  StopOutlined
+  StopOutlined,
+  ShareAltOutlined
 } from '@ant-design/icons';
 import { Vehicle, VehicleStatus, VehicleEventType } from '../types/vehicle.types';
 import { VehicleServiceService } from '../services/vehicleServiceService';
 import { BlockchainService } from '../../blockchain/services/blockchainService';
+import VehicleShareModal from './VehicleShareModal';
 
 const { Title, Text } = Typography;
 
@@ -37,6 +39,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
 }) => {
   const [maintenanceCount, setMaintenanceCount] = useState<number>(0);
   const [loadingCount, setLoadingCount] = useState<boolean>(false);
+  const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (visible && vehicle) {
@@ -298,32 +301,55 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           }}
         />
 
-        {/* Botão fechar */}
-        <Button
-          type="text"
-          icon={<CloseOutlined />}
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: 'var(--space-lg)',
-            right: 'var(--space-lg)',
-            color: 'var(--text-light)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-          }}
-        />
+        {/* Botões do header */}
+        <div style={{ position: 'absolute', top: 'var(--space-lg)', right: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', zIndex: 10 }}>
+          {/* Botão compartilhar */}
+          <Button
+            type="text"
+            icon={<ShareAltOutlined />}
+            onClick={() => setShareModalVisible(true)}
+            style={{
+              color: 'var(--text-light)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+            title="Compartilhar veículo"
+          />
+
+          {/* Botão fechar */}
+          <Button
+            type="text"
+            icon={<CloseOutlined />}
+            onClick={onClose}
+            style={{
+              color: 'var(--text-light)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          />
+        </div>
 
         <div style={{ textAlign: 'center' }}>
           {/* Ícone do veículo */}
@@ -577,6 +603,13 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal de Compartilhamento */}
+      <VehicleShareModal
+        visible={shareModalVisible}
+        vehicle={vehicle}
+        onClose={() => setShareModalVisible(false)}
+      />
     </Modal>
   );
 };

@@ -7,12 +7,16 @@ import {
   PlusOutlined,
   ToolOutlined,
   SearchOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  DownloadOutlined,
+  FilePdfOutlined,
+  FileImageOutlined,
+  FileOutlined
 } from '@ant-design/icons';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
-import { Vehicle, VehicleEvent, VehicleEventType } from '../../features/vehicles/types/vehicle.types';
+import { Vehicle, VehicleEvent } from '../../features/vehicles/types/vehicle.types';
 import { currencyBRL, formatBRDate, kmFormat } from '../../shared/utils/format';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
@@ -48,6 +52,33 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maintenanceEvents, setMaintenanceEvents] = useState<VehicleEvent[]>([]);
 
+  // Funções auxiliares para anexos
+  const getFileIcon = (fileUrl: string) => {
+    const extension = fileUrl.split('.').pop()?.toLowerCase() || '';
+    if (extension === 'pdf') {
+      return <FilePdfOutlined style={{ color: '#f5222d', fontSize: '18px' }} />;
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+      return <FileImageOutlined style={{ color: '#52c41a', fontSize: '18px' }} />;
+    } else {
+      return <FileOutlined style={{ color: '#1890ff', fontSize: '18px' }} />;
+    }
+  };
+
+  const getFileName = (fileUrl: string) => {
+    return fileUrl.split('/').pop() || 'Arquivo';
+  };
+
+  // Converter URL relativa para absoluta
+  const getAbsoluteUrl = (fileUrl: string) => {
+    // Se já é uma URL completa (começa com http:// ou https://), retorna como está
+    if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
+      return fileUrl;
+    }
+    // Se é relativa, adiciona o prefixo do backend (mesma URL da API)
+    const backendUrl = 'http://localhost:3001';
+    return `${backendUrl}${fileUrl}`;
+  };
+
   // Carregar dados apenas uma vez na montagem do componente
   const loadData = useCallback(async () => {
     // Prevenir múltiplas chamadas simultâneas
@@ -59,10 +90,8 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       // Carregar veículos e manutenções em paralelo para melhor performance
       const [vehiclesResponse, maintenanceResponse] = await Promise.allSettled([
         VehicleService.getUserVehicles(),
-        BlockchainService.getAllServices().catch(() => 
-          // Fallback para método antigo se blockchain falhar
-          VehicleServiceService.getAllServices()
-        )
+        // Usar VehicleServiceService diretamente para pegar TODOS os serviços, incluindo os rejeitados
+        VehicleServiceService.getAllServices()
       ]);
 
       // Processar veículos
@@ -77,44 +106,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       // Processar manutenções
       if (maintenanceResponse.status === 'fulfilled') {
         const maintenanceData = maintenanceResponse.value;
-        const allServices = maintenanceData
-          .map((event: any): MaintenanceEvent => {
-            // Mapear tipo do backend para frontend
-            const mapServiceType = (backendType: string): VehicleEventType => {
-              switch (backendType) {
-                case 'maintenance': return VehicleEventType.MAINTENANCE;
-                case 'fuel': return VehicleEventType.FUEL;
-                case 'repair': return VehicleEventType.REPAIR;
-                case 'inspection': return VehicleEventType.INSPECTION;
-                case 'expense': return VehicleEventType.EXPENSE;
-                case 'other': return VehicleEventType.OTHER;
-                default: return VehicleEventType.MAINTENANCE;
-              }
-            };
-
-            // Se é do blockchain, fazer conversão
-            if (event.serviceDate) {
-              return {
-                ...event,
-                type: mapServiceType(event.type), // Mapear tipo corretamente
-                date: new Date(event.serviceDate || event.createdAt),
-                createdAt: new Date(event.createdAt),
-                updatedAt: new Date(event.updatedAt),
-                attachments: [],
-                blockchainStatus: {
-                  status: event.status as any,
-                  lastUpdate: new Date(),
-                  retryCount: 0,
-                  maxRetries: 3
-                },
-                isImmutable: event.status === 'CONFIRMED',
-                canEdit: event.status !== 'CONFIRMED',
-                requiresConfirmation: false
-              };
-            }
-            // Se é do método antigo, já vem no formato correto
-            return event;
-          });
+        
+        // VehicleServiceService já retorna no formato correto do frontend
+        const allServices = maintenanceData;
+        
         setMaintenanceEvents(allServices);
       } else {
         console.error('Erro ao carregar manutenções:', maintenanceResponse.reason);
@@ -226,7 +221,17 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     setMaintenanceEvents(prev => [newService, ...prev]);
     message.success('Manutenção adicionada com sucesso!');
     setPageState(prev => ({ ...prev, serviceModalOpen: false }));
-  }, []);
+    
+    // Recarregar lista após 3 segundos para pegar status atualizado da blockchain
+    setTimeout(() => {
+      console.log('🔄 Recarregando lista para verificar status da blockchain...');
+      message.info({
+        content: 'Verificando confirmação da blockchain...',
+        duration: 2,
+      });
+      loadData();
+    }, 3000);
+  }, [loadData]);
 
   const handleViewDetails = useCallback((record: MaintenanceEvent) => {
     setPageState(prev => ({
@@ -240,32 +245,46 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   const handleResendToBlockchain = useCallback(async (serviceId: string) => {
     console.log('🔄 Iniciando reenvio para blockchain, serviceId:', serviceId);
     
+    message.loading('Reenviando para blockchain... Aguarde até 20s', 0);
+    
     try {
-      // Mostrar loading global
       setPageState(prev => ({ ...prev, loading: true }));
       
-      const loadingKey = 'resend-loading';
-      message.loading({ content: 'Reenviando para blockchain...', key: loadingKey, duration: 0 });
-      
-      console.log('📡 Chamando BlockchainService.resendFailedService...');
       const result = await BlockchainService.resendFailedService(serviceId);
       
       console.log('📊 Resultado do reenvio:', result);
-      message.destroy(loadingKey);
+      message.destroy();
       
       if (result.success) {
-        message.success('Manutenção reenviada para blockchain com sucesso!');
-        console.log('✅ Reenvio bem-sucedido, recarregando dados...');
-        // Recarregar dados para atualizar o status
+        message.success(`✅ Transação enviada! Hash: ${result.transactionHash?.substring(0, 10)}...`, 6);
+        setTimeout(() => {
+          message.info('ℹ️ Aguarde enquanto a transação é minerada...', 4);
+        }, 1000);
         await loadData();
       } else {
         console.error('❌ Falha no reenvio:', result.error);
-        message.error(`Falha ao reenviar: ${result.error || 'Erro desconhecido'}`);
+        console.log('🔍 Tipo de erro:', result.error);
+        
+        // Mensagem simples e direta
+        if (result.error?.includes('Timeout')) {
+          message.warning('⚠️ Rede lenta! A transação não confirmou em 20s. Tente novamente.', 10);
+        } else if (result.error?.includes('já está')) {
+          message.info('✅ Este registro já está na blockchain!', 5);
+        } else {
+          message.error(`❌ Falha: ${result.error}`, 8);
+        }
       }
     } catch (error) {
       console.error('❌ Erro ao reenviar para blockchain:', error);
-      message.destroy('resend-loading');
-      message.error(`Erro ao reenviar para blockchain: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      message.destroy();
+      
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      
+      if (errorMessage.includes('timeout')) {
+        message.warning('⏱️ Tempo esgotado (30s). Verifique sua conexão.', 6);
+      } else {
+        message.error(`❌ Erro: ${errorMessage}`, 6);
+      }
     } finally {
       setPageState(prev => ({ ...prev, loading: false }));
     }
@@ -397,17 +416,8 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       key: 'actions',
       align: 'center' as const,
       render: (record: MaintenanceEvent) => {
-        const status = record.blockchainStatus?.status || record.status || 'PENDING';
+        const status = record.blockchainStatus?.status || 'PENDING';
         const isFailed = status === 'FAILED';
-        
-        // Debug apenas para registros com status FAILED
-        if (isFailed) {
-          console.log('🔍 Registro com status FAILED:', {
-            id: record.id,
-            status: status,
-            blockchainStatus: record.blockchainStatus
-          });
-        }
         
         return (
           <Space size="small">
@@ -727,9 +737,43 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                 </Typography.Text>
               </Descriptions.Item>
             )}
-            {pageState.selectedMaintenance.notes && (
-              <Descriptions.Item label="Observações">
-                {pageState.selectedMaintenance.notes}
+            {pageState.selectedMaintenance.attachments && pageState.selectedMaintenance.attachments.length > 0 && (
+              <Descriptions.Item label="Anexos">
+                <Space direction="vertical" style={{ width: '100%' }} size="small">
+                  {pageState.selectedMaintenance.attachments.map((fileUrl, index) => (
+                    <a
+                      key={index}
+                      href={getAbsoluteUrl(fileUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: '#f0f2f5',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        border: '1px solid #d9d9d9',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#e6f7ff';
+                        e.currentTarget.style.borderColor = '#1890ff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#f0f2f5';
+                        e.currentTarget.style.borderColor = '#d9d9d9';
+                      }}
+                    >
+                      {getFileIcon(fileUrl)}
+                      <Text style={{ flex: 1, color: '#1890ff' }}>
+                        {getFileName(fileUrl)}
+                      </Text>
+                      <DownloadOutlined style={{ color: '#1890ff' }} />
+                    </a>
+                  ))}
+                </Space>
               </Descriptions.Item>
             )}
           </Descriptions>

@@ -234,6 +234,18 @@ const App: React.FC = () => {
             colorPrimary: '#8B5CF6',
             colorPrimaryHover: '#A78BFA',
           },
+          Message: {
+            contentBg: '#161B22',
+            contentPadding: '10px 16px',
+            zIndexPopup: 9999,
+          },
+          Notification: {
+            colorBgElevated: '#161B22',
+            colorText: '#F9FAFB',
+            colorTextHeading: '#F9FAFB',
+            colorIcon: '#A78BFA',
+            zIndexPopup: 9999,
+          },
         },
       }}
     >

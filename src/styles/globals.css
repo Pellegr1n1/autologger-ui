@@ -461,6 +461,47 @@ a.link-underline:hover {
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
 }
 
+/* Garantir que mensagens do Ant Design sejam visíveis */
+.ant-message {
+  z-index: 99999 !important;
+  position: fixed !important;
+  top: 24px !important;
+}
+
+.ant-message-notice {
+  pointer-events: auto !important;
+}
+
+.ant-message-notice-content {
+  background: #161B22 !important;
+  color: #F9FAFB !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid #374151 !important;
+  min-width: 300px !important;
+}
+
+.ant-message-success .anticon {
+  color: #10B981 !important;
+}
+
+.ant-message-error .anticon {
+  color: #EF4444 !important;
+}
+
+.ant-message-warning .anticon {
+  color: #F59E0B !important;
+}
+
+.ant-message-info .anticon {
+  color: #A78BFA !important;
+}
+
+.ant-message-loading .anticon {
+  color: #A78BFA !important;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 var(--space-md);
