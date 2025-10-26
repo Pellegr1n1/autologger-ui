@@ -1,5 +1,6 @@
 import { Row, Col, Typography, Button } from "antd"
 import { GithubOutlined, LinkedinOutlined } from "@ant-design/icons"
+import { Link } from "react-router-dom"
 import styles from "./Footer.module.css"
 
 const { Title, Text } = Typography
@@ -31,9 +32,14 @@ export default function Footer() {
                 </Title>
                 <ul className={styles.linksList}>
                   <li>
-                    <a href="#terms" className={styles.link}>
+                    <Link to="/terms" target="_blank" rel="noopener noreferrer" className={styles.link}>
                       Termos de Uso
-                    </a>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/privacy" target="_blank" rel="noopener noreferrer" className={styles.link}>
+                      Política de Privacidade
+                    </Link>
                   </li>
                 </ul>
               </div>

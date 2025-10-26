@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>12/12</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -208,9 +208,9 @@
 <a name='L143'></a><a href='#L143'>143</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -237,9 +237,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,7 +254,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -293,9 +293,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -310,7 +310,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -350,9 +350,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { PieConfig, ColumnConfig } from '@ant-design/charts'
 import type { VehicleStats } from './vehicleStats'
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >getCategoryChartConfig = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>s</span>tats: VehicleStats): PieConfig =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return {</span>
-    data: Object.entries(stats.eventsByCategory).map(<span class="fstat-no" title="function not covered" >([</span>category, count]) =&gt; (<span class="cstat-no" title="statement not covered" >{</span>
+export const getCategoryChartConfig = (stats: VehicleStats): PieConfig =&gt; {
+  return {
+    data: Object.entries(stats.eventsByCategory).map(([category, count]) =&gt; ({
       type: category,
       value: count
     })),
@@ -379,9 +379,9 @@ export const <span class="cstat-no" title="statement not covered" >getCategoryCh
   }
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >getMonthlyChartConfig = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>s</span>tats: VehicleStats): ColumnConfig =&gt; {</span>
+export const getMonthlyChartConfig = (stats: VehicleStats): ColumnConfig =&gt; {
   // Como não temos mais byMonth, vamos criar dados de exemplo ou usar eventos por data
-  const monthlyData = <span class="cstat-no" title="statement not covered" >[</span>
+  const monthlyData = [
     { month: 'Jan', value: 0 },
     { month: 'Fev', value: 0 },
     { month: 'Mar', value: 0 },
@@ -396,7 +396,7 @@ export const <span class="cstat-no" title="statement not covered" >getMonthlyCha
     { month: 'Dez', value: 0 },
   ]
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return {</span>
+  return {
     data: monthlyData,
     xField: 'month',
     yField: 'value',
@@ -435,9 +435,9 @@ export const <span class="cstat-no" title="statement not covered" >getMonthlyCha
   }
 }
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >getMileageChartConfig = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>s</span>tats: VehicleStats): ColumnConfig =&gt; {</span>
+export const getMileageChartConfig = (stats: VehicleStats): ColumnConfig =&gt; {
   // Como não temos mais kmByMonth, vamos criar dados de exemplo
-  const mileageData = <span class="cstat-no" title="statement not covered" >[</span>
+  const mileageData = [
     { month: 'Jan', km: 0 },
     { month: 'Fev', km: 0 },
     { month: 'Mar', km: 0 },
@@ -452,7 +452,7 @@ export const <span class="cstat-no" title="statement not covered" >getMileageCha
     { month: 'Dez', km: 0 },
   ]
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return {</span>
+  return {
     data: mileageData,
     xField: 'month',
     yField: 'km',
@@ -496,7 +496,7 @@ export const <span class="cstat-no" title="statement not covered" >getMileageCha
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-21T21:28:15.462Z
+                at 2025-10-26T21:46:03.951Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

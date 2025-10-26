@@ -25,21 +25,21 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/175</span>
+                <span class='fraction'>0/171</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/163</span>
+                <span class='fraction'>0/139</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/38</span>
+                <span class='fraction'>0/35</span>
             </div>
         
             
@@ -1961,7 +1961,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
     }
   }, [form, isEditing, photoFile]);
 &nbsp;
-  const loadBrands = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async () =</span>&gt;<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" > {</span></span></span>
+  const loadBrands = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setLoadingBrands(true);</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const isAvailable = <span class="cstat-no" title="statement not covered" >await FipeService.checkApiAvailability();</span>
@@ -1979,7 +1979,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
     }
   };
 &nbsp;
-  const loadModels = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (b</span>randCode: string) =&gt;<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" > {</span></span></span>
+  const loadModels = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(brandCode: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setLoadingModels(true);</span>
 <span class="cstat-no" title="statement not covered" >    setFipeModels([]);</span>
 <span class="cstat-no" title="statement not covered" >    setFipeYears([]);</span>
@@ -1995,7 +1995,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
     }
   };
 &nbsp;
-  const loadYears = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async (b</span>randCode: string, modelCode: number) =&gt;<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" > {</span></span></span>
+  const loadYears = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >async </span>(brandCode: string, modelCode: number) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    setLoadingYears(true);</span>
 <span class="cstat-no" title="statement not covered" >    setFipeYears([]);</span>
 <span class="cstat-no" title="statement not covered" >    form.setFieldsValue({ year: undefined });</span>
@@ -2074,7 +2074,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
 &nbsp;
   const handleSubmit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    form.validateFields().then(<span class="fstat-no" title="function not covered" >values </span>=&gt; {</span>
-      let formattedValues<span class="cstat-no" title="statement not covered" > = {</span>
+      let formattedValues = <span class="cstat-no" title="statement not covered" >{</span>
         ...values,
         year: parseInt(values.year),
         mileage: values.mileage || 0,
@@ -2085,7 +2085,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
       };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (isEditing) {</span>
-        const { plate, renavam, ...editableFields<span class="cstat-no" title="statement not covered" > } = <span class="cstat-no" title="statement not covered" >f</span>ormattedValues;</span>
+        const { plate, renavam, ...editableFields } = <span class="cstat-no" title="statement not covered" >formattedValues;</span>
 <span class="cstat-no" title="statement not covered" >        formattedValues = editableFields;</span>
       } else {
 <span class="cstat-no" title="statement not covered" >        formattedValues.plate = values.plate ? values.plate.toUpperCase().replace('-', '') : '';</span>
@@ -2719,7 +2719,7 @@ const VehicleForm: React.FC&lt;VehicleFormProps&gt; = <span class="cstat-no" tit
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-21T21:28:15.462Z
+                at 2025-10-26T21:46:03.951Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

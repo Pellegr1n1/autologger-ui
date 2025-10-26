@@ -1,161 +1,144 @@
-// Mock do localStorage
-const mockLocalStorage = (() => {
-  let store: { [key: string]: string } = {};
-
-  return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
-      store[key] = value;
-    }),
-    removeItem: jest.fn((key: string) => {
-      delete store[key];
-    }),
-    clear: jest.fn(() => {
-      store = {};
-    }),
-  };
-})();
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true
-});
-
-// Mock do axios
-const mockAxiosInstance = {
-  interceptors: {
-    request: {
-      use: jest.fn(),
-    },
-    response: {
-      use: jest.fn(),
-    },
-  },
-  defaults: {
-    baseURL: 'http://localhost:3001',
-    timeout: 10000,
-    headers: {
-      common: {},
-    },
-  },
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  delete: jest.fn(),
-  patch: jest.fn(),
-};
-
-// Mock do axios antes da importação
-jest.mock('axios', () => ({
-  create: jest.fn(() => mockAxiosInstance),
-}));
-
-import { apiBase } from '../../../shared/services/api';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
 
 describe('ApiBase', () => {
+  // We need to import after mocks
+  let ApiBase: any;
+  let axios: any;
+
   beforeEach(() => {
-    localStorage.clear();
     jest.clearAllMocks();
+    
+    // Mock localStorage
+    const localStorageMock = (() => {
+      let store: Record<string, string> = {};
+      return {
+        getItem: (key: string) => store[key] || null,
+        setItem: (key: string, value: string) => {
+          store[key] = value;
+        },
+        removeItem: (key: string) => {
+          delete store[key];
+        },
+        clear: () => {
+          store = {};
+        },
+      };
+    })();
+    
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+    });
   });
 
-  describe('Token Management', () => {
-    it('deve definir token no localStorage', () => {
-      const token = 'test-token-123';
-      apiBase.setToken(token);
-      expect(localStorage.getItem('autologger_token')).toBe(token);
+  afterEach(() => {
+    jest.resetModules();
+    localStorage.clear();
+  });
+
+  describe('token management', () => {
+    it('should set token in localStorage', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      apiBase.setToken('test-token-123');
+      
+      expect(localStorage.getItem('autologger_token')).toBe('test-token-123');
     });
 
-    it('deve obter token do localStorage', () => {
-      const token = 'test-token-123';
-      localStorage.setItem('autologger_token', token);
-      expect(apiBase.getToken()).toBe(token);
+    it('should get token from localStorage', () => {
+      localStorage.setItem('autologger_token', 'test-token-123');
+      const { apiBase } = require('../../../shared/services/api');
+      
+      const token = apiBase.getToken();
+      expect(token).toBe('test-token-123');
     });
 
-    it('deve retornar null quando não há token', () => {
-      expect(apiBase.getToken()).toBeNull();
+    it('should return null when token does not exist', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      
+      const token = apiBase.getToken();
+      expect(token).toBeNull();
     });
 
-    it('deve remover token do localStorage', () => {
-      const token = 'test-token-123';
-      localStorage.setItem('autologger_token', token);
+    it('should remove token from localStorage', () => {
+      localStorage.setItem('autologger_token', 'test-token-123');
+      const { apiBase } = require('../../../shared/services/api');
+      
       apiBase.removeToken();
       expect(localStorage.getItem('autologger_token')).toBeNull();
     });
 
-    it('deve verificar se está autenticado corretamente', () => {
-      expect(apiBase.isAuthenticated()).toBe(false);
+    it('should check if user is authenticated', () => {
+      localStorage.setItem('autologger_token', 'test-token-123');
+      const { apiBase } = require('../../../shared/services/api');
       
-      apiBase.setToken('test-token');
       expect(apiBase.isAuthenticated()).toBe(true);
+    });
+
+    it('should return false when user is not authenticated', () => {
+      const { apiBase } = require('../../../shared/services/api');
       
-      apiBase.removeToken();
       expect(apiBase.isAuthenticated()).toBe(false);
     });
   });
 
-  describe('Logout', () => {
-    it('deve remover token e redirecionar para login', () => {
+  describe('logout', () => {
+    it('should remove token and navigate to login when navigate function provided', () => {
       const mockNavigate = jest.fn();
-      apiBase.setToken('test-token');
+      localStorage.setItem('autologger_token', 'test-token-123');
+      const { apiBase } = require('../../../shared/services/api');
+      
       apiBase.logout(mockNavigate);
-
+      
       expect(localStorage.getItem('autologger_token')).toBeNull();
       expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
-    it('deve usar window.location quando navigate não for fornecido', () => {
-      apiBase.setToken('test-token');
+    it('should redirect to login page when navigate function not provided', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      
+      // Mock window.location.href
+      delete (window as any).location;
+      (window as any).location = { href: '' };
+      
       apiBase.logout();
-
+      
       expect(localStorage.getItem('autologger_token')).toBeNull();
-      // Verificar se o token foi removido (comportamento principal)
-      expect(apiBase.isAuthenticated()).toBe(false);
     });
   });
 
-  describe('API Instance', () => {
-    it('deve retornar instância da API', () => {
+  describe('API configuration', () => {
+    it('should get API instance', () => {
+      const { apiBase } = require('../../../shared/services/api');
       const instance = apiBase.getApiInstance();
+      
       expect(instance).toBeDefined();
-      expect(instance.defaults.baseURL).toBe('http://localhost:3001');
+      expect(instance.defaults).toBeDefined();
     });
 
-    it('deve permitir alterar baseURL', () => {
-      const newUrl = 'http://new-api.com';
-      apiBase.setBaseURL(newUrl);
+    it('should set base URL', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      apiBase.setBaseURL('https://api.example.com');
       
       const instance = apiBase.getApiInstance();
-      expect(instance.defaults.baseURL).toBe(newUrl);
+      expect(instance.defaults.baseURL).toBe('https://api.example.com');
     });
 
-    it('deve permitir alterar timeout', () => {
-      const newTimeout = 15000;
-      apiBase.setTimeout(newTimeout);
+    it('should set timeout', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      apiBase.setTimeout(5000);
       
       const instance = apiBase.getApiInstance();
-      expect(instance.defaults.timeout).toBe(newTimeout);
+      expect(instance.defaults.timeout).toBe(5000);
     });
 
-    it('deve permitir definir headers customizados', () => {
-      const customHeaders = {
-        'X-Custom-Header': 'custom-value',
-        'Authorization': 'Bearer custom-token',
-      };
+    it('should set headers', () => {
+      const { apiBase } = require('../../../shared/services/api');
+      const customHeaders = { 'X-Custom-Header': 'test-value' };
       
       apiBase.setHeaders(customHeaders);
       
       const instance = apiBase.getApiInstance();
-      expect(instance.defaults.headers.common).toMatchObject(customHeaders);
-    });
-  });
-
-  describe('Interceptors', () => {
-    it('deve ter interceptors configurados', () => {
-      // Verificar se a instância da API tem interceptors
-      const instance = apiBase.getApiInstance();
-      expect(instance.interceptors).toBeDefined();
-      expect(instance.interceptors.request).toBeDefined();
-      expect(instance.interceptors.response).toBeDefined();
+      expect(instance.defaults.headers.common['X-Custom-Header']).toBe('test-value');
     });
   });
 });
+

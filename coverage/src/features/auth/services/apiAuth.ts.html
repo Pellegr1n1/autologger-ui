@@ -149,7 +149,7 @@
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
 <a name='L86'></a><a href='#L86'>86</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -219,7 +219,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -233,7 +233,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span></td><td class="text"><pre class="prettyprint lang-js">import { AxiosResponse } from 'axios';
+<span class="cline-any cline-yes">2x</span></td><td class="text"><pre class="prettyprint lang-js">import { AxiosResponse } from 'axios';
 import { apiBase } from '../../../shared/services/api';
 import { AuthResponse, LoginData, RegisterData, UpdateProfileData, User } from "../../../shared/types/user.types";
 &nbsp;
@@ -272,13 +272,13 @@ class AuthService {
         return response.data;
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >deleteAccount(</span>): Promise&lt;{ message: string }&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>deleteAccount(): Promise&lt;{ message: string }&gt; {
         const response = <span class="cstat-no" title="statement not covered" >await apiBase.api.delete('/users/account');</span>
 <span class="cstat-no" title="statement not covered" >        apiBase.removeToken();</span>
 <span class="cstat-no" title="statement not covered" >        return response.data;</span>
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >validateToken(</span>): Promise&lt;boolean&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>validateToken(): Promise&lt;boolean&gt; {
 <span class="cstat-no" title="statement not covered" >        try {</span>
 <span class="cstat-no" title="statement not covered" >            await apiBase.api.get('/auth/validate');</span>
 <span class="cstat-no" title="statement not covered" >            return true;</span>
@@ -288,17 +288,17 @@ class AuthService {
         }
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >forgotPassword(</span>email: string): Promise&lt;{ message: string }&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>forgotPassword(email: string): Promise&lt;{ message: string }&gt; {
         const response = <span class="cstat-no" title="statement not covered" >await apiBase.api.post('/auth/forgot-password', { email });</span>
 <span class="cstat-no" title="statement not covered" >        return response.data;</span>
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >resetPassword(</span>data: { token: string; newPassword: string; confirmPassword: string }): Promise&lt;{ message: string }&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>resetPassword(data: { token: string; newPassword: string; confirmPassword: string }): Promise&lt;{ message: string }&gt; {
         const response = <span class="cstat-no" title="statement not covered" >await apiBase.api.post('/auth/reset-password', data);</span>
 <span class="cstat-no" title="statement not covered" >        return response.data;</span>
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >changePassword(</span>data: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise&lt;{ message: string }&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>changePassword(data: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise&lt;{ message: string }&gt; {
         const response = <span class="cstat-no" title="statement not covered" >await apiBase.api.put('/auth/change-password', data);</span>
 <span class="cstat-no" title="statement not covered" >        return response.data;</span>
     }
@@ -311,7 +311,7 @@ class AuthService {
 <span class="cstat-no" title="statement not covered" >        return apiBase.getToken();</span>
     }
 &nbsp;
-    async <span class="fstat-no" title="function not covered" >refreshToken(</span>): Promise&lt;AuthResponse&gt; {
+<span class="fstat-no" title="function not covered" >    async </span>refreshToken(): Promise&lt;AuthResponse&gt; {
         const response: AxiosResponse&lt;AuthResponse&gt; = <span class="cstat-no" title="statement not covered" >await apiBase.api.post('/auth/refresh');</span>
 <span class="cstat-no" title="statement not covered" >        apiBase.setToken(response.data.access_token);</span>
 <span class="cstat-no" title="statement not covered" >        return response.data;</span>
@@ -325,7 +325,7 @@ export const authService = new AuthService();</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-21T21:28:15.635Z
+                at 2025-10-26T21:46:04.059Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

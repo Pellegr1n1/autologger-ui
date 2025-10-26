@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -312,15 +312,27 @@
 <a name='L247'></a><a href='#L247'>247</a>
 <a name='L248'></a><a href='#L248'>248</a>
 <a name='L249'></a><a href='#L249'>249</a>
-<a name='L250'></a><a href='#L250'>250</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -560,16 +572,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react";
-<span class="cstat-no" title="statement not covered" >import { BrowserRouter } from "react-router-dom";</span>
-<span class="cstat-no" title="statement not covered" >import { ConfigProvider } from "antd";</span>
-<span class="cstat-no" title="statement not covered" >import { AuthProvider } from "./features/auth";</span>
-<span class="cstat-no" title="statement not covered" >import Router from "./app/router/Router";</span>
-<span class="cstat-no" title="statement not covered" >import "./styles/globals.css";</span>
+import { BrowserRouter } from "react-router-dom";
+import { ConfigProvider } from "antd";
+import { AuthProvider } from "./features/auth";
+import Router from "./app/router/Router";
+import "./styles/globals.css";
 &nbsp;
-const App: React.FC = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return (</span>
+const App: React.FC = () =&gt; {
+  return (
     &lt;ConfigProvider
       theme={{
         token: {
@@ -797,6 +821,18 @@ const App: React.FC = <span class="cstat-no" title="statement not covered" ><spa
             colorPrimary: '#8B5CF6',
             colorPrimaryHover: '#A78BFA',
           },
+          Message: {
+            contentBg: '#161B22',
+            contentPadding: '10px 16px',
+            zIndexPopup: 9999,
+          },
+          Notification: {
+            colorBgElevated: '#161B22',
+            colorText: '#F9FAFB',
+            colorTextHeading: '#F9FAFB',
+            colorIcon: '#A78BFA',
+            zIndexPopup: 9999,
+          },
         },
       }}
     &gt;
@@ -809,7 +845,7 @@ const App: React.FC = <span class="cstat-no" title="statement not covered" ><spa
   );
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default App;</span>
+export default App;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -817,7 +853,7 @@ const App: React.FC = <span class="cstat-no" title="statement not covered" ><spa
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-21T21:28:15.462Z
+                at 2025-10-26T21:46:03.951Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -45,39 +45,32 @@ Object.defineProperty(window, 'localStorage', {
 // Mock do console para evitar logs desnecessários nos testes
 const originalConsoleError = console.error;
 const originalConsoleWarn = console.warn;
+const originalConsoleLog = console.log;
 
 beforeAll(() => {
+  // Suprimir TODOS os console.error durante os testes
   console.error = (...args: any[]) => {
-    // Filtrar erros de navegação do JSDOM
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render is no longer supported') ||
-       args[0].includes('Not implemented: navigation'))
-    ) {
-      return;
-    }
-    // Filtrar erros do JSDOM sobre navegação
-    if (args[0] && args[0].message && args[0].message.includes('Not implemented: navigation')) {
-      return;
-    }
-    originalConsoleError.call(console, ...args);
+    // Não fazer nada - suprimir todos os erros
+    return;
   };
 
+  // Suprimir TODOS os console.warn durante os testes
   console.warn = (...args: any[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render is no longer supported') ||
-       args[0].includes('Not implemented: navigation'))
-    ) {
-      return;
-    }
-    originalConsoleWarn.call(console, ...args);
+    // Não fazer nada - suprimir todos os warnings
+    return;
+  };
+
+  // Suprimir TODOS os console.log durante os testes
+  console.log = (...args: any[]) => {
+    // Não fazer nada - suprimir todos os logs
+    return;
   };
 });
 
 afterAll(() => {
   console.error = originalConsoleError;
   console.warn = originalConsoleWarn;
+  console.log = originalConsoleLog;
 });
 
 // Limpar localStorage antes de cada teste

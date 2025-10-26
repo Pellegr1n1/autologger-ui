@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>10/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -251,18 +251,18 @@
 <a name='L186'></a><a href='#L186'>186</a>
 <a name='L187'></a><a href='#L187'>187</a>
 <a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L189'></a><a href='#L189'>189</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -439,18 +439,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export enum V</span>ehicleStatus {</span>
-<span class="cstat-no" title="statement not covered" >  ACTIVE = "active",</span>
-<span class="cstat-no" title="statement not covered" >  SOLD = "sold",</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export enum VehicleStatus {
+  ACTIVE = "active",
+  SOLD = "sold",
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export enum V</span>ehicleEventType {</span>
-<span class="cstat-no" title="statement not covered" >  MAINTENANCE = "maintenance",</span>
-<span class="cstat-no" title="statement not covered" >  EXPENSE = "expense",</span>
-<span class="cstat-no" title="statement not covered" >  FUEL = "fuel",</span>
-<span class="cstat-no" title="statement not covered" >  REPAIR = "repair",</span>
-<span class="cstat-no" title="statement not covered" >  INSPECTION = "inspection",</span>
-<span class="cstat-no" title="statement not covered" >  OTHER = "other",</span>
+export enum VehicleEventType {
+  MAINTENANCE = "maintenance",
+  EXPENSE = "expense",
+  FUEL = "fuel",
+  REPAIR = "repair",
+  INSPECTION = "inspection",
+  OTHER = "other",
 }
 &nbsp;
 // Importar ChainStatus do blockchain.types.ts
@@ -634,7 +634,7 @@ export interface ServiceFormProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-21T21:28:15.635Z
+                at 2025-10-26T21:46:04.059Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
