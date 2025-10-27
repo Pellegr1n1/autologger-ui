@@ -36,11 +36,11 @@ class ApiBase {
         this.api.interceptors.response.use(
             (response) => response,
             (error) => {
+                // Não redireciona automaticamente em caso de erro 401
+                // Deixa o erro ser tratado pela página que fez a requisição
                 if (error.response?.status === 401) {
+                    // Apenas remove o token, mas não redireciona
                     this.removeToken();
-                    if (typeof window !== 'undefined') {
-                        window.location.href = '/login';
-                    }
                 }
                 return Promise.reject(error);
             }

@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return {
       ...authUser,
       isActive: true,
+      isEmailVerified: false, // Default value, will be updated by backend
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -101,6 +102,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      if (authService.isAuthenticated()) {
+        const userData = await authService.getProfile();
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar dados do usuário:', error);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await authService.deleteAccount();
+      setUser(null);
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -108,6 +131,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    refreshUser,
+    deleteAccount,
     isAuthenticated: !!user,
   };
 

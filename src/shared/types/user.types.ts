@@ -3,6 +3,7 @@ export interface User {
     name: string;
     email: string;
     isActive: boolean;
+    isEmailVerified: boolean;
     authProvider: 'local' | 'google';
     createdAt: string;
     updatedAt: string;
@@ -13,6 +14,7 @@ export interface AuthUser {
     name: string;
     email: string;
     authProvider: 'local' | 'google';
+    isEmailVerified?: boolean;
 }
 
 export interface AuthResponse {
@@ -44,5 +46,7 @@ export interface AuthContextType {
     register: (data: RegisterData) => Promise<void>;
     logout: () => void;
     updateProfile: (data: Partial<User>) => Promise<void>;
+    refreshUser: () => Promise<void>;
+    deleteAccount: () => Promise<void>;
     isAuthenticated: boolean;
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
-import { LoginPage, RegisterPage } from "../../pages/Auth";
+import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage, EmailVerificationPendingPage } from "../../pages/Auth";
 import CallbackPage from "../../pages/Auth/CallbackPage";
 import { HomePage } from "../../pages/Home";
 import { NotFoundPage } from "../../pages/NotFound";
@@ -25,6 +25,10 @@ const routes: RouteType[] = [
   { path: "/", component: HomePage },
   { path: "/register", component: RegisterPage },
   { path: "/login", component: LoginPage },
+  { path: "/forgot-password", component: ForgotPasswordPage },
+  { path: "/reset-password/:token", component: ResetPasswordPage },
+  { path: "/verify-email/:token", component: VerifyEmailPage },
+  { path: "/email-verification-pending", component: EmailVerificationPendingPage },
   { path: "/auth/callback", component: CallbackPage },
   { path: "/terms", component: TermsPage },
   { path: "/privacy", component: PrivacyPage },

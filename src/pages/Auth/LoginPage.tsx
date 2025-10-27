@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Form, Input, Button, Card, Typography, Checkbox, Alert, Divider } from "antd"
+import { Form, Input, Button, Card, Typography, Checkbox, Divider, notification } from "antd"
 import { UserOutlined, LockOutlined } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
@@ -9,13 +9,12 @@ import styles from "./Auth.module.css"
 const { Title, Text } = Typography
 
 export default function LoginPage() {
+  const [api, contextHolder] = notification.useNotification()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const { login } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Listener para mensagens do popup OAuth2
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       
@@ -37,7 +36,6 @@ export default function LoginPage() {
 
   const onFinish = async (values: any) => {
     setLoading(true)
-    setError("")
 
     try {
       await login({
@@ -47,13 +45,16 @@ export default function LoginPage() {
 
       navigate("/vehicles")
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError("Email ou senha incorretos. Verifique seus dados.")
-      } else if (err.response?.status === 404) {
-        setError("Usuário não encontrado. Verifique o email.")
-      } else {
-        setError("Erro ao fazer login. Tente novamente.")
-      }
+      console.error("Erro no login:", err)
+      
+      setTimeout(() => {
+        api.error({
+          message: 'Erro ao fazer login',
+          description: 'Credenciais inválidas ou conta não encontrada. Verifique seus dados e tente novamente.',
+          placement: 'bottomRight',
+          duration: 5,
+        })
+      }, 100)
     } finally {
       setLoading(false)
     }
@@ -61,17 +62,13 @@ export default function LoginPage() {
 
   const handleGoogleSuccess = async (response: any) => {
     setLoading(true)
-    setError("")
 
     try {
       console.log('Google OAuth2 success, response:', response)
       
-      // O fluxo OAuth2 já foi processado na página de callback
-      // Aqui apenas fazemos o login com os dados recebidos
       if (response.user && response.token) {
         localStorage.setItem('autologger_token', response.token)
         
-        // Importar apiBase para definir o token
         const { apiBase } = await import('../../shared/services/api')
         apiBase.setToken(response.token)
         
@@ -83,7 +80,13 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error('Google login error:', err)
       const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
-      setError(errorMessage)
+      
+      api.error({
+        message: 'Erro no login',
+        description: errorMessage,
+        placement: 'bottomRight',
+        duration: 5,
+      })
     } finally {
       setLoading(false)
     }
@@ -92,13 +95,21 @@ export default function LoginPage() {
   const handleGoogleError = (error: any) => {
     console.error('Google login error:', error)
     const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
-    setError(errorMessage)
+    
+    api.error({
+      message: 'Erro no login',
+      description: errorMessage,
+      placement: 'bottomRight',
+      duration: 5,
+    })
   }
 
   return (
-    <div className={styles.authContainer}>
+    <>
+      {contextHolder}
+      <div className={styles.authContainer}>
       <div className={styles.authContent}>
-        <Card className={styles.authCard}>
+        <Card className={styles.authCard} style={{ width: '480px' }}>
           <div className={styles.authHeader}>
             <Title level={2} className={styles.authTitle}>
               Bem-vindo de volta
@@ -106,9 +117,13 @@ export default function LoginPage() {
             <Text className={styles.authSubtitle}>Acesse sua conta AutoLogger</Text>
           </div>
 
-          {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 24 }} />}
-
-          <Form name="login" onFinish={onFinish} layout="vertical" size="large">
+          <Form 
+            name="login" 
+            onFinish={onFinish} 
+            onFinishFailed={() => {}}
+            layout="vertical" 
+            size="large"
+          >
             <Form.Item
               name="email"
               label="Email"
@@ -165,5 +180,6 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+    </>
   )
 }

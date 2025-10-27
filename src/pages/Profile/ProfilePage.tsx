@@ -20,9 +20,12 @@ import {
   MailOutlined, 
   SaveOutlined, 
   EditOutlined,
-  LockOutlined
+  LockOutlined,
+  DeleteOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../features/auth';
+import { useNavigate } from 'react-router-dom';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './ProfilePage.module.css';
@@ -36,7 +39,8 @@ interface ProfileFormData {
 
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, deleteAccount } = useAuth();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -44,6 +48,8 @@ export default function ProfilePage() {
   const [hasChanges, setHasChanges] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -109,6 +115,25 @@ export default function ProfilePage() {
   const handlePasswordModalCancel = () => {
     setPasswordModalVisible(false);
     passwordForm.resetFields();
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      setDeleteLoading(true);
+      await deleteAccount();
+      message.success('Conta excluída com sucesso');
+      setDeleteModalVisible(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Erro ao deletar conta:', error);
+      message.error('Erro ao excluir conta. Tente novamente.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDeleteModalCancel = () => {
+    setDeleteModalVisible(false);
   };
 
   if (!user) {
@@ -375,6 +400,33 @@ export default function ProfilePage() {
                   </div>
                 </Space>
               </Card>
+
+              {/* Área Perigosa */}
+              <Card 
+                title="Área Perigosa"
+                className={componentStyles.professionalCard}
+                style={{ borderColor: '#ff4d4f' }}
+              >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                    <Text style={{ color: 'var(--text-secondary)', fontSize: '13px', display: 'block', marginBottom: '16px' }}>
+                      Ao excluir sua conta, todos os seus dados serão removidos permanentemente. Esta ação não pode ser desfeita.
+                    </Text>
+                  </div>
+                  <Button 
+                    danger 
+                    block 
+                    icon={<DeleteOutlined />}
+                    onClick={() => setDeleteModalVisible(true)}
+                    style={{
+                      height: '40px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Excluir Conta
+                  </Button>
+                </Space>
+              </Card>
             </Space>
           </Col>
         </Row>
@@ -476,6 +528,61 @@ export default function ProfilePage() {
               </Space>
             </Form.Item>
           </Form>
+        </Modal>
+
+        {/* Modal de Confirmação de Exclusão de Conta */}
+        <Modal
+          title={
+            <Space>
+              <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />
+              <span>Confirmar Exclusão de Conta</span>
+            </Space>
+          }
+          open={deleteModalVisible}
+          onCancel={handleDeleteModalCancel}
+          footer={[
+            <Button key="cancel" onClick={handleDeleteModalCancel}>
+              Cancelar
+            </Button>,
+            <Button 
+              key="delete" 
+              danger 
+              type="primary"
+              loading={deleteLoading}
+              icon={<DeleteOutlined />}
+              onClick={handleDeleteAccount}
+            >
+              Sim, Excluir Conta
+            </Button>
+          ]}
+          width={500}
+          centered
+          style={{ top: 20 }}
+        >
+          <Alert
+            message="Esta ação é irreversível"
+            description={
+              <div>
+                <Text style={{ display: 'block', marginBottom: '12px' }}>
+                  Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos, incluindo:
+                </Text>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li><Text>Seu perfil e informações pessoais</Text></li>
+                  <li><Text>Todo o histórico</Text></li>
+                  <li><Text>Dados associados à sua conta</Text></li>
+                </ul>
+                <Alert
+                  type="warning"
+                  message="Importante"
+                  description="Esta ação não pode ser desfeita!"
+                  showIcon
+                  style={{ marginTop: '12px' }}
+                />
+              </div>
+            }
+            type="error"
+            showIcon
+          />
         </Modal>
       </div>
     </DefaultFrame>
