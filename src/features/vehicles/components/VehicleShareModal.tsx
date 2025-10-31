@@ -8,6 +8,7 @@ import {
   message,
   Spin,
   Card,
+  Checkbox,
 } from 'antd';
 import {
   ShareAltOutlined,
@@ -16,6 +17,7 @@ import {
   DownloadOutlined,
   CloseOutlined,
   CheckCircleOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
 import QRCode from 'qrcode';
 import { VehicleShareService, VehicleShareResponse } from '../services/vehicleShareService';
@@ -39,10 +41,15 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
   const [shareData, setShareData] = useState<VehicleShareResponse | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [includeAttachments, setIncludeAttachments] = useState(false);
 
   useEffect(() => {
-    if (visible && vehicle && !shareData) {
-      generateShareLink();
+    if (visible && vehicle) {
+      // Reset quando o modal abre
+      setIncludeAttachments(false);
+      setShareData(null);
+      setQrCodeDataUrl('');
+      setCopied(false);
     }
   }, [visible, vehicle]);
 
@@ -51,10 +58,9 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
 
     setLoading(true);
     try {
-      const response = await VehicleShareService.generateShareLink(vehicle.id, 30);
+      const response = await VehicleShareService.generateShareLink(vehicle.id, 30, includeAttachments);
       setShareData(response);
       
-      // Gerar QR Code
       const qrCodeUrl = await QRCode.toDataURL(response.shareUrl, {
         width: 256,
         margin: 2,
@@ -124,7 +130,6 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
         }
       }}
     >
-      {/* Header */}
       <div
         style={{
           background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
@@ -134,7 +139,6 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
           overflow: 'hidden'
         }}
       >
-        {/* Decorações de fundo */}
         <div
           style={{
             position: 'absolute',
@@ -148,7 +152,6 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
           }}
         />
 
-        {/* Botão fechar */}
         <Button
           type="text"
           icon={<CloseOutlined />}
@@ -210,7 +213,6 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
         </div>
       </div>
 
-      {/* Conteúdo */}
       <div style={{ padding: 'var(--space-xxl)' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-xxl)' }}>
@@ -219,9 +221,57 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
               <Text>Gerando link de compartilhamento...</Text>
             </div>
           </div>
+        ) : !shareData ? (
+          <div>
+            <Card
+              style={{
+                marginBottom: 'var(--space-lg)',
+                border: '1px solid var(--gray-2)',
+              }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                <div>
+                  <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: 'var(--space-md)' }}>
+                    Configurações de Compartilhamento
+                  </Text>
+                  <Checkbox
+                    checked={includeAttachments}
+                    onChange={(e) => setIncludeAttachments(e.target.checked)}
+                    style={{ fontSize: '14px' }}
+                  >
+                    <Space>
+                      <PaperClipOutlined style={{ color: 'var(--primary-color)' }} />
+                      <span>Incluir anexos nos dados compartilhados</span>
+                    </Space>
+                  </Checkbox>
+                  <div style={{ marginTop: 'var(--space-sm)' }}>
+                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                      Se marcado, os anexos dos serviços serão visíveis na página pública.
+                    </Text>
+                  </div>
+                </div>
+                
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<ShareAltOutlined />}
+                  onClick={generateShareLink}
+                  block
+                  style={{
+                    background: 'var(--primary-color)',
+                    borderColor: 'var(--primary-color)',
+                    height: '48px',
+                    fontSize: '16px',
+                    fontWeight: 600
+                  }}
+                >
+                  Gerar Link de Compartilhamento
+                </Button>
+              </Space>
+            </Card>
+          </div>
         ) : shareData ? (
           <div>
-            {/* Informações do Link */}
             <Card
               style={{
                 marginBottom: 'var(--space-lg)',
@@ -267,7 +317,6 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
               </Space>
             </Card>
 
-            {/* QR Code */}
             <Card
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>

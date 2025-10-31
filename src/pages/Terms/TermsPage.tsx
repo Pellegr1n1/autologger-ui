@@ -33,12 +33,12 @@ export default function TermsPage() {
                 <Title level={3} className={styles.sectionTitle}>2. Descrição do Serviço</Title>
                 <Paragraph className={styles.sectionContent}>
                   O AutoLogger é uma plataforma web para gestão de histórico veicular que utiliza 
-                  tecnologia blockchain para garantir o registro imutável e transparente de serviços, 
-                  manutenções e despesas automotivas. Nossa plataforma permite:
+                  tecnologia blockchain para garantir o registro imutável e transparente de serviços 
+                  e despesas automotivas. Nossa plataforma permite:
                 </Paragraph>
                 <ul className={styles.sectionList}>
                   <li>Cadastro e gestão de veículos pessoais</li>
-                  <li>Registro de serviços e manutenções veiculares</li>
+                  <li>Registro de serviços e despesas veiculares</li>
                   <li>Armazenamento seguro de documentos e comprovantes</li>
                   <li>Geração de relatórios e análises de gastos</li>
                   <li>Registro imutável de eventos na blockchain privada Besu</li>

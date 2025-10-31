@@ -184,7 +184,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
             <Divider className={styles.tooltipDivider} style={{ margin: '12px 0 8px 0' }} />
           )}
           <div className={styles.tooltipAdditionalInfo}>
-            {additionalInfo.count && (
+            {additionalInfo.count !== undefined && (
               <div className={styles.tooltipInfoItem}>
                 <Text className={styles.tooltipInfoLabel}>Registros:</Text>
                 <Text className={styles.tooltipInfoValue}>

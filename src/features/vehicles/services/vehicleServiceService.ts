@@ -75,21 +75,34 @@ export class VehicleServiceService {
   static async getAllServices(): Promise<VehicleEvent[]> {
     const response = await apiBase.api.get<any[]>(this.BASE_PATH);
     
-    // Mapear os dados da API para o formato esperado pelo frontend
+    const parseDate = (dateStr: string | Date): Date => {
+      if (!dateStr) return new Date();
+      if (dateStr instanceof Date) return dateStr;
+      
+      const dateStrNormalized = typeof dateStr === 'string' ? dateStr.split('T')[0] : dateStr;
+      if (typeof dateStrNormalized === 'string') {
+        const [year, month, day] = dateStrNormalized.split('-').map(Number);
+        if (year && month && day) {
+          return new Date(year, month - 1, day, 12, 0, 0, 0);
+        }
+      }
+      return new Date(dateStr);
+    };
+    
     return response.data.map(service => ({
       id: service.id,
       vehicleId: service.vehicleId,
       type: service.type,
       category: service.category,
       description: service.description,
-      date: new Date(service.serviceDate), // Mapear serviceDate para date
+      date: parseDate(service.serviceDate),
       mileage: service.mileage,
       cost: service.cost,
       location: service.location,
       attachments: service.attachments || [],
       technician: service.technician,
       warranty: service.warranty,
-      nextServiceDate: service.nextServiceDate ? new Date(service.nextServiceDate) : undefined,
+      nextServiceDate: service.nextServiceDate ? parseDate(service.nextServiceDate) : undefined,
       notes: service.notes,
       createdAt: new Date(service.createdAt),
       updatedAt: new Date(service.updatedAt),
@@ -117,21 +130,34 @@ export class VehicleServiceService {
   static async getServicesByVehicle(vehicleId: string): Promise<VehicleEvent[]> {
     const response = await apiBase.api.get<any[]>(`${this.BASE_PATH}/vehicle/${vehicleId}`);
     
-    // Mapear os dados da API para o formato esperado pelo frontend
+    const parseDate = (dateStr: string | Date): Date => {
+      if (!dateStr) return new Date();
+      if (dateStr instanceof Date) return dateStr;
+      
+      const dateStrNormalized = typeof dateStr === 'string' ? dateStr.split('T')[0] : dateStr;
+      if (typeof dateStrNormalized === 'string') {
+        const [year, month, day] = dateStrNormalized.split('-').map(Number);
+        if (year && month && day) {
+          return new Date(year, month - 1, day, 12, 0, 0, 0);
+        }
+      }
+      return new Date(dateStr);
+    };
+    
     return response.data.map(service => ({
       id: service.id,
       vehicleId: service.vehicleId,
       type: service.type,
       category: service.category,
       description: service.description,
-      date: new Date(service.serviceDate), // Mapear serviceDate para date
+      date: parseDate(service.serviceDate),
       mileage: service.mileage,
       cost: service.cost,
       location: service.location,
       attachments: service.attachments || [],
       technician: service.technician,
       warranty: service.warranty,
-      nextServiceDate: service.nextServiceDate ? new Date(service.nextServiceDate) : undefined,
+      nextServiceDate: service.nextServiceDate ? parseDate(service.nextServiceDate) : undefined,
       notes: service.notes,
       createdAt: new Date(service.createdAt),
       updatedAt: new Date(service.updatedAt),

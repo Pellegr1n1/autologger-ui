@@ -19,16 +19,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      
       if (authService.isAuthenticated()) {
-        console.log('Checking auth status, token exists');
         const userData = await authService.getProfile();
-        console.log('User profile loaded:', userData);
         setUser(userData);
       } else {
-        console.log('No token found, user not authenticated');
       }
     } catch (error) {
-      console.error('Erro ao verificar autenticação:', error);
       apiBase.removeToken();
       setUser(null);
     } finally {
@@ -50,7 +47,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Se é um usuário do Google (já autenticado), apenas define o token e o usuário
       if ('id' in data && 'authProvider' in data) {
-        console.log('Google user login:', data);
         setUser(data as User);
         return;
       }
@@ -64,7 +60,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
-        console.warn('Erro ao buscar perfil completo, usando dados básicos:', profileError);
       }
     } catch (error) {
       throw error;
@@ -81,7 +76,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
-        console.warn('Erro ao buscar perfil completo, usando dados básicos:', profileError);
       }
     } catch (error) {
       throw error;
@@ -109,7 +103,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(userData);
       }
     } catch (error) {
-      console.error('Erro ao atualizar dados do usuário:', error);
       throw error;
     }
   };
@@ -119,7 +112,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await authService.deleteAccount();
       setUser(null);
     } catch (error) {
-      console.error('Erro ao deletar conta:', error);
       throw error;
     }
   };

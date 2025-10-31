@@ -46,7 +46,7 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
 
     const items: MenuItem[] = [
         getItem("Veículos", "/vehicles", <CarOutlined />),
-        getItem("Manutenções", "/maintenance", <ToolOutlined />),
+        getItem("Serviços", "/maintenance", <ToolOutlined />),
         getItem("Blockchain", "/blockchain", <BlockOutlined />),
         getItem("Relatórios", "/reports", <BarChartOutlined />),
         getItem("Perfil", "/profile", <UserOutlined />)

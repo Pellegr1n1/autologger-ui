@@ -1,5 +1,4 @@
 export function currencyBRL(value: number) {
-  // Garantir que o valor seja um número válido
   const numValue = Number(value) || 0;
 
   return new Intl.NumberFormat("pt-BR", {
@@ -20,7 +19,26 @@ export function percentFormat(value: number) {
 
 export function formatBRDate(input?: string | Date) {
   if (!input) return "-"
-  const d = typeof input === "string" ? new Date(input) : input
+  
+  let d: Date;
+  if (typeof input === "string") {
+    const dateStr = input.split('T')[0];
+    const [year, month, day] = dateStr.split('-').map(Number);
+    
+    if (year && month && day) {
+      d = new Date(year, month - 1, day, 12, 0, 0, 0);
+    } else {
+      d = new Date(input);
+    }
+  } else {
+    d = input;
+  }
+  
   if (isNaN(d.getTime())) return "-"
-  return d.toLocaleDateString("pt-BR")
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  
+  return `${day}/${month}/${year}`;
 }

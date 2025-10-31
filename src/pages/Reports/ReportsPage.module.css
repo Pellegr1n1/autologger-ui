@@ -420,6 +420,26 @@ le .reportsContainer {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 
+/* Estilos para labels do gráfico de pizza (PieChart) */
+.recharts-pie-label-text {
+  fill: rgba(255, 255, 255, 0.85) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+/* Estilos globais para textos dos gráficos no tema escuro */
+.recharts-cartesian-axis-tick-value,
+.recharts-label,
+.recharts-pie-label-line,
+.recharts-pie-label-text {
+  fill: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Eixos dos gráficos */
+.recharts-cartesian-axis-line {
+  stroke: rgba(255, 255, 255, 0.3) !important;
+}
+
 /* Efeito de profundidade nos containers */
 .chartContainer {
   position: relative;

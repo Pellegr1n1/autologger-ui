@@ -503,6 +503,48 @@ a.link-underline:hover {
   color: #A78BFA !important;
 }
 
+.ant-picker-cell-in-range::before {
+  background: rgba(139, 92, 246, 0.15) !important;
+}
+
+.ant-picker-cell-in-range.ant-picker-cell-in-range-start::before,
+.ant-picker-cell-in-range.ant-picker-cell-in-range-end::before {
+  background: rgba(139, 92, 246, 0.2) !important;
+}
+
+.ant-picker-cell-range-start .ant-picker-cell-inner,
+.ant-picker-cell-range-end .ant-picker-cell-inner {
+  background: #8B5CF6 !important;
+  color: #fff !important;
+  border-color: #8B5CF6 !important;
+}
+
+.ant-picker-cell-in-range .ant-picker-cell-inner {
+  background: rgba(139, 92, 246, 0.2) !important;
+}
+
+/* Remover outline vermelho e substituir por roxo */
+.ant-picker-cell-selected .ant-picker-cell-inner,
+.ant-picker-cell-active .ant-picker-cell-inner {
+  background: #8B5CF6 !important;
+  border-color: #8B5CF6 !important;
+  box-shadow: 0 0 0 1px #8B5CF6 !important;
+}
+
+.ant-picker-cell-selected:not(.ant-picker-cell-disabled) .ant-picker-cell-inner {
+  border-color: #8B5CF6 !important;
+}
+
+/* Hover nas células do calendário com outline roxo */
+.ant-picker-cell:hover:not(.ant-picker-cell-disabled) .ant-picker-cell-inner {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  background: rgba(139, 92, 246, 0.15) !important;
+}
+
+.ant-picker-cell.ant-picker-cell-today .ant-picker-cell-inner {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 var(--space-md);

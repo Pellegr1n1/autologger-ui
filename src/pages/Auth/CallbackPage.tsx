@@ -18,12 +18,7 @@ export default function CallbackPage() {
         const userParam = searchParams.get('user');
         const error = searchParams.get('error');
 
-        console.log('OAuth2 Callback received:', { 
-          token: token ? token.substring(0, 20) + '...' : null,
-          user: userParam ? 'present' : 'missing',
-          error,
-          fullUrl: window.location.href
-        });
+        
 
         if (error) {
           throw new Error(`Erro do Google: ${error}`);
@@ -35,7 +30,6 @@ export default function CallbackPage() {
 
         // Parse do usuário
         const userData = JSON.parse(decodeURIComponent(userParam));
-        console.log('User data from backend:', userData);
 
         // Salvar token no localStorage e no apiBase
         localStorage.setItem('autologger_token', token);
@@ -43,6 +37,9 @@ export default function CallbackPage() {
         // Importar apiBase para definir o token
         const { apiBase } = await import('../../shared/services/api');
         apiBase.setToken(token);
+        
+        // Verify token is properly set
+        const storedToken = apiBase.getToken();
 
         // Fazer login do usuário
         const tempUser = {
@@ -53,6 +50,9 @@ export default function CallbackPage() {
         };
 
         await login(tempUser as any);
+
+        // Small delay to ensure token is properly set
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         // Fechar popup e redirecionar
         if (window.opener) {
@@ -67,7 +67,6 @@ export default function CallbackPage() {
         }
 
       } catch (err: any) {
-        console.error('OAuth2 callback error:', err);
         setError(err.message || 'Erro ao processar autenticação');
         
         if (window.opener) {

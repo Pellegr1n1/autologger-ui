@@ -41,6 +41,7 @@ import {
   CloseCircleOutlined,
 } from '@ant-design/icons';
 import { VehicleShareService, PublicVehicleInfo } from '../../features/vehicles/services/vehicleShareService';
+import { formatBRDate } from '../../shared/utils/format';
 import styles from './PublicVehiclePage.module.css';
 
 const { Title, Text } = Typography;
@@ -88,12 +89,7 @@ const PublicVehiclePage: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    return formatBRDate(dateString);
   };
 
   const formatCurrency = (value: number) => {
@@ -231,13 +227,45 @@ const PublicVehiclePage: React.FC = () => {
     return null;
   }
 
+  // Verificar se o veículo foi vendido e bloquear acesso à página pública
+  if (vehicleInfo.status !== 'active') {
+    return (
+      <div className={styles.errorContainer}>
+        <Card className={styles.errorCard}>
+          <Alert
+            message="Acesso Bloqueado"
+            description="Este veículo foi vendido e não está mais disponível para visualização pública."
+            type="warning"
+            showIcon
+            icon={<CarOutlined />}
+            style={{ marginBottom: 'var(--space-lg)' }}
+          />
+          <Button 
+            type="primary" 
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/')}
+            block
+            size="large"
+          >
+            Voltar ao início
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const totalCost = vehicleInfo.maintenanceHistory.reduce((sum, service) => {
     const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
     return sum + cost;
   }, 0);
   
+  // Ordenar histórico completo por data de serviço
   const sortedHistory = vehicleInfo.maintenanceHistory
     .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
+  
+  // Ordenar últimos serviços registrados por createdAt (mais recentes primeiro)
+  const sortedByCreatedAt = vehicleInfo.maintenanceHistory
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Aplicar filtros
   const filteredHistory = sortedHistory.filter((service) => {
@@ -286,7 +314,7 @@ const PublicVehiclePage: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll suave para o início do grid de manutenções (não esconde os cards acima)
+    // Scroll suave para o início do grid de serviços (não esconde os cards acima)
     const maintenanceGrid = document.querySelector('#maintenance-grid-start');
     if (maintenanceGrid) {
       // Offset de 100px para mostrar um pouco do contexto acima
@@ -320,7 +348,25 @@ const PublicVehiclePage: React.FC = () => {
         <Card className={styles.headerCard}>
           <div className={styles.headerContent}>
             <div className={styles.vehicleIcon}>
-              <CarOutlined />
+              {vehicleInfo.photoUrl ? (
+                <Image
+                  src={vehicleInfo.photoUrl}
+                  alt="Foto do veículo"
+                  className={styles.vehicleIconImage}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    cursor: 'pointer'
+                  }}
+                  preview={{
+                    mask: 'Visualizar em tamanho real'
+                  }}
+                />
+              ) : (
+                <CarOutlined />
+              )}
             </div>
 
             <Title level={1} className={styles.vehicleTitle}>
@@ -396,22 +442,6 @@ const PublicVehiclePage: React.FC = () => {
                   <Text type="secondary" className={styles.infoLabel}>Cadastrado em:</Text>
                   <Text strong className={styles.infoValue}>{formatDate(vehicleInfo.createdAt)}</Text>
                 </div>
-
-                {vehicleInfo.photoUrl && (
-                  <div className={styles.vehicleImageContainer}>
-                    <Image
-                      src={vehicleInfo.photoUrl}
-                      alt="Foto do veículo"
-                      className={styles.vehicleImage}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '180px',
-                        borderRadius: '8px',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             </Card>
           </Col>
@@ -479,13 +509,13 @@ const PublicVehiclePage: React.FC = () => {
             </Card>
           </Col>
 
-          {/* Histórico de Manutenções */}
+          {/* Últimos Serviços Registrados */}
           <Col xs={24} lg={8}>
             <Card
               title={
                 <div className={styles.cardTitle}>
                   <HistoryOutlined className="icon" />
-                  <span>Últimas Manutenções</span>
+                  <span>Últimos Serviços Registrados</span>
                 </div>
               }
               className={`${styles.infoCard} ${styles.lastMaintenanceCard}`}
@@ -493,34 +523,44 @@ const PublicVehiclePage: React.FC = () => {
               {vehicleInfo.maintenanceHistory.length === 0 ? (
                 <div className={styles.emptyState}>
                   <HistoryOutlined style={{ fontSize: '32px', color: 'rgba(139, 92, 246, 0.3)', marginBottom: '12px' }} />
-                  <Text type="secondary">Nenhuma manutenção registrada</Text>
+                  <Text type="secondary">Nenhum serviço registrado</Text>
                 </div>
               ) : (
                 <div className={styles.maintenanceList}>
-                  {sortedHistory.slice(0, 2).map((service, index) => (
+                  {sortedByCreatedAt.slice(0, 2).map((service, index) => (
                     <div key={index} className={styles.maintenanceListItem}>
                       <div className={styles.maintenanceItemHeader}>
                         <div className={styles.maintenanceItemIcon}>
                           {getServiceIcon(service.type)}
                         </div>
                         <div className={styles.maintenanceItemInfo}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                            <Text strong style={{ fontSize: '14px' }}>{service.type}</Text>
-                            <Tag color={getServiceColor(service.type)} style={{ fontSize: '10px', margin: 0, padding: '2px 8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <Text strong style={{ fontSize: '15px', lineHeight: '1.4' }}>{service.type}</Text>
+                            <Tag color={getServiceColor(service.type)} style={{ fontSize: '11px', margin: 0, padding: '3px 10px', borderRadius: '12px' }}>
                               {service.category}
                             </Tag>
                           </div>
-                          <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '2px' }}>
-                            {formatDate(service.serviceDate)}
-                          </Text>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Text style={{ fontSize: '13px', color: 'var(--success-color)', fontWeight: 600 }}>
-                              {formatCurrency(service.cost)}
-                            </Text>
-                            <Text type="secondary" style={{ fontSize: '11px' }}>
-                            {formatMileage(service.mileage)}
-                          </Text>
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            paddingTop: '8px',
+                            borderTop: '1px solid rgba(139, 92, 246, 0.15)'
+                          }}>
+                            <div>
+                              <Text style={{ fontSize: '14px', color: 'var(--success-color)', fontWeight: 600, display: 'block' }}>
+                                {formatCurrency(service.cost)}
+                              </Text>
+                              <Text type="secondary" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>
+                                {formatMileage(service.mileage)}
+                              </Text>
                             </div>
+                            {service.warranty && (
+                              <Tag color="green" icon={<SafetyOutlined />} style={{ fontSize: '10px', margin: 0 }}>
+                                Garantia
+                              </Tag>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -538,7 +578,7 @@ const PublicVehiclePage: React.FC = () => {
             title={
               <div className={styles.cardTitle}>
                 <HistoryOutlined className="icon" />
-                <span>Histórico Completo de Manutenções ({sortedHistory.length})</span>
+                <span>Histórico Completo de Serviços ({sortedHistory.length})</span>
               </div>
             }
             className={styles.statisticCard}
@@ -653,7 +693,7 @@ const PublicVehiclePage: React.FC = () => {
               </Row>
             </div>
 
-            {/* Grid de Manutenções */}
+            {/* Grid de Serviços */}
             <div id="maintenance-grid-start"></div>
             {filteredHistory.length === 0 ? (
               <div style={{ 
@@ -665,7 +705,7 @@ const PublicVehiclePage: React.FC = () => {
               }}>
                 <FilterOutlined style={{ fontSize: '48px', color: 'rgba(139, 92, 246, 0.3)', marginBottom: '16px' }} />
                 <Title level={4} style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '8px' }}>
-                  Nenhuma manutenção encontrada
+                  Nenhum serviço encontrado
                 </Title>
                 <Text type="secondary">
                   Tente ajustar os filtros para encontrar o que procura
@@ -793,7 +833,7 @@ const PublicVehiclePage: React.FC = () => {
                   pageSize={ITEMS_PER_PAGE}
                   onChange={handlePageChange}
                   showSizeChanger={false}
-                  showTotal={(total, range) => `${range[0]}-${range[1]} de ${total} manutenções`}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} de ${total} serviços`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

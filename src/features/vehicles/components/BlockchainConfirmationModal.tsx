@@ -70,7 +70,6 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
   const handleStep1Submit = async () => {
     setLoading(true);
     try {
-      // Enviar para blockchain via backend
       const result = await BlockchainService.submitService({
         serviceId: service.id,
         vehicleId: service.vehicleId,
@@ -103,14 +102,12 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
 
     setLoading(true);
     try {
-      // Simular confirmação (em produção, seria uma chamada real)
       const result = await BlockchainService.confirmService(service.id);
       
       if (result.success) {
         setCurrentStep(2);
         message.success('Serviço confirmado e imutável na blockchain!');
         
-        // Simular resultado de sucesso
         const successResult = {
           success: true,
           hash: result.transactionHash || `hash-${Date.now()}`,
@@ -182,7 +179,7 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
       onCancel={handleClose}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ padding: '24px 0' }}>
         <Steps current={currentStep} items={steps} />
@@ -298,7 +295,7 @@ const BlockchainConfirmationModal: React.FC<BlockchainConfirmationModalProps> = 
               </Card>
             )}
 
-            <Form layout="vertical">
+            <Form layout="vertical" form={form}>
               <Form.Item
                 label="Código de Confirmação"
                 required

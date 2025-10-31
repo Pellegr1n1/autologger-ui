@@ -187,3 +187,442 @@
 .accountInfo {
   padding: 8px 0;
 }
+
+/* Área Perigosa Estilizada */
+.dangerCard {
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.05) 0%, rgba(255, 120, 117, 0.05) 100%);
+  border: 2px solid rgba(255, 77, 79, 0.2) !important;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.dangerCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ff4d4f 0%, #ff7875 50%, #ff4d4f 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.dangerCard:hover {
+  border-color: rgba(255, 77, 79, 0.4);
+  box-shadow: 0 8px 25px rgba(255, 77, 79, 0.15);
+  transform: translateY(-2px);
+}
+
+.dangerContent {
+  text-align: center;
+  padding: 8px 0;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  flex-grow: 1;
+  min-height: 100%;
+  height: 100%;
+}
+
+.dangerTop {
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.dangerContent .ant-typography {
+  font-size: 16px !important;
+  margin-bottom: 10px !important;
+}
+
+.dangerIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.1) 0%, rgba(255, 120, 117, 0.1) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 77, 79, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dangerCard:hover .dangerIcon {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.15) 0%, rgba(255, 120, 117, 0.15) 100%);
+  border-color: rgba(255, 77, 79, 0.5);
+}
+
+.dangerIcon .anticon {
+  font-size: 28px;
+  color: #ff4d4f;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dangerCard:hover .dangerIcon .anticon {
+  color: #ff7875;
+}
+
+.dangerText {
+  display: block;
+  color: rgba(255, 77, 79, 0.85);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 32px;
+  padding: 0 8px;
+}
+
+.deleteButton {
+  height: 40px;
+  font-weight: 600;
+  font-size: 13px;
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.deleteButton:hover {
+  background: linear-gradient(135deg, #ff7875 0%, #ff4d4f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 77, 79, 0.35);
+}
+
+.deleteButton:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+}
+
+/* Garantir que o botão de exclusão fique sempre no bottom */
+.cardsRow .dangerContent .deleteButton {
+  flex-shrink: 0;
+  flex-grow: 0;
+  margin-top: auto;
+}
+
+/* Informações da Conta */
+.infoIcon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.infoIcon .anticon {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.infoRow {
+  padding: 12px;
+  background: rgba(139, 92, 246, 0.02);
+  border-radius: 10px;
+  border: 1px solid rgba(139, 92, 246, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.infoRow:hover {
+  background: rgba(139, 92, 246, 0.04);
+  border-color: rgba(139, 92, 246, 0.15);
+  transform: translateX(2px);
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoLabel {
+  margin-bottom: 6px;
+}
+
+.infoValue {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  word-break: break-all;
+}
+
+/* Autenticação */
+.authIcon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.authIcon .anticon {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.authContent {
+  text-align: center;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  min-height: 100%;
+}
+
+.googleBadge {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.googleBadge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.googleBadge svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Botão de Segurança */
+.securityButtonImproved {
+  height: 44px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+}
+
+.securityButtonImproved:hover {
+  background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35);
+  color: #ffffff !important;
+}
+
+.securityButtonImproved:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Ícone de Informações Pessoais */
+.personalInfoIcon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.personalInfoIcon .anticon {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+/* Grid de Cards - Altura consistente */
+.cardsRow {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: stretch !important;
+}
+
+.cardsRow > div,
+.cardsRow > .ant-col {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cardsRow .ant-card {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cardsRow .ant-card-head {
+  flex-shrink: 0 !important;
+}
+
+.cardsRow .ant-card-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.cardsRow .ant-form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+.cardsRow .ant-form-item {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+}
+
+/* Garantir que o corpo do card expanda */
+.cardsRow .ant-card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
+/* Content wrappers */
+.cardsRow .ant-card-body > .ant-btn:only-child,
+.cardsRow .ant-card-body > div:first-child {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.cardsRow .dangerContent,
+.cardsRow .authContent {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cardsRow .ant-space {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 100% !important;
+}
+
+/* Garantir altura uniforme EXATA para todos os cards */
+.cardsRow {
+  display: flex !important;
+  align-items: stretch !important;
+}
+
+.cardsRow > div {
+  height: auto !important;
+}
+
+.cardsRow .ant-col {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.cardsRow .ant-card {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 350px !important;
+}
+
+/* Override padrão para colunas individuais */
+.cardsRow .ant-col[class*="lg-6"] {
+  display: flex !important;
+}
+
+.cardsRow .ant-col[class*="lg-6"] > .ant-card {
+  flex-grow: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Conteúdo do card de exclusão - expandir para preencher altura */
+.cardsRow .dangerContent {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 100% !important;
+}
+
+/* Conteúdo do auth - expandir para preencher altura */
+.cardsRow .authContent {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 100% !important;
+}
+
+/* Botão de alterar senha - expandir */
+.cardsRow .ant-card-body > .ant-btn {
+  flex-grow: 0 !important;
+}
+
+/* Espaçamento no card de exclusão */
+.cardsRow .dangerContent .ant-btn {
+  margin-top: auto !important;
+}
+
+/* Garantir que todos os cards usem toda a altura disponível */
+.cardsRow .ant-card-body > * {
+  flex-grow: 0;
+}
+
+/* Adicionar espaçamento mínimo no conteúdo dos cards */
+.cardsRow .dangerContent {
+  padding: 12px 0 !important;
+}
+
+.cardsRow .authContent {
+  padding: 12px 0 !important;
+}
+
+/* Alerta de alterações não salvas */
+.alertWrapper {
+  margin-top: 24px;
+  animation: none !important;
+}
+
+.unsavedChangesAlert {
+  animation: slideDownFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation-fill-mode: both !important;
+}
+
+@keyframes slideDownFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

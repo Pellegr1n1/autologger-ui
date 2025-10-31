@@ -8,26 +8,6 @@ import styles from "./Auth.module.css";
 const { Title, Text } = Typography;
 const { Password } = Input;
 
-/**
- * Página: Resetar Senha
- * Rota: /reset-password/:token
- * 
- * Funcionalidades:
- * - Validar token ao montar componente
- * - Formulário com nova senha e confirmação
- * - Validação de senha forte (min 8 chars, letra, número, especial)
- * - Verificar se senhas coincidem
- * - Mostrar força da senha
- * - Loading state
- * - Redirecionar para login após sucesso
- * - Mensagem se token inválido/expirado
- * 
- * Validações:
- * - Token válido e não expirado
- * - Senha >= 8 caracteres
- * - Senha == Confirmar senha
- * - Senha forte (letra maiúscula, minúscula, número, especial)
- */
 export default function ResetPasswordPage() {
   const [api, contextHolder] = notification.useNotification();
   const [loading, setLoading] = useState(false);

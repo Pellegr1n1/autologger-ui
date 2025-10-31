@@ -19,7 +19,7 @@ import {
   StopOutlined,
   ShareAltOutlined
 } from '@ant-design/icons';
-import { Vehicle, VehicleStatus, VehicleEventType } from '../types/vehicle.types';
+import { Vehicle, VehicleStatus } from '../types/vehicle.types';
 import { VehicleServiceService } from '../services/vehicleServiceService';
 import { BlockchainService } from '../../blockchain/services/blockchainService';
 import VehicleShareModal from './VehicleShareModal';
@@ -53,67 +53,25 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     setLoadingCount(true);
     
     try {
-      // Usar o mesmo serviço da tela de manutenções
-      const allServices = await BlockchainService.getAllServices();
-      
-      // Mapear tipo do backend para frontend (igual à tela de manutenções)
-      const mapServiceType = (backendType: string): VehicleEventType => {
-        switch (backendType) {
-          case 'maintenance': return VehicleEventType.MAINTENANCE;
-          case 'fuel': return VehicleEventType.FUEL;
-          case 'repair': return VehicleEventType.REPAIR;
-          case 'inspection': return VehicleEventType.INSPECTION;
-          case 'expense': return VehicleEventType.EXPENSE;
-          case 'other': return VehicleEventType.OTHER;
-          default: return VehicleEventType.MAINTENANCE;
-        }
-      };
-      
-      // Processar serviços igual à tela de manutenções
-      const processedServices = allServices.map((event: any) => {
-        // Se é do blockchain, fazer conversão
-        if (event.serviceDate) {
-          return {
-            ...event,
-            type: mapServiceType(event.type), // Mapear tipo corretamente
-            date: new Date(event.serviceDate || event.createdAt),
-            createdAt: new Date(event.createdAt),
-            updatedAt: new Date(event.updatedAt),
-            attachments: [],
-            blockchainStatus: {
-              status: event.status as any,
-              lastUpdate: new Date(),
-              retryCount: 0,
-              maxRetries: 3
-            },
-            isImmutable: event.status === 'CONFIRMED',
-            canEdit: event.status !== 'CONFIRMED',
-            requiresConfirmation: false
-          };
-        }
-        // Se é do método antigo, já vem no formato correto
-        return event;
-      });
-      
-      // Filtrar todos os serviços do veículo (igual à tela de manutenções)
-      const vehicleServices = processedServices.filter(service => {
-        return service.vehicleId === vehicle.id;
-      });
-      
-      setMaintenanceCount(vehicleServices.length);
-      
+      // Primeiro, tenta usar o método específico que retorna apenas a contagem
+      const count = await VehicleServiceService.getServicesCountByVehicle(vehicle.id);
+      setMaintenanceCount(count);
     } catch (error) {
-      console.error('Erro ao carregar contagem de manutenções:', error);
-      // Fallback para VehicleServiceService se blockchain falhar
+      console.error('Erro ao carregar contagem de serviços:', error);
       try {
-        const allServices = await VehicleServiceService.getAllServices();
-        const vehicleServices = allServices.filter(service => 
-          service.vehicleId === vehicle.id
-        );
-        setMaintenanceCount(vehicleServices.length);
-      } catch (fallbackError) {
-        console.error('Erro no fallback:', fallbackError);
-        setMaintenanceCount(0);
+        // Fallback: tenta buscar serviços por veículo da blockchain
+        const blockchainServices = await BlockchainService.getServicesByVehicle(vehicle.id);
+        setMaintenanceCount(blockchainServices.length);
+      } catch (blockchainError) {
+        console.error('Erro ao buscar serviços da blockchain:', blockchainError);
+        try {
+          // Fallback final: busca serviços por veículo do serviço normal
+          const services = await VehicleServiceService.getServicesByVehicle(vehicle.id);
+          setMaintenanceCount(services.length);
+        } catch (fallbackError) {
+          console.error('Erro no fallback final:', fallbackError);
+          setMaintenanceCount(0);
+        }
       }
     } finally {
       setLoadingCount(false);
@@ -266,7 +224,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         }
       }}
     >
-      {/* Header com gradiente */}
       <div
         style={{
           background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
@@ -276,7 +233,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           overflow: 'hidden'
         }}
       >
-        {/* Decorações de fundo */}
         <div
           style={{
             position: 'absolute',
@@ -301,9 +257,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           }}
         />
 
-        {/* Botões do header */}
         <div style={{ position: 'absolute', top: 'var(--space-lg)', right: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', zIndex: 10 }}>
-          {/* Botão compartilhar */}
           <Button
             type="text"
             icon={<ShareAltOutlined />}
@@ -327,7 +281,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
             title="Compartilhar veículo"
           />
 
-          {/* Botão fechar */}
           <Button
             type="text"
             icon={<CloseOutlined />}
@@ -352,7 +305,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          {/* Ícone do veículo */}
           <div
             style={{
               width: '80px',
@@ -370,7 +322,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
             <CarOutlined style={{ fontSize: '36px', color: 'var(--text-light)' }} />
           </div>
 
-          {/* Informações principais */}
           <Title
             level={2}
             style={{
@@ -427,9 +378,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         </div>
       </div>
 
-      {/* Conteúdo */}
       <div style={{ padding: 'var(--space-xxl)' }}>
-        {/* Estatísticas */}
         <Row gutter={[16, 16]} style={{ marginBottom: 'var(--space-xxl)' }}>
           <Col span={6}>
             <StatCard
@@ -461,15 +410,14 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           <Col span={6}>
             <StatCard
               icon={<SettingOutlined />}
-              title="Manutenções"
+              title="Serviços"
               value={loadingCount ? '...' : maintenanceCount}
-              suffix="registradas"
+              suffix="registrados"
               color="var(--warning-color)"
             />
           </Col>
         </Row>
 
-        {/* Informações detalhadas */}
         <div
           style={{
             background: 'var(--gray-1)',
@@ -547,7 +495,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           />
         </div>
 
-        {/* Histórico */}
         <div
           style={{
             background: 'var(--card-background)',
@@ -604,7 +551,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         </div>
       </div>
 
-      {/* Modal de Compartilhamento */}
       <VehicleShareModal
         visible={shareModalVisible}
         vehicle={vehicle}

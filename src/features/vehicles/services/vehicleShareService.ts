@@ -35,6 +35,7 @@ export interface PublicMaintenanceInfo {
   notes?: string;
   blockchainStatus: string;
   blockchainHash?: string;
+  createdAt: string;
   attachments?: PublicAttachment[];
 }
 
@@ -52,11 +53,17 @@ export class VehicleShareService {
   /**
    * Gerar link de compartilhamento para um veículo
    */
-  static async generateShareLink(vehicleId: string, expiresInDays?: number): Promise<VehicleShareResponse> {
-    const params = expiresInDays ? `?expiresInDays=${expiresInDays}` : '';
-    const response = await apiBase.api.post<VehicleShareResponse>(
-      `${this.BASE_PATH}/${vehicleId}/generate-share-link${params}`
-    );
+  static async generateShareLink(vehicleId: string, expiresInDays?: number, includeAttachments?: boolean): Promise<VehicleShareResponse> {
+    const params = new URLSearchParams();
+    if (expiresInDays) {
+      params.append('expiresInDays', expiresInDays.toString());
+    }
+    if (includeAttachments !== undefined) {
+      params.append('includeAttachments', includeAttachments.toString());
+    }
+    const queryString = params.toString();
+    const url = `${this.BASE_PATH}/${vehicleId}/generate-share-link${queryString ? `?${queryString}` : ''}`;
+    const response = await apiBase.api.post<VehicleShareResponse>(url);
     return response.data;
   }
 

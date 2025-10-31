@@ -13,17 +13,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [isProcessingAuth, setIsProcessingAuth] = useState(false)
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       
       if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
-        console.log('OAuth2 success message received:', event.data);
-        handleGoogleSuccess(event.data);
+        if (!isProcessingAuth) {
+          setIsProcessingAuth(true);
+          handleGoogleSuccess(event.data);
+        }
       } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
-        console.log('OAuth2 error message received:', event.data);
-        handleGoogleError(new Error(event.data.error));
+        if (!isProcessingAuth) {
+          setIsProcessingAuth(true);
+          handleGoogleError(new Error(event.data.error));
+        }
       }
     };
 
@@ -32,7 +37,7 @@ export default function LoginPage() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, []);
+  }, [isProcessingAuth]);
 
   const onFinish = async (values: any) => {
     setLoading(true)
@@ -45,7 +50,6 @@ export default function LoginPage() {
 
       navigate("/vehicles")
     } catch (err: any) {
-      console.error("Erro no login:", err)
       
       setTimeout(() => {
         api.error({
@@ -64,21 +68,29 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      console.log('Google OAuth2 success, response:', response)
       
       if (response.user && response.token) {
+        // Store token in localStorage first
         localStorage.setItem('autologger_token', response.token)
         
+        // Import and set token in apiBase
         const { apiBase } = await import('../../shared/services/api')
         apiBase.setToken(response.token)
         
+        // Verify token is properly set
+        const storedToken = apiBase.getToken()
+        
+        // Login user
         await login(response.user)
+        
+        // Small delay to ensure token is properly set before navigation
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         navigate("/vehicles")
       } else {
         throw new Error('Dados do usuário não recebidos')
       }
     } catch (err: any) {
-      console.error('Google login error:', err)
       const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
       
       api.error({
@@ -89,11 +101,11 @@ export default function LoginPage() {
       })
     } finally {
       setLoading(false)
+      setIsProcessingAuth(false)
     }
   }
 
   const handleGoogleError = (error: any) => {
-    console.error('Google login error:', error)
     const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
     
     api.error({
@@ -102,6 +114,8 @@ export default function LoginPage() {
       placement: 'bottomRight',
       duration: 5,
     })
+    
+    setIsProcessingAuth(false)
   }
 
   return (

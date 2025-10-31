@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { ConfigProvider } from "antd";
+import ptBR from "antd/locale/pt_BR";
 import { AuthProvider } from "./features/auth";
 import Router from "./app/router/Router";
 import "./styles/globals.css";
@@ -82,6 +83,13 @@ const App: React.FC = () => {
             colorIcon: '#6B7280',
             colorIconHover: '#A78BFA',
             borderRadiusLG: 12,
+            // Adicionar cores para Alert dentro do Modal
+            colorWarning: '#F59E0B',
+            colorError: '#EF4444',
+            colorErrorBg: 'rgba(239, 68, 68, 0.1)',
+            colorErrorBorder: '#EF4444',
+            colorWarningBg: 'rgba(245, 158, 11, 0.1)',
+            colorWarningBorder: '#F59E0B',
           },
           Form: {
             labelColor: '#F9FAFB',
@@ -125,6 +133,17 @@ const App: React.FC = () => {
             colorInfoBg: 'rgba(167, 139, 250, 0.1)',
             colorInfoBorder: '#A78BFA',
             borderRadiusLG: 8,
+            // Cores para Alert de erro
+            colorError: '#EF4444',
+            colorErrorBg: 'rgba(239, 68, 68, 0.1)',
+            colorErrorBorder: '#EF4444',
+            // Cores para Alert de warning
+            colorWarning: '#F59E0B',
+            colorWarningBg: 'rgba(245, 158, 11, 0.1)',
+            colorWarningBorder: '#F59E0B',
+            // Texto
+            colorText: '#F9FAFB',
+            colorTextHeading: '#F9FAFB',
           },
           Typography: {
             titleMarginTop: 0,
@@ -196,6 +215,7 @@ const App: React.FC = () => {
             colorTextPlaceholder: '#6B7280',
             colorBorder: '#6B7280',
             colorBgContainer: '#0D1117',
+            colorBgElevated: '#161B22',
             borderRadius: 8,
             hoverBorderColor: '#A78BFA',
             activeBorderColor: '#8B5CF6',
@@ -212,8 +232,9 @@ const App: React.FC = () => {
             colorPrimary: '#8B5CF6',
             colorPrimaryHover: '#A78BFA',
             colorPrimaryActive: '#7C3AED',
-            colorBgTextHover: 'rgba(139, 92, 246, 0.1)',
-            colorBgTextActive: 'rgba(139, 92, 246, 0.15)',
+            colorBgTextHover: 'rgba(139, 92, 246, 0.2)',
+            colorBgTextActive: 'rgba(139, 92, 246, 0.25)',
+            colorTextHeading: '#F9FAFB',
           },
           Pagination: {
             colorText: '#F9FAFB',
@@ -248,6 +269,7 @@ const App: React.FC = () => {
           },
         },
       }}
+      locale={ptBR}
     >
       <BrowserRouter>
         <AuthProvider>

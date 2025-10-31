@@ -14,7 +14,6 @@ import {
   message,
   Button,
   Tooltip,
-  Progress,
   Upload,
   Image
 } from 'antd';
@@ -69,7 +68,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   const [selectedBrandCode, setSelectedBrandCode] = useState<string>('');
   const [selectedModelCode, setSelectedModelCode] = useState<number | null>(null);
   const [fipeApiAvailable, setFipeApiAvailable] = useState(true);
-  const [formProgress, setFormProgress] = useState(0);
 
   // Estados para foto
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -87,7 +85,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       setFipeYears([]);
       setSelectedBrandCode('');
       setSelectedModelCode(null);
-      setFormProgress(0);
       setPhotoFile(null);
       setPhotoPreview('');
     }
@@ -105,7 +102,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           renavam: vehicle.renavam,
           mileage: vehicle.mileage
         });
-        setFormProgress(100);
 
         // Se o veículo já tem foto, mostrar preview
         if (vehicle.photoUrl) {
@@ -113,22 +109,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         }
       } else {
         form.resetFields();
-        setFormProgress(0);
       }
     }
   }, [visible, vehicle, form]);
 
-  // Calcular progresso do formulário
-  useEffect(() => {
-    if (!isEditing) {
-      const fields = form.getFieldsValue();
-      const filledFields = Object.values(fields).filter(value => value !== undefined && value !== '').length;
-      const photoBonus = photoFile ? 1 : 0;
-      const totalFields = 8; // Total de campos obrigatórios + foto (opcional)
-      const progress = Math.round(((filledFields + photoBonus) / totalFields) * 100);
-      setFormProgress(progress);
-    }
-  }, [form, isEditing, photoFile]);
 
   const loadBrands = async () => {
     setLoadingBrands(true);
@@ -435,25 +419,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
             {isEditing ? 'Atualize as informações do seu veículo' : 'Preencha os dados do seu veículo'}
           </Text>
-
-          {/* Barra de progresso */}
-          {!isEditing && (
-            <div style={{ marginTop: 'var(--space-lg)', maxWidth: '300px', margin: 'var(--space-lg) auto 0' }}>
-              <Progress
-                percent={formProgress}
-                strokeColor={{
-                  '0%': 'var(--accent-color)',
-                  '100%': 'var(--success-color)'
-                }}
-                trailColor="rgba(255, 255, 255, 0.2)"
-                showInfo={false}
-                size="small"
-              />
-              <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '12px', display: 'block', marginTop: 'var(--space-xs)' }}>
-                {formProgress}% concluído
-              </Text>
-            </div>
-          )}
         </div>
       </div>
 
@@ -462,18 +427,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           form={form}
           layout="vertical"
           size="large"
-          requiredMark={false}
+          requiredMark={true}
           disabled={loading}
           onValuesChange={() => {
-            if (!isEditing) {
-              setTimeout(() => {
-                const fields = form.getFieldsValue();
-                const filledFields = Object.values(fields).filter(value => value !== undefined && value !== '').length;
-                const photoBonus = photoFile ? 1 : 0;
-                const progress = Math.round(((filledFields + photoBonus) / 8) * 100);
-                setFormProgress(progress);
-              }, 100);
-            }
+            // Sem lógica de progresso - formulário funciona normalmente
           }}
         >
           {/* Seção 1: Identificação */}
@@ -605,12 +562,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                   }
                   rules={[{ required: true, message: 'Modelo é obrigatório' }]}
                 >
-                  {!isEditing && fipeModels.length > 0 ? (
+                  {!isEditing && fipeApiAvailable ? (
                     <Select
                       placeholder="Selecione o modelo"
                       showSearch
                       loading={loadingModels}
-                      disabled={!selectedBrandCode}
+                      disabled={!selectedBrandCode || loadingModels}
                       style={{ height: '48px' }}
                       filterOption={(input, option) =>
                         option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -657,12 +614,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                   }
                   rules={[{ required: true, message: 'Ano é obrigatório' }]}
                 >
-                  {!isEditing && fipeYears.length > 0 ? (
+                  {!isEditing && fipeApiAvailable ? (
                     <Select
                       placeholder="Selecione o ano"
                       showSearch
                       loading={loadingYears}
-                      disabled={!selectedModelCode}
+                      disabled={!selectedModelCode || loadingYears}
                       style={{ height: '48px' }}
                       onChange={handleYearChange}
                       notFoundContent={

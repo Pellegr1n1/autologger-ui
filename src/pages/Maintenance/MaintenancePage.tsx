@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions } from 'antd';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
+import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions, notification } from 'antd';
 import {
   BarChartOutlined,
   EyeOutlined,
@@ -11,13 +13,16 @@ import {
   DownloadOutlined,
   FilePdfOutlined,
   FileImageOutlined,
-  FileOutlined
+  FileOutlined,
+  FilterOutlined,
+  ClearOutlined
 } from '@ant-design/icons';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
 import { Vehicle, VehicleEvent } from '../../features/vehicles/types/vehicle.types';
 import { currencyBRL, formatBRDate, kmFormat } from '../../shared/utils/format';
+import { EVENT_TYPES } from '../../features/vehicles/utils/constants';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './MaintenancePage.module.css';
@@ -26,6 +31,12 @@ import ServiceModal from '../../features/vehicles/components/ServiceModal';
 const { Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+
+// Função para formatar o nome do tipo de serviço
+const getTypeLabel = (type: string): string => {
+  const typeOption = EVENT_TYPES.find(option => option.value === type);
+  return typeOption ? typeOption.label : type;
+};
 
 type MaintenanceEvent = VehicleEvent & {
   status?: string;
@@ -38,7 +49,9 @@ type MaintenanceEvent = VehicleEvent & {
 };
 
 const MaintenancePage = React.memo(function MaintenancePage() {
-  // Estados consolidados para evitar re-renders
+  const navigate = useNavigate();
+  const [api, contextHolder] = notification.useNotification();
+  const pollersRef = useRef<number[]>([]);
   const [pageState, setPageState] = useState({
     loading: true,
     selectedVehicle: 'all',
@@ -51,8 +64,24 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maintenanceEvents, setMaintenanceEvents] = useState<VehicleEvent[]>([]);
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+  
+  // Estados dos filtros (padrão da página pública)
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
 
-  // Funções auxiliares para anexos
+  const handleAddMaintenance = useCallback(() => {
+    if (vehicles.length === 0) {
+      api.warning({
+        message: 'Nenhum veículo cadastrado',
+        description: 'Cadastre um veículo antes de criar serviços.',
+        placement: 'bottomRight'
+      });
+      return;
+    }
+    setPageState(prev => ({ ...prev, serviceModalOpen: true }));
+  }, [vehicles]);
+
   const getFileIcon = (fileUrl: string) => {
     const extension = fileUrl.split('.').pop()?.toLowerCase() || '';
     if (extension === 'pdf') {
@@ -68,110 +97,119 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     return fileUrl.split('/').pop() || 'Arquivo';
   };
 
-  // Converter URL relativa para absoluta
   const getAbsoluteUrl = (fileUrl: string) => {
-    // Se já é uma URL completa (começa com http:// ou https://), retorna como está
     if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
       return fileUrl;
     }
-    // Se é relativa, adiciona o prefixo do backend (mesma URL da API)
     const backendUrl = 'http://localhost:3001';
     return `${backendUrl}${fileUrl}`;
   };
 
-  // Carregar dados apenas uma vez na montagem do componente
   const loadData = useCallback(async () => {
-    // Prevenir múltiplas chamadas simultâneas
     if (pageState.isLoadingData) return;
-    
     setPageState(prev => ({ ...prev, isLoadingData: true, loading: true }));
 
     try {
-      // Carregar veículos e manutenções em paralelo para melhor performance
       const [vehiclesResponse, maintenanceResponse] = await Promise.allSettled([
         VehicleService.getUserVehicles(),
-        // Usar VehicleServiceService diretamente para pegar TODOS os serviços, incluindo os rejeitados
         VehicleServiceService.getAllServices()
       ]);
 
-      // Processar veículos
       if (vehiclesResponse.status === 'fulfilled') {
         const activeVehicles = vehiclesResponse.value.active || [];
         setVehicles(activeVehicles);
       } else {
-        console.error('Erro ao carregar veículos:', vehiclesResponse.reason);
         setVehicles([]);
       }
 
-      // Processar manutenções
       if (maintenanceResponse.status === 'fulfilled') {
         const maintenanceData = maintenanceResponse.value;
-        
-        // VehicleServiceService já retorna no formato correto do frontend
         const allServices = maintenanceData;
-        
         setMaintenanceEvents(allServices);
       } else {
-        console.error('Erro ao carregar manutenções:', maintenanceResponse.reason);
         setMaintenanceEvents([]);
       }
 
     } catch (error) {
-      console.error('Erro geral ao carregar dados:', error);
-      message.error('Erro ao carregar dados');
+      api.error({
+        message: 'Erro ao carregar dados',
+        description: 'Não foi possível carregar veículos e serviços.',
+        placement: 'bottomRight'
+      });
     } finally {
       setPageState(prev => ({ ...prev, loading: false, isLoadingData: false }));
     }
   }, [pageState.isLoadingData]);
 
-  // Effect para carregar dados apenas na montagem
   useEffect(() => {
     loadData();
-  }, []); // Array vazio para executar apenas uma vez
+    return () => {
+      pollersRef.current.forEach(id => clearInterval(id));
+      pollersRef.current = [];
+    };
+  }, []);
 
-  // Memoizar veículos para evitar re-renders desnecessários
   const memoizedVehicles = useMemo(() => {
     return vehicles;
   }, [vehicles]);
 
-  // Memoizar eventos para evitar re-renders desnecessários
   const memoizedMaintenanceEvents = useMemo(() => {
     return maintenanceEvents;
   }, [maintenanceEvents]);
 
-  // Filtrar manutenções com memoização otimizada
   const filteredMaintenance = useMemo(() => {
     return memoizedMaintenanceEvents.filter(event => {
-      // Verificar se o evento tem todas as propriedades necessárias
       if (!event?.vehicleId || !event?.description || !event?.category) {
         return false;
       }
-
-      // Filtro por veículo ativo
       const vehicle = memoizedVehicles.find(v => v.id === event.vehicleId);
       if (!vehicle || vehicle.status !== 'active') {
         return false;
       }
-
-      // Filtro por veículo selecionado
+      
+      // Filtro por veículo
       if (pageState.selectedVehicle !== 'all' && event.vehicleId !== pageState.selectedVehicle) {
         return false;
       }
+      
+      // Filtro por tipo
+      if (filterType !== 'all' && event.type && event.type.toLowerCase() !== filterType.toLowerCase()) {
+        return false;
+      }
 
-      // Filtro por termo de busca
+      // Filtro por categoria
+      if (filterCategory !== 'all' && event.category.toLowerCase() !== filterCategory.toLowerCase()) {
+        return false;
+      }
+      
+      // Filtro por texto (busca em descrição, local, técnico, notas, categoria)
       if (pageState.searchTerm) {
         const searchLower = pageState.searchTerm.toLowerCase();
-        if (!event.description.toLowerCase().includes(searchLower) &&
-            !event.category.toLowerCase().includes(searchLower)) {
+        const matchesDescription = event.description?.toLowerCase().includes(searchLower);
+        const matchesLocation = (event as any).location?.toLowerCase().includes(searchLower);
+        const matchesTechnician = (event as any).technician?.toLowerCase().includes(searchLower);
+        const matchesNotes = (event as any).notes?.toLowerCase().includes(searchLower);
+        const matchesCategory = event.category?.toLowerCase().includes(searchLower);
+        
+        if (!matchesDescription && !matchesLocation && !matchesTechnician && !matchesNotes && !matchesCategory) {
           return false;
         }
       }
 
+      // Filtro por período de datas
+      if (dateRange && dateRange[0] && dateRange[1]) {
+        const eventDateSource = (event as any).serviceDate || (event as any).date || (event as any).createdAt;
+        if (!eventDateSource) return false;
+        const eventDate = dayjs(eventDateSource);
+        // incluir bordas (>= start && <= end)
+        const isInside = eventDate.isAfter(dateRange[0].subtract(1, 'day')) && eventDate.isBefore(dateRange[1].add(1, 'day'));
+        if (!isInside) return false;
+      }
+
       return true;
     });
-  }, [memoizedMaintenanceEvents, memoizedVehicles, pageState.selectedVehicle, pageState.searchTerm]);
+  }, [memoizedMaintenanceEvents, memoizedVehicles, pageState.selectedVehicle, pageState.searchTerm, dateRange, filterType, filterCategory]);
 
-  // Funções para obter dados do veículo (memoizadas)
   const getVehicleName = useCallback((vehicleId: string) => {
     const vehicle = memoizedVehicles.find(v => v.id === vehicleId);
     if (!vehicle) return 'Veículo não encontrado';
@@ -186,7 +224,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     return vehicle.plate;
   }, [memoizedVehicles]);
 
-  // Calcular estatísticas (memoizado)
   const statistics = useMemo(() => {
     const totalCost = filteredMaintenance.reduce((sum, event) => sum + (Number(event.cost) || 0), 0);
     const totalMaintenance = filteredMaintenance.length;
@@ -195,42 +232,99 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     return { totalCost, totalMaintenance, averageCost };
   }, [filteredMaintenance]);
 
-  // Handlers otimizados
-  const handleVehicleChange = useCallback((value: string) => {
-    setPageState(prev => ({ ...prev, selectedVehicle: value }));
+  const handleClearFilters = useCallback(() => {
+    setPageState(prev => ({ ...prev, searchTerm: '', selectedVehicle: 'all' }));
+    setFilterType('all');
+    setFilterCategory('all');
+    setDateRange(null);
   }, []);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setPageState(prev => ({ ...prev, searchTerm: e.target.value }));
-  }, []);
-
-  const handleAddMaintenance = useCallback(() => {
-    // Verificar se o usuário tem veículos cadastrados
-    if (vehicles.length === 0) {
-      message.warning('Você precisa cadastrar pelo menos um veículo antes de criar manutenções');
-      return;
-    }
-    setPageState(prev => ({ ...prev, serviceModalOpen: true }));
-  }, [vehicles]);
 
   const handleServiceModalClose = useCallback(() => {
     setPageState(prev => ({ ...prev, serviceModalOpen: false }));
   }, []);
 
   const handleServiceAdd = useCallback((newService: VehicleEvent) => {
-    setMaintenanceEvents(prev => [newService, ...prev]);
-    message.success('Manutenção adicionada com sucesso!');
+    const pendingInjected = {
+      ...newService,
+      blockchainStatus: {
+        ...(newService as any).blockchainStatus,
+        status: 'PENDING' as const
+      }
+    } as VehicleEvent;
+    setMaintenanceEvents(prev => [pendingInjected, ...prev]);
     setPageState(prev => ({ ...prev, serviceModalOpen: false }));
-    
-    // Recarregar lista após 3 segundos para pegar status atualizado da blockchain
-    setTimeout(() => {
-      console.log('🔄 Recarregando lista para verificar status da blockchain...');
-      message.info({
-        content: 'Verificando confirmação da blockchain...',
-        duration: 2,
-      });
-      loadData();
+    const notifKey = `blockchain-${newService.id}`;
+    api.info({
+      key: notifKey,
+      message: 'Processando na blockchain',
+      description: 'Aguardando confirmação... isso pode levar alguns segundos.',
+      placement: 'bottomRight',
+      duration: 0
+    });
+    let attempts = 0;
+    const maxAttempts = 12;
+    let consecutiveConfirmed = 0;
+    const startTime = Date.now();
+    const minConfirmMs = 15000;
+    const intervalId = setInterval(async () => {
+      attempts += 1;
+      try {
+        const updatedList = await VehicleServiceService.getAllServices();
+        const updated = updatedList.find(s => s.id === newService.id);
+        if (updated) {
+          setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? updated : ev));
+
+          const status = updated.blockchainStatus?.status;
+          const hasDefinitiveProof = !!(updated as any).confirmedAt || !!(updated as any).hash;
+
+          if (status === 'CONFIRMED' && hasDefinitiveProof) {
+            consecutiveConfirmed += 1;
+          } else {
+            consecutiveConfirmed = 0;
+          }
+
+          const elapsedMs = Date.now() - startTime;
+
+          if (status === 'CONFIRMED' && consecutiveConfirmed >= 2 && elapsedMs >= minConfirmMs) {
+            api.success({
+              key: notifKey,
+              message: 'Confirmado na blockchain',
+              description: 'O serviço foi registrado com sucesso.',
+              placement: 'bottomRight',
+              duration: 4
+            });
+            clearInterval(intervalId);
+            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+          } else if (status === 'FAILED') {
+            api.error({
+              key: notifKey,
+              message: 'Falha na blockchain',
+              description: 'Não foi possível registrar. Você pode tentar reenviar.',
+              placement: 'bottomRight',
+              duration: 6
+            });
+            clearInterval(intervalId);
+            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+          }
+        }
+      } catch (e) {
+        console.warn('Erro ao verificar status da blockchain:', e);
+      } finally {
+        if (attempts >= maxAttempts) {
+          api.warning({
+            key: notifKey,
+            message: 'Ainda aguardando confirmação',
+            description: 'A confirmação pode demorar. Verifique mais tarde ou tente reenviar.',
+            placement: 'bottomRight',
+            duration: 6
+          });
+          clearInterval(intervalId);
+          pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+        }
+      }
     }, 3000);
+    pollersRef.current.push(intervalId as unknown as number);
   }, [loadData]);
 
   const handleViewDetails = useCallback((record: MaintenanceEvent) => {
@@ -243,7 +337,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
 
 
   const handleResendToBlockchain = useCallback(async (serviceId: string) => {
-    console.log('🔄 Iniciando reenvio para blockchain, serviceId:', serviceId);
     
     message.loading('Reenviando para blockchain... Aguarde até 20s', 0);
     
@@ -251,31 +344,51 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       setPageState(prev => ({ ...prev, loading: true }));
       
       const result = await BlockchainService.resendFailedService(serviceId);
-      
-      console.log('📊 Resultado do reenvio:', result);
       message.destroy();
       
       if (result.success) {
-        message.success(`✅ Transação enviada! Hash: ${result.transactionHash?.substring(0, 10)}...`, 6);
+        api.success({
+          message: 'Transação enviada',
+          description: `Hash: ${result.transactionHash?.substring(0, 10)}...`,
+          placement: 'bottomRight',
+          duration: 6
+        });
         setTimeout(() => {
-          message.info('ℹ️ Aguarde enquanto a transação é minerada...', 4);
+          api.info({
+            message: 'Aguardando mineração',
+            description: 'A transação está sendo minerada na rede.',
+            placement: 'bottomRight',
+            duration: 4
+          });
         }, 1000);
         await loadData();
       } else {
-        console.error('❌ Falha no reenvio:', result.error);
-        console.log('🔍 Tipo de erro:', result.error);
         
         // Mensagem simples e direta
         if (result.error?.includes('Timeout')) {
-          message.warning('⚠️ Rede lenta! A transação não confirmou em 20s. Tente novamente.', 10);
+          api.warning({
+            message: 'Rede lenta',
+            description: 'A transação não confirmou em 20s. Tente novamente.',
+            placement: 'bottomRight',
+            duration: 10
+          });
         } else if (result.error?.includes('já está')) {
-          message.info('✅ Este registro já está na blockchain!', 5);
+          api.info({
+            message: 'Já na blockchain',
+            description: 'Este registro já foi confirmado anteriormente.',
+            placement: 'bottomRight',
+            duration: 5
+          });
         } else {
-          message.error(`❌ Falha: ${result.error}`, 8);
+          api.error({
+            message: 'Falha no reenvio',
+            description: result.error,
+            placement: 'bottomRight',
+            duration: 8
+          });
         }
       }
     } catch (error) {
-      console.error('❌ Erro ao reenviar para blockchain:', error);
       message.destroy();
       
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
@@ -290,8 +403,72 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     }
   }, [loadData]);
 
+  const exportMaintenanceData = useCallback(() => {
+    try {
+      const exportData = filteredMaintenance.map(service => {
+        const vehicle = memoizedVehicles.find(v => v.id === service.vehicleId);
+        const maintenanceEvent = service as MaintenanceEvent;
+        const status = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
+        let statusText = 'Pendente';
+        
+        switch (status) {
+          case 'CONFIRMED':
+            statusText = 'Confirmado';
+            break;
+          case 'SUBMITTED':
+            statusText = 'Enviado';
+            break;
+          case 'FAILED':
+            statusText = 'Falhou';
+            break;
+        }
 
-  // Colunas da tabela (memoizadas)
+        return {
+          'Veículo': vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
+          'Placa': vehicle?.plate || 'N/A',
+          'Categoria': service.category,
+          'Descrição': service.description,
+          'Data': formatBRDate(service.date || maintenanceEvent.serviceDate || service.createdAt),
+          'Quilometragem': kmFormat(service.mileage),
+          'Custo': currencyBRL(service.cost),
+          'Local': service.location || 'N/A',
+          'Status Blockchain': statusText,
+          'Hash': maintenanceEvent.blockchainHash || 'N/A',
+          'Técnico': service.technician || 'N/A',
+          'Garantia': service.warranty ? 'Sim' : 'Não',
+          'Observações': service.notes || 'N/A'
+        };
+      });
+
+      if (exportData.length === 0) {
+        message.warning('Nenhum dado para exportar');
+        return;
+      }
+
+      const headers = Object.keys(exportData[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => 
+          headers.map(header => `"${(row as any)[header] || ''}"`).join(',')
+        )
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `manutencoes_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      message.success('Dados exportados com sucesso!');
+    } catch (error) {
+      message.error('Erro ao exportar dados');
+    }
+  }, [filteredMaintenance, memoizedVehicles]);
+
   const columns = useMemo(() => [
     {
       title: 'Veículo',
@@ -430,16 +607,15 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               />
             </Tooltip>
             {isFailed && (
-              <Tooltip title="Reenviar para blockchain">
+            <Tooltip title="Reenviar para blockchain">
                 <Button
                   type="primary"
                   danger
                   icon={<ReloadOutlined />}
                   size="small"
-                  onClick={() => {
-                    console.log('🔄 Botão de reenvio clicado para ID:', record.id);
-                    handleResendToBlockchain(record.id);
-                  }}
+                onClick={() => {
+                  handleResendToBlockchain(record.id);
+                }}
                 />
               </Tooltip>
             )}
@@ -449,16 +625,14 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     },
   ], [getVehicleName, getVehiclePlate, handleViewDetails, handleResendToBlockchain]);
 
-  // Props do DefaultFrame memoizadas
   const defaultFrameProps = useMemo(() => ({
-    title: "Manutenções",
-    loading: pageState.loading,
-    key: "maintenance-page"
+    title: "Serviços",
+    loading: pageState.loading
   }), [pageState.loading]);
 
   return (
-    <DefaultFrame {...defaultFrameProps}>
-      {/* Header da página */}
+    <DefaultFrame key="maintenance-page" {...defaultFrameProps}>
+      
       {vehicles.length > 0 && statistics.totalMaintenance > 0 && (
         <div className={styles.pageHeader}>
           <Button
@@ -467,13 +641,12 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             onClick={handleAddMaintenance}
             className={componentStyles.professionalButton}
           >
-            Nova Manutenção
+            Novo Serviço
           </Button>
         </div>
       )}
 
-      <div style={{ padding: '0' }}>
-        {/* Mensagem quando não há veículos */}
+        
         {vehicles.length === 0 ? (
           <div className={styles.statsSection}>
             <Card className={componentStyles.professionalCard}>
@@ -484,7 +657,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                       Nenhum veículo cadastrado
                     </Text>
                     <Text style={{ color: 'var(--text-secondary)' }}>
-                      Para criar manutenções, você precisa cadastrar pelo menos um veículo primeiro.
+                      Para criar serviços, você precisa cadastrar pelo menos um veículo primeiro.
                     </Text>
                   </div>
                 }
@@ -492,7 +665,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               >
                 <Button
                   type="primary"
-                  onClick={() => window.location.href = '/vehicles'}
+                  onClick={() => navigate('/vehicles')}
                   className={componentStyles.professionalButton}
                 >
                   Acessar Veículos
@@ -502,13 +675,13 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           </div>
         ) : (
           <>
-            {/* Estatísticas */}
+            
             <div className={styles.statsSection}>
               <Row gutter={[24, 24]}>
                 <Col xs={24} sm={8}>
                   <Card className={componentStyles.professionalStatistic}>
                     <Statistic
-                      title="Total de Manutenções"
+                      title="Total de Serviços"
                       value={statistics.totalMaintenance}
                       prefix={<ToolOutlined style={{ color: 'var(--primary-color)' }} />}
                       valueStyle={{ color: 'var(--text-primary)' }}
@@ -542,75 +715,193 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               </Row>
             </div>
 
-            {/* Tabela de manutenções com filtros integrados */}
+            
             <div className={styles.maintenanceTableSection}>
               <Card
-                title={`Manutenções (${filteredMaintenance.length})`}
+                title={`Serviços (${filteredMaintenance.length})`}
                 className={componentStyles.professionalCard}
+                extra={
+                  <Button 
+                    type="text" 
+                    icon={<DownloadOutlined />}
+                    onClick={exportMaintenanceData}
+                    style={{ color: '#8B5CF6' }}
+                  >
+                    Exportar CSV
+                  </Button>
+                }
               >
-                {/* Filtros integrados */}
-                <div className={styles.filtersContainer}>
-                  <Row gutter={[16, 16]} align="middle">
-                    <Col xs={24} sm={8}>
-                      <div className={styles.filterField}>
-                        <Text strong>Veículo:</Text>
-                        <Select
-                          value={pageState.selectedVehicle}
-                          onChange={handleVehicleChange}
-                          placeholder="Selecione um veículo"
-                          className={componentStyles.professionalInput}
-                        >
-                          <Option value="all">Todos os veículos ativos</Option>
-                          {memoizedVehicles.filter(vehicle => vehicle.status === 'active').map(vehicle => (
-                            <Option key={vehicle.id} value={vehicle.id}>
-                              {vehicle.brand} {vehicle.model} - {vehicle.plate}
-                            </Option>
-                          ))}
-                        </Select>
+                
+                {/* Filtros - Padrão da página pública */}
+                <div style={{ marginBottom: '24px' }}>
+                  {(() => {
+                    const activeFiltersCount = [
+                      pageState.selectedVehicle !== 'all' ? 1 : 0,
+                      pageState.searchTerm !== '' ? 1 : 0,
+                      filterType !== 'all' ? 1 : 0,
+                      filterCategory !== 'all' ? 1 : 0,
+                      dateRange !== null ? 1 : 0
+                    ].reduce((sum, val) => sum + val, 0);
+                    
+                    const hasActiveFilters = activeFiltersCount > 0;
+                    
+                    return (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <Space>
+                          <FilterOutlined style={{ color: 'rgba(255,255,255,0.5)' }} />
+                          <Text type="secondary" style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>
+                            Filtros
+                          </Text>
+                          {hasActiveFilters && (
+                            <Tag color="purple" style={{ fontSize: '10px', margin: 0 }}>
+                              {activeFiltersCount} ativo{activeFiltersCount !== 1 ? 's' : ''}
+                            </Tag>
+                          )}
+                        </Space>
+                        {hasActiveFilters && (
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<ClearOutlined />}
+                            onClick={handleClearFilters}
+                            style={{ 
+                              color: 'rgba(255,255,255,0.7)',
+                              fontSize: '12px'
+                            }}
+                          >
+                            Limpar filtros
+                          </Button>
+                        )}
                       </div>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                      <div className={styles.filterField}>
-                        <Text strong>Buscar:</Text>
-                        <Input
-                          placeholder="Buscar por categoria ou descrição"
-                          value={pageState.searchTerm}
-                          onChange={handleSearchChange}
-                          prefix={<SearchOutlined />}
-                          className={componentStyles.professionalInput}
-                        />
-                      </div>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                      <div className={styles.filterField}>
-                        <Text strong>Período:</Text>
-                        <RangePicker
-                          placeholder={['Data inicial', 'Data final']}
-                          onChange={() => {
-                            message.info('Filtro por data será implementado em breve');
-                          }}
-                          className={componentStyles.professionalInput}
-                        />
-                      </div>
-                    </Col>
-                  </Row>
+                    );
+                  })()}
+                  
+                  {(() => {
+                    // Extrair tipos e categorias únicos para os filtros
+                    const uniqueTypes = Array.from(new Set(memoizedMaintenanceEvents.map(e => e.type).filter(Boolean)));
+                    const uniqueCategories = Array.from(new Set(memoizedMaintenanceEvents.map(e => e.category).filter(Boolean)));
+                    
+                    return (
+                      <Row gutter={[12, 12]} className={styles.filterRow}>
+                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                          <div className={styles.filterItem}>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                              Veículo
+                            </Text>
+                            <Select
+                              value={pageState.selectedVehicle}
+                              onChange={(value) => setPageState(prev => ({ ...prev, selectedVehicle: value }))}
+                              style={{ width: '100%' }}
+                              className={styles.filterSelect}
+                              placeholder="Selecione o veículo"
+                              showSearch
+                              filterOption={(input, option) =>
+                                (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                              }
+                            >
+                              <Option value="all">Todos os veículos</Option>
+                              {memoizedVehicles
+                                .filter(v => v.status === 'active')
+                                .map(vehicle => (
+                                  <Option key={vehicle.id} value={vehicle.id} label={`${vehicle.brand} ${vehicle.model} - ${vehicle.plate}`}>
+                                    {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                                  </Option>
+                                ))}
+                            </Select>
+                          </div>
+                        </Col>
+
+                        <Col xs={24} sm={12} md={12} lg={5} xl={5}>
+                          <div className={styles.filterItem}>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                              Buscar
+                            </Text>
+                            <Input
+                              placeholder="Descrição, local..."
+                              prefix={<SearchOutlined style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                              value={pageState.searchTerm}
+                              onChange={(e) => {
+                                setPageState(prev => ({ ...prev, searchTerm: e.target.value }));
+                              }}
+                              allowClear
+                              className={styles.filterInput}
+                            />
+                          </div>
+                        </Col>
+
+                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                          <div className={styles.filterItem}>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                              Tipo de Serviço
+                            </Text>
+                            <Select
+                              value={filterType}
+                              onChange={(value) => setFilterType(value)}
+                              style={{ width: '100%' }}
+                              className={styles.filterSelect}
+                            >
+                              <Option value="all">Todos os tipos</Option>
+                              {uniqueTypes.map(type => (
+                                <Option key={type} value={type}>{getTypeLabel(type)}</Option>
+                              ))}
+                            </Select>
+                          </div>
+                        </Col>
+
+                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                          <div className={styles.filterItem}>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                              Categoria
+                            </Text>
+                            <Select
+                              value={filterCategory}
+                              onChange={(value) => setFilterCategory(value)}
+                              style={{ width: '100%' }}
+                              className={styles.filterSelect}
+                            >
+                              <Option value="all">Todas categorias</Option>
+                              {uniqueCategories.map(category => (
+                                <Option key={category} value={category}>{category}</Option>
+                              ))}
+                            </Select>
+                          </div>
+                        </Col>
+
+                        <Col xs={24} sm={12} md={12} lg={7} xl={7}>
+                          <div className={styles.filterItem}>
+                            <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                              Período
+                            </Text>
+                            <RangePicker
+                              value={dateRange}
+                              onChange={(dates) => setDateRange(dates as [dayjs.Dayjs | null, dayjs.Dayjs | null] | null)}
+                              format="DD/MM/YYYY"
+                              placeholder={['Data inicial', 'Data final']}
+                              style={{ width: '100%' }}
+                              className={styles.filterDatePicker}
+                            />
+                          </div>
+                        </Col>
+                      </Row>
+                    );
+                  })()}
                 </div>
 
-                {/* Separador visual */}
+                
                 <div className={styles.tableSeparator} />
 
-                {/* Conteúdo da tabela */}
+                
                 {filteredMaintenance.length === 0 ? (
                   <Empty
                     description={
                       <div>
                         <Text strong style={{ display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>
-                          Nenhuma manutenção encontrada
+                          Nenhum serviço encontrado
                         </Text>
                         <Text style={{ color: 'var(--text-secondary)' }}>
                           {pageState.searchTerm || pageState.selectedVehicle !== 'all'
-                            ? 'Tente ajustar os filtros ou adicionar uma nova manutenção.'
-                            : 'Adicione sua primeira manutenção para começar.'
+                            ? 'Tente ajustar os filtros ou adicionar um novo serviço.'
+                            : 'Adicione seu primeiro serviço para começar.'
                           }
                         </Text>
                       </div>
@@ -623,7 +914,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                       onClick={handleAddMaintenance}
                       className={componentStyles.professionalButton}
                     >
-                      Adicionar Manutenção
+                      Adicionar Serviço
                     </Button>
                   </Empty>
                 ) : (
@@ -633,11 +924,11 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                     rowKey="id"
                     className={componentStyles.professionalTable}
                     pagination={{
-                      pageSize: 10,
+                      pageSize: 5,
                       showSizeChanger: false,
-                      showQuickJumper: true,
+                      showQuickJumper: false,
                       showTotal: (total, range) =>
-                        `${range[0]}-${range[1]} de ${total} manutenções`,
+                        `${range[0]}-${range[1]} de ${total} serviços`,
                     }}
                     scroll={{ x: 1200 }}
                   />
@@ -646,7 +937,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             </div>
           </>
         )}
-      </div>
 
       <ServiceModal
         open={pageState.serviceModalOpen}
@@ -654,11 +944,12 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         onAdd={handleServiceAdd}
         vehicles={memoizedVehicles}
         loading={false}
+        notificationApi={api}
       />
       
-      {/* Modal de visualização de detalhes */}
+      
       <Modal
-        title="Detalhes da Manutenção"
+        title="Detalhes do Serviço"
         open={pageState.viewModalOpen}
         onCancel={() => setPageState(prev => ({ ...prev, viewModalOpen: false, selectedMaintenance: null }))}
         footer={[
@@ -779,6 +1070,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           </Descriptions>
         )}
       </Modal>
+      {contextHolder}
     </DefaultFrame>
   );
 });

@@ -32,7 +32,6 @@ export const useVehicles = (): UseVehiclesReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Buscar veículos do usuário
   const fetchVehicles = useCallback(async () => {
     try {
       setLoading(true);
@@ -46,7 +45,6 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, []);
 
-  // Buscar estatísticas
   const fetchStats = useCallback(async () => {
     try {
       const data = await VehicleService.getActiveVehiclesStats();
@@ -56,19 +54,16 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, []);
 
-  // Criar novo veículo
   const createVehicle = useCallback(async (data: CreateVehicleData): Promise<Vehicle> => {
     try {
       setError(null);
       const newVehicle = await VehicleService.createVehicle(data);
       
-      // Atualizar lista local
       setVehicles(prev => ({
         ...prev,
         active: [newVehicle, ...prev.active]
       }));
       
-      // Atualizar estatísticas
       await fetchStats();
       
       return newVehicle;
@@ -79,13 +74,11 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, [fetchStats]);
 
-  // Atualizar veículo
   const updateVehicle = useCallback(async (id: string, data: UpdateVehicleData): Promise<Vehicle> => {
     try {
       setError(null);
       const updatedVehicle = await VehicleService.updateVehicle(id, data);
       
-      // Atualizar lista local
       setVehicles(prev => ({
         active: prev.active.map(vehicle => 
           vehicle.id === id ? updatedVehicle : vehicle
@@ -103,19 +96,16 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, []);
 
-  // Marcar como vendido
   const markAsSold = useCallback(async (id: string, data?: MarkVehicleSoldData): Promise<Vehicle> => {
     try {
       setError(null);
       const soldVehicle = await VehicleService.markVehicleAsSold(id, data);
       
-      // Mover veículo da lista ativa para vendidos
       setVehicles(prev => ({
         active: prev.active.filter(vehicle => vehicle.id !== id),
         sold: [soldVehicle, ...prev.sold]
       }));
       
-      // Atualizar estatísticas
       await fetchStats();
       
       return soldVehicle;
@@ -126,19 +116,16 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, [fetchStats]);
 
-  // Deletar veículo
   const deleteVehicle = useCallback(async (id: string): Promise<void> => {
     try {
       setError(null);
       await VehicleService.deleteVehicle(id);
       
-      // Remover da lista local
       setVehicles(prev => ({
         active: prev.active.filter(vehicle => vehicle.id !== id),
         sold: prev.sold.filter(vehicle => vehicle.id !== id)
       }));
       
-      // Atualizar estatísticas
       await fetchStats();
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Erro ao deletar veículo';
@@ -147,22 +134,18 @@ export const useVehicles = (): UseVehiclesReturn => {
     }
   }, [fetchStats]);
 
-  // Recarregar veículos
   const refreshVehicles = useCallback(async () => {
     await fetchVehicles();
   }, [fetchVehicles]);
 
-  // Recarregar estatísticas
   const refreshStats = useCallback(async () => {
     await fetchStats();
   }, [fetchStats]);
 
-  // Limpar erro
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
-  // Carregar dados iniciais
   useEffect(() => {
     fetchVehicles();
     fetchStats();
@@ -183,7 +166,6 @@ export const useVehicles = (): UseVehiclesReturn => {
   };
 };
 
-// Hook para gerenciar um veículo específico
 interface UseVehicleReturn {
   vehicle: Vehicle | null;
   loading: boolean;

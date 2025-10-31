@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { FipeBrand, FipeModel, FipeVehicleInfo, FipeYear } from '../types/fipe.types';
+import { FipeBrand, FipeModel, FipeVehicle, FipeYear } from '../types/fipe.types';
 
 export class FipeService {
     private static readonly BASE_URL = 'https://parallelum.com.br/fipe/api/v1';
@@ -46,7 +46,6 @@ export class FipeService {
                 `${this.BASE_URL}/carros/marcas/${brandCode}/modelos/${modelCode}/anos`
             );
 
-            // Ordenar anos decrescente (mais recente primeiro)
             return response.data.sort((a, b) => parseInt(b.nome) - parseInt(a.nome));
         } catch (error) {
             console.error('Erro ao buscar anos FIPE:', error);
@@ -61,9 +60,9 @@ export class FipeService {
         brandCode: string,
         modelCode: number,
         yearCode: string
-    ): Promise<FipeVehicleInfo> {
+    ): Promise<FipeVehicle> {
         try {
-            const response = await axios.get<FipeVehicleInfo>(
+            const response = await axios.get<FipeVehicle>(
                 `${this.BASE_URL}/carros/marcas/${brandCode}/modelos/${modelCode}/anos/${yearCode}`
             );
 
@@ -86,7 +85,6 @@ export class FipeService {
      * Formatar valor FIPE
      */
     static formatFipeValue(value: string): string {
-        // Remove "R$" e formata
         return value.replace('R$', '').trim();
     }
 

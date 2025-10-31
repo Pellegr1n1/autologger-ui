@@ -146,7 +146,7 @@
 .vehicleIcon {
   width: 100px;
   height: 100px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: transparent;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -156,6 +156,23 @@
   font-size: 48px;
   box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
   animation: pulse 2s ease-in-out infinite;
+  overflow: hidden;
+  position: relative;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.vehicleIcon:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
+}
+
+.vehicleIconImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  aspect-ratio: 1 / 1;
 }
 
 @keyframes pulse {
@@ -359,7 +376,7 @@
   cursor: help;
 }
 
-/* Estilos para lista de manutenções */
+/* Estilos para lista de serviços */
 .maintenanceList {
   display: flex;
   flex-direction: column;
@@ -481,7 +498,7 @@
   padding: 20px;
 }
 
-/* Estilo para o card de últimas manutenções */
+/* Estilo para o card de últimos serviços */
 .lastMaintenanceCard :global(.ant-card-body) {
   padding: 24px !important;
   display: flex;

@@ -13,7 +13,8 @@ import {
   Divider,
   Alert,
   Spin,
-  Modal
+  Modal,
+  Tooltip
 } from 'antd';
 import { 
   UserOutlined, 
@@ -22,7 +23,8 @@ import {
   EditOutlined,
   LockOutlined,
   DeleteOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../features/auth';
 import { useNavigate } from 'react-router-dom';
@@ -89,7 +91,13 @@ export default function ProfilePage() {
   };
 
   const handleCancel = () => {
-    form.resetFields();
+    // Restaura os valores originais do usuário
+    if (user) {
+      form.setFieldsValue({
+        name: user.name,
+        email: user.email
+      });
+    }
     setIsEditing(false);
     setHasChanges(false);
   };
@@ -153,7 +161,7 @@ export default function ProfilePage() {
     <DefaultFrame title="Meu Perfil">
       <div className={styles.profileContainer}>
         {/* Header do Perfil */}
-        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }}>
+        <Card className={componentStyles.professionalCard} bordered={false} style={{ marginBottom: '24px' }}>
           <Row gutter={[24, 24]} align="middle">
             <Col xs={24} sm={8}>
               <div className={styles.profileAvatar}>
@@ -226,41 +234,56 @@ export default function ProfilePage() {
         </Card>
 
         {/* Formulário de Perfil */}
-        <Row gutter={[24, 24]}>
-          <Col xs={24} lg={16}>
+        <Row 
+          gutter={[24, 24]} 
+          className={styles.cardsRow}
+          style={{ display: 'flex', alignItems: 'stretch' }}
+        >
+          <Col xs={24} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
             <Card 
               title={
                 <Space>
-                  <UserOutlined style={{ color: '#8B5CF6' }} />
+                  <div className={styles.personalInfoIcon}>
+                    <UserOutlined />
+                  </div>
                   <span>Informações Pessoais</span>
                 </Space>
               }
               className={componentStyles.professionalCard}
+              bordered={false}
+              style={{ height: '100%' }}
               extra={
                 <Space>
                   {isEditing ? (
                     <>
-                      <Button onClick={handleCancel}>
-                        Cancelar
-                      </Button>
-                      <Button 
-                        type="primary" 
-                        icon={<SaveOutlined />}
-                        onClick={() => form.submit()}
-                        loading={loading}
-                        disabled={!hasChanges}
-                      >
-                        Salvar
-                      </Button>
+                      <Tooltip title="Cancelar">
+                        <Button 
+                          onClick={handleCancel} 
+                          size="small"
+                          icon={<CloseOutlined />}
+                          type="text"
+                        />
+                      </Tooltip>
+                      <Tooltip title="Salvar">
+                        <Button 
+                          type="primary" 
+                          icon={<SaveOutlined />}
+                          onClick={() => form.submit()}
+                          loading={loading}
+                          disabled={!hasChanges}
+                          size="small"
+                        />
+                      </Tooltip>
                     </>
                   ) : (
-                    <Button 
-                      type="primary" 
-                      icon={<EditOutlined />}
-                      onClick={() => setIsEditing(true)}
-                    >
-                      Editar
-                    </Button>
+                    <Tooltip title="Editar">
+                      <Button 
+                        type="primary" 
+                        icon={<EditOutlined />}
+                        onClick={() => setIsEditing(true)}
+                        size="small"
+                      />
+                    </Tooltip>
                   )}
                 </Space>
               }
@@ -272,174 +295,196 @@ export default function ProfilePage() {
                 onValuesChange={handleFormChange}
                 disabled={!isEditing}
               >
-                <Row gutter={[16, 16]}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="name" 
-                      label={
-                        <Space>
-                          <UserOutlined />
-                          <span>Nome Completo</span>
-                        </Space>
-                      }
-                      rules={[{ required: true, message: 'Por favor, insira seu nome' }]}
-                    >
-                      <Input 
-                        placeholder="Seu nome completo"
-                        className={componentStyles.professionalInput}
-                      />
-                    </Form.Item>
-                  </Col>
-                  
-                  <Col xs={24} sm={12}>
-                    <Form.Item 
-                      name="email" 
-                      label={
-                        <Space>
-                          <MailOutlined />
-                          <span>E-mail</span>
-                        </Space>
-                      }
-                      rules={[
-                        { required: true, message: 'Por favor, insira seu e-mail' },
-                        { type: 'email', message: 'Por favor, insira um e-mail válido' }
-                      ]}
-                    >
-                      <Input 
-                        placeholder="seu@email.com"
-                        className={componentStyles.professionalInput}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
+                <Form.Item 
+                  name="name" 
+                  label={
+                    <Space>
+                      <UserOutlined />
+                      <span>Nome Completo</span>
+                    </Space>
+                  }
+                  rules={[{ required: true, message: 'Por favor, insira seu nome' }]}
+                >
+                  <Input 
+                    placeholder="Seu nome completo"
+                    className={componentStyles.professionalInput}
+                  />
+                </Form.Item>
+                
+                <Form.Item 
+                  name="email" 
+                  label={
+                    <Space>
+                      <MailOutlined />
+                      <span>E-mail</span>
+                    </Space>
+                  }
+                  rules={[
+                    { required: true, message: 'Por favor, insira seu e-mail' },
+                    { type: 'email', message: 'Por favor, insira um e-mail válido' }
+                  ]}
+                >
+                  <Input 
+                    placeholder="seu@email.com"
+                    className={componentStyles.professionalInput}
+                  />
+                </Form.Item>
               </Form>
             </Card>
           </Col>
 
-          {/* Sidebar com ações rápidas */}
-          <Col xs={24} lg={8}>
-            <Space direction="vertical" style={{ width: '100%' }} size="large">
-              {/* Configurações de Segurança - apenas para usuários locais */}
-              {user.authProvider === 'local' && (
-                <Card 
-                  title={
-                    <Space>
-                      <LockOutlined style={{ color: '#8B5CF6' }} />
-                      <span>Segurança</span>
-                    </Space>
-                  }
-                  className={componentStyles.professionalCard}
-                >
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <Button 
-                      block 
-                      icon={<LockOutlined />}
-                      onClick={() => setPasswordModalVisible(true)}
-                      style={{
-                        background: 'linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%)',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                        color: '#ffffff',
-                        height: '40px',
-                        fontWeight: '500'
-                      }}
-                    >
-                      Alterar Senha
-                    </Button>
-                  </Space>
-                </Card>
-              )}
-
-              {/* Informações de autenticação para usuários Google */}
-              {user.authProvider === 'google' && (
-                <Card 
-                  title={
-                    <Space>
-                      <LockOutlined style={{ color: '#8B5CF6' }} />
-                      <span>Autenticação</span>
-                    </Space>
-                  }
-                  className={componentStyles.professionalCard}
-                >
-                  <Space direction="vertical" style={{ width: '100%' }}>
-                    <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                      <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-                        Sua conta está conectada ao Google
-                      </Text>
-                      <br />
-                      <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                        Para alterar sua senha, acesse sua conta do Google
-                      </Text>
-                    </div>
-                  </Space>
-                </Card>
-              )}
-
-              {/* Informações da Conta */}
+          {/* Configurações de Segurança - apenas para usuários locais */}
+          {user.authProvider === 'local' && (
+            <Col xs={24} sm={12} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
               <Card 
-                title="Informações da Conta"
+                title={
+                  <Space>
+                    <div className={styles.authIcon}>
+                      <LockOutlined />
+                    </div>
+                    <span>Segurança</span>
+                  </Space>
+                }
                 className={componentStyles.professionalCard}
+                bordered={false}
+                style={{ height: '100%' }}
               >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <div>
+                <Button 
+                  block 
+                  icon={<LockOutlined />}
+                  onClick={() => setPasswordModalVisible(true)}
+                  className={styles.securityButtonImproved}
+                >
+                  Alterar Senha
+                </Button>
+              </Card>
+            </Col>
+          )}
+
+          {user.authProvider === 'google' && (
+            <Col xs={24} sm={12} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
+              <Card 
+                title={
+                  <Space>
+                    <div className={styles.authIcon}>
+                      <LockOutlined />
+                    </div>
+                    <span>Autenticação</span>
+                  </Space>
+                }
+                className={componentStyles.professionalCard}
+                bordered={false}
+                style={{ height: '100%' }}
+              >
+                <div className={styles.authContent}>
+                  <div className={styles.googleBadge}>
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  </div>
+                  <div style={{ marginTop: '16px' }}>
+                    <Text strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>
+                      Conta Google
+                    </Text>
+                    <br />
+                    <Text style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      Conectada via OAuth
+                    </Text>
+                  </div>
+                  <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(139, 92, 246, 0.05)', borderRadius: '8px' }}>
+                    <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      Para alterar sua senha, acesse sua conta do Google
+                    </Text>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+          )}
+
+          <Col xs={24} sm={12} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
+            <Card 
+              title={
+                <Space>
+                  <div className={styles.infoIcon}>
+                    <UserOutlined />
+                  </div>
+                  <span>Informações da Conta</span>
+                </Space>
+              }
+              className={componentStyles.professionalCard}
+              bordered={false}
+              style={{ height: '100%' }}
+            >
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <div className={styles.infoRow}>
+                  <div className={styles.infoLabel}>
                     <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
                       ID do Usuário
                     </Text>
-                    <Text strong style={{ display: 'block', fontSize: '14px' }}>
-                      {user.id}
-                    </Text>
                   </div>
-                  <Divider style={{ margin: '12px 0' }} />
-                  <div>
+                  <Text strong className={styles.infoValue}>
+                    {user.id}
+                  </Text>
+                </div>
+                <Divider style={{ margin: '12px 0', borderColor: 'rgba(139, 92, 246, 0.1)' }} />
+                <div className={styles.infoRow}>
+                  <div className={styles.infoLabel}>
                     <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
                       Criado em
                     </Text>
-                    <Text strong style={{ display: 'block', fontSize: '14px' }}>
-                      {new Date(user.createdAt || Date.now()).toLocaleString('pt-BR')}
-                    </Text>
                   </div>
-                </Space>
-              </Card>
+                  <Text strong className={styles.infoValue}>
+                    {new Date(user.createdAt || Date.now()).toLocaleString('pt-BR')}
+                  </Text>
+                </div>
+              </Space>
+            </Card>
+          </Col>
 
-              {/* Área Perigosa */}
-              <Card 
-                title="Área Perigosa"
-                className={componentStyles.professionalCard}
-                style={{ borderColor: '#ff4d4f' }}
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                    <Text style={{ color: 'var(--text-secondary)', fontSize: '13px', display: 'block', marginBottom: '16px' }}>
-                      Ao excluir sua conta, todos os seus dados serão removidos permanentemente. Esta ação não pode ser desfeita.
-                    </Text>
-                  </div>
-                  <Button 
-                    danger 
-                    block 
-                    icon={<DeleteOutlined />}
-                    onClick={() => setDeleteModalVisible(true)}
-                    style={{
-                      height: '40px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Excluir Conta
-                  </Button>
-                </Space>
-              </Card>
-            </Space>
+          <Col xs={24} sm={12} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
+            <Card 
+              className={styles.dangerCard}
+              bordered={false}
+              style={{ height: '100%' }}
+            >
+              <div className={styles.dangerContent}>
+                <div className={styles.dangerIcon}>
+                  <ExclamationCircleOutlined />
+                </div>
+                <Title level={5} style={{ color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  Excluir Conta
+                </Title>
+                <Text className={styles.dangerText}>
+                  Esta ação é permanente e não pode ser desfeita. Todos os seus dados serão permanentemente removidos.
+                </Text>
+                <Button 
+                  danger 
+                  block 
+                  icon={<DeleteOutlined />}
+                  onClick={() => setDeleteModalVisible(true)}
+                  className={styles.deleteButton}
+                >
+                  Excluir Conta
+                </Button>
+              </div>
+            </Card>
           </Col>
         </Row>
 
         {/* Alertas e Notificações */}
         {hasChanges && isEditing && (
-          <Alert
-            message="Alterações não salvas"
-            description="Você tem alterações não salvas. Clique em 'Salvar' para aplicá-las."
-            type="warning"
-            showIcon
-            style={{ marginTop: '24px' }}
-          />
+          <div className={styles.alertWrapper}>
+            <Alert
+              message="Alterações não salvas"
+              description="Você tem alterações não salvas. Clique em 'Salvar' para aplicá-las."
+              type="warning"
+              showIcon
+              className={styles.unsavedChangesAlert}
+            />
+          </div>
         )}
 
         {/* Modal de Alteração de Senha */}
@@ -552,7 +597,7 @@ export default function ProfilePage() {
               icon={<DeleteOutlined />}
               onClick={handleDeleteAccount}
             >
-              Sim, Excluir Conta
+              Excluir Conta
             </Button>
           ]}
           width={500}
@@ -563,21 +608,19 @@ export default function ProfilePage() {
             message="Esta ação é irreversível"
             description={
               <div>
-                <Text style={{ display: 'block', marginBottom: '12px' }}>
-                  Tem certeza que deseja excluir sua conta? Todos os seus dados serão permanentemente removidos, incluindo:
+                <Text style={{ display: 'block', marginBottom: '12px', color: '#F9FAFB' }}>
+                  Tem certeza que deseja excluir sua conta? Os seguintes dados serão removidos do nosso sistema:
                 </Text>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                  <li><Text>Seu perfil e informações pessoais</Text></li>
-                  <li><Text>Todo o histórico</Text></li>
-                  <li><Text>Dados associados à sua conta</Text></li>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: '#F9FAFB' }}>
+                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Seu perfil e informações pessoais</li>
+                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Credenciais de acesso</li>
+                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Preferências de conta</li>
                 </ul>
-                <Alert
-                  type="warning"
-                  message="Importante"
-                  description="Esta ação não pode ser desfeita!"
-                  showIcon
-                  style={{ marginTop: '12px' }}
-                />
+                <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(107, 114, 128, 0.1)', borderRadius: '8px', border: '1px solid rgba(107, 114, 128, 0.2)' }}>
+                  <Text style={{ color: '#6B7280', fontSize: '12px', display: 'block' }}>
+                    <strong style={{ color: '#F9FAFB' }}>Nota:</strong> Os registros de serviços e histórico armazenados na blockchain permanecerão intactos, pois são registros imutáveis e descentralizados.
+                  </Text>
+                </div>
               </div>
             }
             type="error"

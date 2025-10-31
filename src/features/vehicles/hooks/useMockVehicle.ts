@@ -3,7 +3,6 @@ import {
   Vehicle, 
   VehicleEvent, 
   VehicleDocument,
-  ChainStatus,
   VehicleEventType,
   VehicleStatus 
 } from "../types/vehicle.types"
@@ -23,8 +22,7 @@ export function useMockVehicle(id: string) {
       attachments: ["NF_Troca_Oleo_2025-05-10.pdf"],
       createdAt: new Date("2025-05-10"),
       updatedAt: new Date("2025-05-10"),
-      
-      // Blockchain fields
+
       blockchainStatus: {
         status: 'CONFIRMED',
         message: 'Confirmado na blockchain',
@@ -38,7 +36,6 @@ export function useMockVehicle(id: string) {
       isImmutable: true,
       canEdit: false,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: "user",
       confirmedAt: new Date("2025-05-10"),
@@ -58,7 +55,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-06-02"),
       updatedAt: new Date("2025-06-02"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'PENDING',
         message: 'Aguardando confirmação blockchain',
@@ -72,7 +68,6 @@ export function useMockVehicle(id: string) {
       isImmutable: false,
       canEdit: true,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: undefined,
       confirmedAt: undefined,
@@ -92,7 +87,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-07-15"),
       updatedAt: new Date("2025-07-15"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'CONFIRMED',
         message: 'Confirmado na blockchain',
@@ -106,7 +100,6 @@ export function useMockVehicle(id: string) {
       isImmutable: true,
       canEdit: false,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: "user",
       confirmedAt: new Date("2025-07-15"),
@@ -126,7 +119,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-07-22"),
       updatedAt: new Date("2025-07-22"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'PENDING',
         message: 'Aguardando confirmação blockchain',
@@ -140,7 +132,6 @@ export function useMockVehicle(id: string) {
       isImmutable: false,
       canEdit: true,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: undefined,
       confirmedAt: undefined,

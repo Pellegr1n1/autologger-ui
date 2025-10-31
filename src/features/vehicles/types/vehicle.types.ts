@@ -12,7 +12,6 @@ export enum VehicleEventType {
   OTHER = "other",
 }
 
-// Importar ChainStatus do blockchain.types.ts
 export interface ChainStatus {
   status: 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED' | 'REVERTED';
   message?: string;
@@ -55,16 +54,12 @@ export interface VehicleEvent {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  
-  // Blockchain fields
   blockchainStatus: ChainStatus;
   hash?: string;
   previousHash?: string;
   merkleRoot?: string;
   isImmutable: boolean;
   canEdit: boolean;
-  
-  // Two-factor confirmation
   requiresConfirmation: boolean;
   confirmedBy?: string;
   confirmedAt?: Date;

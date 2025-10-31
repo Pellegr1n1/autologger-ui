@@ -127,7 +127,7 @@ export default function HomePage() {
                   itemLayout="horizontal"
                   dataSource={[
                     'Custos por quilômetro',
-                    'Manutenção programada',
+                    'Serviço programado',
                     'Alertas personalizados'
                   ]}
                   renderItem={item => (
@@ -177,7 +177,7 @@ export default function HomePage() {
                   <Title level={3} style={{ margin: 0, color: 'white' }}>Smart Contracts</Title>
                 </div>
                 <Paragraph style={{ color: 'white' }}>
-                  Automatize processos como cálculos de depreciação, alertas de manutenção e transferência de propriedade.
+                  Automatize processos como cálculos de depreciação, alertas de serviço e transferência de propriedade.
                 </Paragraph>
                 <List
                   itemLayout="horizontal"

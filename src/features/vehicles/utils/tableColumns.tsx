@@ -1,16 +1,13 @@
 import { Button, Space, Tag, Typography, Tooltip, Modal } from "antd"
 import { 
-  EyeOutlined, 
   EditOutlined, 
   DeleteOutlined,
-  DownloadOutlined,
   FilePdfOutlined,
   FileTextOutlined,
   PaperClipOutlined,
-  ExclamationCircleOutlined
 } from "@ant-design/icons"
 import type { TableColumnsType } from "antd"
-import type { VehicleEvent, VehicleDocument, ChainStatus, VehicleEventType } from "../types/vehicle.types"
+import type { VehicleEvent, VehicleDocument, VehicleEventType } from "../types/vehicle.types"
 import { currencyBRL, formatBRDate, kmFormat } from "../../../shared/utils/format"
 import { getChainStatusConfig, getVehicleEventTypeLabel } from "./helpers"
 
@@ -77,17 +74,7 @@ export function createEventColumns(
               size="small"
               icon={<DeleteOutlined />}
               danger
-              onClick={() => {
-                // Modal.confirm({ // This line was removed as per the new_code, as Modal is no longer imported.
-                //   title: "Excluir evento",
-                //   icon: <ExclamationCircleOutlined />,
-                //   content: "Deseja remover este evento?",
-                //   okText: "Excluir",
-                //   okButtonProps: { danger: true },
-                //   cancelText: "Cancelar",
-                //   onOk: () => onDelete(record.id),
-                // })
-              }}
+              onClick={() => {}}
             />
           </Tooltip>
         </Space>

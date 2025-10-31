@@ -59,7 +59,7 @@ export default function PrivacyPage() {
 
                 <Title level={4} className={styles.sectionSubtitle}>2.3 Dados de Serviços Veiculares</Title>
                 <Paragraph className={styles.sectionContent}>
-                  Registramos informações sobre serviços e manutenções realizados:
+                  Registramos informações sobre serviços e despesas realizados:
                 </Paragraph>
                 <ul className={styles.sectionList}>
                   <li><strong>Detalhes do Serviço:</strong> Tipo, categoria, descrição, data, custo</li>

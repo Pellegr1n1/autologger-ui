@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   Row, 
@@ -8,24 +9,20 @@ import {
   Button, 
   Tag, 
   Space, 
-  Table, 
   DatePicker, 
   Select, 
   Empty,
-  Spin,
   message
 } from 'antd';
 import {
-  BarChartOutlined,
-  PieChartOutlined,
-  DownloadOutlined,
+  LineChartOutlined,
   DollarOutlined,
   CarOutlined,
   ToolOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
-  ReloadOutlined
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  PieChartOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 import {
   BarChart,
@@ -35,22 +32,20 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
   PieChart,
   Pie,
-  Cell,
-  Legend,
-  Area,
-  ComposedChart
+  Cell
 } from 'recharts';
+import dayjs from 'dayjs';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './ReportsPage.module.css';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
-import { BlockchainService } from '../../features/blockchain/services/blockchainService';
-import { Vehicle, VehicleEvent, VehicleEventType } from '../../features/vehicles/types/vehicle.types';
+import { Vehicle, VehicleEvent } from '../../features/vehicles/types/vehicle.types';
 import { currencyBRL, formatBRDate } from '../../shared/utils/format';
-import CustomTooltip from '../../components/charts/CustomTooltip';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -60,115 +55,59 @@ interface ReportData {
   totalVehicles: number;
   totalExpenses: number;
   totalServices: number;
-  blockchainVerified: number;
   monthlyExpenses: number;
-  upcomingServices: number;
+  previousMonthExpenses: number;
+  monthlyExpensesChange: number; // % de variação
   averageServiceCost: number;
-  reliabilityScore: number;
+  averageCostPerVehicle: number;
+  topSpendingVehicle: { name: string; cost: number } | null;
+  topCategory: { name: string; cost: number } | null;
+  topExpensiveServices: Array<{ id: string; description: string; cost: number; vehicleName: string; date: Date }>;
 }
 
 export default function ReportsPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState<ReportData>({
     totalVehicles: 0,
     totalExpenses: 0,
     totalServices: 0,
-    blockchainVerified: 0,
     monthlyExpenses: 0,
-    upcomingServices: 0,
+    previousMonthExpenses: 0,
+    monthlyExpensesChange: 0,
     averageServiceCost: 0,
-    reliabilityScore: 0
+    averageCostPerVehicle: 0,
+    topSpendingVehicle: null,
+    topCategory: null,
+    topExpensiveServices: []
   });
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [services, setServices] = useState<VehicleEvent[]>([]);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('30');
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
 
   useEffect(() => {
     loadReportData();
-  }, [selectedPeriod, selectedVehicle, dateRange]);
+  }, [selectedVehicle, dateRange]);
 
   const loadReportData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Carregar veículos
       const vehiclesData = await VehicleService.getUserVehicles();
       const activeVehicles = vehiclesData.active || [];
       setVehicles(activeVehicles);
 
-      // Carregar serviços - usar mesma fonte da tela de manutenções
+      // Buscar sempre do banco (serviço local)
       let servicesData: VehicleEvent[] = [];
-      try {
-        // Tentar primeiro o BlockchainService (mesma fonte da tela de manutenções)
-        const blockchainServices = await BlockchainService.getAllServices();
-        console.log('Blockchain services loaded:', blockchainServices);
-        
-        // Converter para formato VehicleEvent - mostrar todos os tipos de serviços
-        servicesData = blockchainServices.map((service: any) => {
-          // Mapear tipo do backend para frontend
-          const mapServiceType = (backendType: string): VehicleEventType => {
-            switch (backendType) {
-              case 'maintenance': return VehicleEventType.MAINTENANCE;
-              case 'fuel': return VehicleEventType.FUEL;
-              case 'repair': return VehicleEventType.REPAIR;
-              case 'inspection': return VehicleEventType.INSPECTION;
-              case 'expense': return VehicleEventType.EXPENSE;
-              case 'other': return VehicleEventType.OTHER;
-              default: return VehicleEventType.MAINTENANCE;
-            }
-          };
-
-          return {
-            id: service.id || service.serviceId,
-            vehicleId: service.vehicleId,
-            type: mapServiceType(service.type), // Mapear tipo corretamente
-            category: service.category || 'Serviço',
-            description: service.description,
-            date: new Date(service.serviceDate || service.createdAt),
-            mileage: service.mileage || 0,
-            cost: service.cost || 0,
-            location: service.location || '',
-            attachments: service.attachments || [],
-            technician: service.technician,
-            warranty: service.warranty || false,
-            nextServiceDate: service.nextServiceDate ? new Date(service.nextServiceDate) : undefined,
-            notes: service.notes,
-            createdAt: new Date(service.createdAt),
-            updatedAt: new Date(service.updatedAt),
-            blockchainStatus: {
-              status: service.status || 'PENDING',
-              message: service.status === 'CONFIRMED' ? 'Transação confirmada na blockchain' : 'Aguardando confirmação',
-              lastUpdate: new Date(service.updatedAt || service.createdAt),
-              retryCount: 0,
-              maxRetries: 3
-            },
-            hash: service.blockchainHash,
-            previousHash: service.previousHash,
-            merkleRoot: service.merkleRoot,
-            isImmutable: service.status === 'CONFIRMED',
-            canEdit: service.status !== 'CONFIRMED',
-            requiresConfirmation: false,
-            confirmedBy: service.confirmedBy,
-            confirmedAt: service.confirmedAt ? new Date(service.confirmedAt) : undefined
-          };
-        });
-      } catch (error) {
-        console.log('Blockchain service error, trying fallback:', error);
         try {
-          // Fallback para VehicleServiceService se blockchain falhar
           servicesData = await VehicleServiceService.getAllServices();
-          console.log('Fallback services loaded:', servicesData);
-        } catch (fallbackError) {
-          console.log('All services failed, using empty array:', fallbackError);
+      } catch (error) {
           servicesData = [];
-        }
       }       
       
       setServices(servicesData);
 
-      // Calcular estatísticas
       const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, activeVehicles);
       
       const totalExpenses = filteredServices.reduce((sum, service) => {
@@ -176,18 +115,39 @@ export default function ReportsPage() {
         return sum + cost;
       }, 0);
       
-      const verifiedServices = filteredServices.filter(service => 
-        service.blockchainStatus?.status === 'CONFIRMED'
-      );
       const averageCost = filteredServices.length > 0 ? totalExpenses / filteredServices.length : 0;
-      const reliabilityScore = servicesData.length > 0 
-        ? Math.round((verifiedServices.length / servicesData.length) * 100) 
-        : 0;
+      const averageCostPerVehicle = activeVehicles.length > 0 ? totalExpenses / activeVehicles.length : 0;
 
-      // Calcular gastos do mês atual
+      // Calcular gastos por veículo
+      const vehicleCosts: { [key: string]: number } = {};
+      filteredServices.forEach(service => {
+        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+        vehicleCosts[service.vehicleId] = (vehicleCosts[service.vehicleId] || 0) + cost;
+      });
+
+      const topVehicleEntry = Object.entries(vehicleCosts).reduce((max, [vehicleId, cost]) => {
+        if (cost > max.cost) {
+          const vehicle = activeVehicles.find(v => v.id === vehicleId);
+          return { cost, name: vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A' };
+        }
+        return max;
+      }, { cost: 0, name: 'N/A' });
+
+      // Calcular categoria que mais gasta
+      const categoryCosts: { [key: string]: number } = {};
+      filteredServices.forEach(service => {
+        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+        categoryCosts[service.category] = (categoryCosts[service.category] || 0) + cost;
+      });
+
+      const topCategoryEntry = Object.entries(categoryCosts).reduce((max, [category, cost]) => {
+        return cost > max.cost ? { cost, name: category } : max;
+      }, { cost: 0, name: 'N/A' });
+
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       
+      // Gastos do mês atual
       const monthlyServices = filteredServices.filter(service => {
         const serviceDate = new Date(service.date);
         const serviceMonth = serviceDate.getMonth();
@@ -200,31 +160,64 @@ export default function ReportsPage() {
         return sum + cost;
       }, 0);
 
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      const upcomingServices = filteredServices.filter(service => {
+      // Gastos do mês anterior
+      const previousMonthDate = new Date();
+      previousMonthDate.setMonth(currentMonth - 1);
+      const previousMonth = previousMonthDate.getMonth();
+      const previousYear = previousMonthDate.getFullYear();
+
+      const previousMonthlyServices = filteredServices.filter(service => {
         const serviceDate = new Date(service.date);
-        return serviceDate > new Date() && serviceDate <= thirtyDaysFromNow;
+        const serviceMonth = serviceDate.getMonth();
+        const serviceYear = serviceDate.getFullYear();
+        return serviceMonth === previousMonth && serviceYear === previousYear;
       });
+      
+      const previousMonthExpenses = previousMonthlyServices.reduce((sum, service) => {
+        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+        return sum + cost;
+      }, 0);
+
+      // Calcular variação percentual
+      const monthlyExpensesChange = previousMonthExpenses > 0 
+        ? ((monthlyExpenses - previousMonthExpenses) / previousMonthExpenses) * 100 
+        : 0;
+
+      // Top 5 serviços mais caros
+      const topExpensiveServices = filteredServices
+        .map(service => {
+          const vehicle = activeVehicles.find(v => v.id === service.vehicleId);
+          return {
+            id: service.id,
+            description: service.description,
+            cost: typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0,
+            vehicleName: vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
+            date: service.date
+          };
+        })
+        .sort((a, b) => b.cost - a.cost)
+        .slice(0, 5);
 
       setReportData({
         totalVehicles: activeVehicles.length,
         totalExpenses,
         totalServices: filteredServices.length,
-        blockchainVerified: verifiedServices.length,
         monthlyExpenses,
-        upcomingServices: upcomingServices.length,
+        previousMonthExpenses,
+        monthlyExpensesChange,
         averageServiceCost: averageCost,
-        reliabilityScore
+        averageCostPerVehicle,
+        topSpendingVehicle: topVehicleEntry.cost > 0 ? topVehicleEntry : null,
+        topCategory: topCategoryEntry.cost > 0 ? topCategoryEntry : null,
+        topExpensiveServices
       });
 
     } catch (error) {
-      console.error('Erro ao carregar dados do relatório:', error);
       message.error('Erro ao carregar dados do relatório');
     } finally {
       setLoading(false);
     }
-  }, [selectedPeriod, selectedVehicle, dateRange]);
+  }, [selectedVehicle, dateRange]);
 
   const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null, vehiclesList?: Vehicle[]) => {
     let filtered = services;
@@ -242,8 +235,16 @@ export default function ReportsPage() {
       const [startDate, endDate] = dateRange;
       filtered = filtered.filter(service => {
         const serviceDate = new Date(service.date);
+        // Normalizar para início do dia (00:00:00) para comparação correta
+        serviceDate.setHours(0, 0, 0, 0);
+        
         const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        
         const end = new Date(endDate);
+        // Normalizar para fim do dia (23:59:59) para incluir todo o dia
+        end.setHours(23, 59, 59, 999);
+        
         return serviceDate >= start && serviceDate <= end;
       });
     }
@@ -251,341 +252,182 @@ export default function ReportsPage() {
     return filtered;
   };
 
-  // Dados para gráfico de gastos mensais
+  // Gráfico: Tendência mensal de gastos (adaptável ao filtro de período)
   const monthlyExpensesData = useMemo(() => {
     const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
-    const monthlyData: { [key: string]: { 
-      month: string; 
-      maintenance: number; 
-      fuel: number; 
-      repair: number; 
-      inspection: number; 
-      expense: number; 
-      other: number; 
-      total: number 
-    } } = {};
+    const monthlyData: { [key: string]: { month: string; total: number } } = {};
     
-    // Inicializar últimos 12 meses
-    const months = [];
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      months.push({ 
-        month: monthName, 
-        maintenance: 0, 
-        fuel: 0, 
-        repair: 0, 
-        inspection: 0, 
-        expense: 0, 
-        other: 0, 
-        total: 0 
-      });
-      monthlyData[monthKey] = { 
-        month: monthName, 
-        maintenance: 0, 
-        fuel: 0, 
-        repair: 0, 
-        inspection: 0, 
-        expense: 0, 
-        other: 0, 
-        total: 0 
-      };
+    // Se há filtro de período, usar o período selecionado; senão, últimos 12 meses
+    if (dateRange) {
+      const start = dayjs(dateRange[0]);
+      const end = dayjs(dateRange[1]);
+      const daysDiff = end.diff(start, 'day') + 1;
+      const monthsDiff = end.diff(start, 'month') + 1;
+      
+      // Se for um único dia, mostrar por dia
+      if (daysDiff === 1) {
+        const dayKey = start.format('YYYY-MM-DD');
+        const dayLabel = start.format('DD/MM');
+        monthlyData[dayKey] = { month: dayLabel, total: 0 };
+
+    filteredServices.forEach(service => {
+          const serviceDate = dayjs(service.date);
+          const serviceDayKey = serviceDate.format('YYYY-MM-DD');
+      
+          if (monthlyData[serviceDayKey]) {
+        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+            monthlyData[serviceDayKey].total += cost;
+          }
+        });
+      }
+      // Se o período for menor que 3 meses e maior que 1 dia, agrupar por semana
+      else if (monthsDiff <= 3) {
+        let current = start.startOf('week');
+        while (current.isBefore(end) || current.isSame(end, 'day')) {
+          // Calcular número da semana: dias desde o início do ano / 7
+          const startOfYear = current.startOf('year');
+          const weekNumber = Math.floor(current.diff(startOfYear, 'day') / 7) + 1;
+          const weekKey = `${current.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
+          const weekLabel = `${current.format('DD/MM')}`;
+          monthlyData[weekKey] = { month: weekLabel, total: 0 };
+          current = current.add(1, 'week');
+        }
+
+    filteredServices.forEach(service => {
+          const serviceDate = dayjs(service.date);
+          const startOfYear = serviceDate.startOf('year');
+          const weekNumber = Math.floor(serviceDate.diff(startOfYear, 'day') / 7) + 1;
+          const weekKey = `${serviceDate.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
+          
+          if (monthlyData[weekKey]) {
+            const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+            monthlyData[weekKey].total += cost;
+          }
+        });
+      } else {
+        // Agrupar por mês
+        let current = start.startOf('month');
+        while (current.isBefore(end) || current.isSame(end, 'month')) {
+          const monthKey = current.format('YYYY-MM');
+          const monthName = current.format('MMM/YY');
+          monthlyData[monthKey] = { month: monthName, total: 0 };
+          current = current.add(1, 'month');
     }
 
-    // Processar serviços - categorizar todos os tipos
     filteredServices.forEach(service => {
-      const serviceDate = new Date(service.date);
-      const monthKey = `${serviceDate.getFullYear()}-${String(serviceDate.getMonth() + 1).padStart(2, '0')}`;
+          const serviceDate = dayjs(service.date);
+          const monthKey = serviceDate.format('YYYY-MM');
       
       if (monthlyData[monthKey]) {
         const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+        monthlyData[monthKey].total += cost;
+          }
+        });
+      }
+    } else {
+      // Sem filtro: mostrar últimos 12 meses
+      for (let i = 11; i >= 0; i--) {
+        const date = dayjs().subtract(i, 'month');
+        const monthKey = date.format('YYYY-MM');
+        const monthName = date.format('MMM/YY');
+        monthlyData[monthKey] = { month: monthName, total: 0 };
+    }
+
+    filteredServices.forEach(service => {
+        const serviceDate = dayjs(service.date);
+        const monthKey = serviceDate.format('YYYY-MM');
         
-        // Categorizar todos os tipos de serviços
-        switch (service.type) {
-          case VehicleEventType.MAINTENANCE:
-            monthlyData[monthKey].maintenance += cost;
-            break;
-          case VehicleEventType.FUEL:
-            monthlyData[monthKey].fuel += cost;
-            break;
-          case VehicleEventType.REPAIR:
-            monthlyData[monthKey].repair += cost;
-            break;
-          case VehicleEventType.INSPECTION:
-            monthlyData[monthKey].inspection += cost;
-            break;
-          case VehicleEventType.EXPENSE:
-            monthlyData[monthKey].expense += cost;
-            break;
-          case VehicleEventType.OTHER:
-            monthlyData[monthKey].other += cost;
-            break;
-          default:
-            monthlyData[monthKey].other += cost;
-        }
+        if (monthlyData[monthKey]) {
+          const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
         monthlyData[monthKey].total += cost;
       }
     });
-
-    return Object.values(monthlyData);
-  }, [services, selectedVehicle, dateRange, vehicles]);
-
-  // Dados para gráfico de distribuição por tipo
-  const serviceDistributionData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
-    const distribution = {
-      maintenance: 0,
-      fuel: 0,
-      repair: 0,
-      inspection: 0,
-      expense: 0,
-      other: 0
-    };
-
-    filteredServices.forEach(service => {
-      const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-      
-      switch (service.type) {
-        case VehicleEventType.MAINTENANCE:
-          distribution.maintenance += cost;
-          break;
-        case VehicleEventType.FUEL:
-          distribution.fuel += cost;
-          break;
-        case VehicleEventType.REPAIR:
-          distribution.repair += cost;
-          break;
-        case VehicleEventType.INSPECTION:
-          distribution.inspection += cost;
-          break;
-        case VehicleEventType.EXPENSE:
-          distribution.expense += cost;
-          break;
-        case VehicleEventType.OTHER:
-          distribution.other += cost;
-          break;
-        default:
-          distribution.other += cost;
-      }
-    });
-
-    const data = [
-      { name: 'Manutenção', value: distribution.maintenance, color: '#667eea' },
-      { name: 'Abastecimento', value: distribution.fuel, color: '#4facfe' },
-      { name: 'Reparo', value: distribution.repair, color: '#f093fb' },
-      { name: 'Inspeção', value: distribution.inspection, color: '#4facfe' },
-      { name: 'Despesa', value: distribution.expense, color: '#ff9a9e' },
-      { name: 'Outros', value: distribution.other, color: '#a8edea' }
-    ].filter(item => item.value > 0);
-
-    return data;
-  }, [services, selectedVehicle, dateRange, vehicles]);
-
-  // Dados para gráfico de tendência de gastos
-  const expenseTrendData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
-    const weeklyData: { [key: string]: { 
-      week: string; 
-      total: number; 
-      maintenance: number; 
-      fuel: number; 
-      repair: number; 
-      inspection: number; 
-      expense: number; 
-      other: number; 
-    } } = {};
-    
-    // Inicializar últimas 8 semanas
-    const weeks = [];
-    for (let i = 7; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - (i * 7));
-      const weekKey = `Sem ${8 - i}`;
-      weeks.push({ 
-        week: weekKey, 
-        total: 0, 
-        maintenance: 0, 
-        fuel: 0, 
-        repair: 0, 
-        inspection: 0, 
-        expense: 0, 
-        other: 0 
-      });
-      weeklyData[weekKey] = { 
-        week: weekKey, 
-        total: 0, 
-        maintenance: 0, 
-        fuel: 0, 
-        repair: 0, 
-        inspection: 0, 
-        expense: 0, 
-        other: 0 
-      };
     }
 
-    // Processar serviços por semana
+    // Retornar dados ordenados cronologicamente
+    const sortedKeys = Object.keys(monthlyData).sort();
+    return sortedKeys.map(key => monthlyData[key]);
+  }, [services, selectedVehicle, dateRange, vehicles]);
+
+  // Gráfico: Comparação de gastos por veículo (respeita filtro de veículo)
+  const vehicleExpensesData = useMemo(() => {
+    // Se há filtro de veículo específico, mostrar apenas ele; senão, todos
+    const vehicleToShow = selectedVehicle !== 'all' ? selectedVehicle : 'all';
+    const filteredServices = filterServices(services, vehicleToShow, dateRange, vehicles);
+    const vehicleCosts: { [key: string]: number } = {};
+
     filteredServices.forEach(service => {
-      const serviceDate = new Date(service.date);
-      const now = new Date();
-      const daysDiff = Math.floor((now.getTime() - serviceDate.getTime()) / (1000 * 60 * 60 * 24));
-      const weekNumber = Math.floor(daysDiff / 7);
-      
-      if (weekNumber >= 0 && weekNumber <= 7) {
-        const weekKey = `Sem ${8 - weekNumber}`;
-        if (weeklyData[weekKey]) {
           const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-          weeklyData[weekKey].total += cost;
-          
-          // Categorizar todos os tipos de serviços
-          switch (service.type) {
-            case VehicleEventType.MAINTENANCE:
-              weeklyData[weekKey].maintenance += cost;
-              break;
-            case VehicleEventType.FUEL:
-              weeklyData[weekKey].fuel += cost;
-              break;
-            case VehicleEventType.REPAIR:
-              weeklyData[weekKey].repair += cost;
-              break;
-            case VehicleEventType.INSPECTION:
-              weeklyData[weekKey].inspection += cost;
-              break;
-            case VehicleEventType.EXPENSE:
-              weeklyData[weekKey].expense += cost;
-              break;
-            case VehicleEventType.OTHER:
-              weeklyData[weekKey].other += cost;
-              break;
-            default:
-              weeklyData[weekKey].other += cost;
-          }
-        }
-      }
+      vehicleCosts[service.vehicleId] = (vehicleCosts[service.vehicleId] || 0) + cost;
     });
 
-    return Object.values(weeklyData);
+    return vehicles
+      .filter(v => vehicleCosts[v.id] && vehicleCosts[v.id] > 0)
+      .map(vehicle => ({
+        name: `${vehicle.brand} ${vehicle.model}`.substring(0, 20),
+        fullName: `${vehicle.brand} ${vehicle.model}`,
+        cost: vehicleCosts[vehicle.id] || 0
+      }))
+      .sort((a, b) => b.cost - a.cost)
+      .slice(0, 10); // Top 10 veículos
   }, [services, selectedVehicle, dateRange, vehicles]);
 
+  // Gráfico: Distribuição por categoria
+  const categoryDistributionData = useMemo(() => {
+    const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
+    const categoryCosts: { [key: string]: number } = {};
 
+    filteredServices.forEach(service => {
+          const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+      categoryCosts[service.category] = (categoryCosts[service.category] || 0) + cost;
+    });
 
-  const exportReport = () => {
-    message.success('Relatório exportado com sucesso!');
-  };
+    const colors = ['#8B5CF6', '#4facfe', '#f093fb', '#ff9a9e', '#a8edea', '#fadb14', '#52c41a', '#fa8c16'];
+    
+    return Object.entries(categoryCosts)
+      .map(([name, value], index) => ({
+        name,
+        value,
+        color: colors[index % colors.length]
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8); // Top 8 categorias
+  }, [services, selectedVehicle, dateRange, vehicles]);
 
-  const exportTableData = () => {
-    try {
-      // Filtrar dados da tabela com base nos filtros atuais
-      const filteredTableData = filterServices(services, selectedVehicle, dateRange, vehicles);
-      
-      // Preparar dados para exportação
-      const exportData = filteredTableData.map(service => {
-        const vehicle = vehicles.find(v => v.id === service.vehicleId);
-        return {
-          'Veículo': vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
-          'Categoria': service.category,
-          'Descrição': service.description,
-          'Data': formatBRDate(service.date),
-          'Quilometragem': service.mileage,
-          'Custo': currencyBRL(service.cost),
-          'Local': service.location,
-          'Status Blockchain': service.blockchainStatus?.status || 'N/A',
-          'Técnico': service.technician || 'N/A',
-          'Garantia': service.warranty ? 'Sim' : 'Não',
-          'Observações': service.notes || 'N/A'
-        };
-      });
+  // Verificar se há serviços para exibir
+  const hasServices = services.length > 0;
 
-      // Converter para CSV
-      const headers = Object.keys(exportData[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...exportData.map(row => 
-          headers.map(header => `"${(row as any)[header] || ''}"`).join(',')
-        )
-      ].join('\n');
-
-      // Criar e baixar arquivo
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `historico_servicos_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      message.success('Tabela exportada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao exportar tabela:', error);
-      message.error('Erro ao exportar tabela');
-    }
-  };
-
-  const tableColumns = [
-    {
-      title: 'Veículo',
-      dataIndex: 'vehicleName',
-      key: 'vehicleName',
-      render: (text: string) => <Text strong>{text}</Text>
-    },
-    {
-      title: 'Categoria',
-      dataIndex: 'category',
-      key: 'category',
-      render: (category: string) => (
-        <Tag color="blue" style={{ fontWeight: 500 }}>
-          {category}
-        </Tag>
-      )
-    },
-    {
-      title: 'Descrição',
-      dataIndex: 'description',
-      key: 'description',
-      render: (description: string) => (
-        <Text ellipsis={{ tooltip: description }} style={{ maxWidth: 200 }}>
-          {description}
-        </Text>
-      )
-    },
-    {
-      title: 'Data',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date: Date) => formatBRDate(date),
-      sorter: (a: VehicleEvent, b: VehicleEvent) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-    },
-    {
-      title: 'Custo',
-      dataIndex: 'cost',
-      key: 'cost',
-      render: (cost: number) => (
-        <Text strong style={{ color: '#ff4d4f' }}>
-          {currencyBRL(cost)}
-        </Text>
-      ),
-      sorter: (a: VehicleEvent, b: VehicleEvent) => a.cost - b.cost
-    },
-    {
-      title: 'Status Blockchain',
-      dataIndex: 'blockchainStatus',
-      key: 'blockchainStatus',
-      render: (status: any) => (
-        <Tag 
-          color={status?.status === 'CONFIRMED' ? 'success' : 'warning'}
-          icon={status?.status === 'CONFIRMED' ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
-        >
-          {status?.status === 'CONFIRMED' ? 'Verificado' : 'Pendente'}
-        </Tag>
-      )
-    }
-  ];
-
-
+  if (!hasServices) {
+    return (
+      <DefaultFrame title="Relatórios e Análises" loading={loading}>
+        <div className={styles.reportsContainer}>
+          <Card className={componentStyles.professionalCard}>
+            <Empty 
+              description={
+                <div style={{ textAlign: 'center' }}>
+                  <Text style={{ fontSize: '16px', color: '#6B7280', marginBottom: '16px', display: 'block' }}>
+                    Nenhum serviço registrado ainda
+                  </Text>
+                  <Text style={{ fontSize: '14px', color: '#9CA3AF' }}>
+                    Registre serviços, abastecimentos e outras despesas para visualizar os relatórios
+                  </Text>
+                </div>
+              }
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            >
+              <Button
+                type="primary"
+                onClick={() => navigate('/maintenance')}
+                className={componentStyles.professionalButton}
+              >
+                Registrar Serviço
+              </Button>
+            </Empty>
+          </Card>
+        </div>
+      </DefaultFrame>
+    );
+  }
 
   return (
     <DefaultFrame title="Relatórios e Análises" loading={loading}>
@@ -595,25 +437,12 @@ export default function ReportsPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
             <Space size="large" wrap>
               <div>
-                <Text strong style={{ display: 'block', marginBottom: '8px' }}>Período</Text>
-                <Select 
-                  value={selectedPeriod} 
-                  onChange={setSelectedPeriod}
-                  style={{ width: 120 }}
-                >
-                  <Option value="7">7 dias</Option>
-                  <Option value="30">30 dias</Option>
-                  <Option value="90">90 dias</Option>
-                  <Option value="365">1 ano</Option>
-                </Select>
-              </div>
-              
-              <div>
                 <Text strong style={{ display: 'block', marginBottom: '8px' }}>Veículo</Text>
                 <Select 
                   value={selectedVehicle} 
                   onChange={setSelectedVehicle}
                   style={{ width: 200 }}
+                  allowClear={false}
                 >
                   <Option value="all">Todos os veículos</Option>
                   {vehicles.map(vehicle => (
@@ -625,50 +454,64 @@ export default function ReportsPage() {
               </div>
               
               <div>
-                <Text strong style={{ display: 'block', marginBottom: '8px' }}>Data específica</Text>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>Período</Text>
                 <RangePicker 
+                  value={dateRange ? [
+                    dayjs(dateRange[0]),
+                    dayjs(dateRange[1])
+                  ] as [dayjs.Dayjs, dayjs.Dayjs] : null}
                   onChange={(dates) => {
-                    if (dates) {
-                      setDateRange([dates[0]!.toISOString(), dates[1]!.toISOString()]);
+                    if (dates && dates[0] && dates[1]) {
+                      setDateRange([dates[0].toISOString(), dates[1].toISOString()]);
                     } else {
                       setDateRange(null);
                     }
                   }}
+                  format="DD/MM/YYYY"
                 />
               </div>
-            </Space>
             
+              {(selectedVehicle !== 'all' || dateRange) && (
             <Button 
-              icon={<ReloadOutlined />} 
-              onClick={loadReportData}
-              loading={loading}
-              type="primary"
-              style={{ 
-                backgroundColor: '#8B5CF6', 
-                borderColor: '#8B5CF6',
-                height: '40px',
-                minWidth: '120px'
-              }}
-            >
-              Atualizar
+                  type="link"
+                  onClick={() => {
+                    setSelectedVehicle('all');
+                    setDateRange(null);
+                  }}
+                  style={{ color: '#8B5CF6', padding: '0' }}
+                >
+                  Limpar filtros
             </Button>
+              )}
+            </Space>
           </div>
+          
+          {(selectedVehicle !== 'all' || dateRange) && (
+            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
+              <Space size="middle">
+                <Text type="secondary" style={{ fontSize: '12px' }}>Filtros ativos:</Text>
+                {selectedVehicle !== 'all' && (
+                  <Tag color="purple" closable onClose={() => setSelectedVehicle('all')}>
+                    Veículo: {vehicles.find(v => v.id === selectedVehicle)?.brand} {vehicles.find(v => v.id === selectedVehicle)?.model}
+                  </Tag>
+                )}
+                {dateRange && (
+                  <Tag 
+                    color="purple" 
+                    closable 
+                    onClose={() => setDateRange(null)}
+                  >
+                    Período: {formatBRDate(new Date(dateRange[0]))} até {formatBRDate(new Date(dateRange[1]))}
+                  </Tag>
+                )}
+              </Space>
+            </div>
+          )}
         </Card>
 
         {/* Estatísticas Principais */}
-        <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className={componentStyles.professionalStatistic}>
-              <Statistic
-                title="Veículos Ativos"
-                value={reportData.totalVehicles}
-                prefix={<CarOutlined style={{ color: '#8B5CF6' }} />}
-                valueStyle={{ color: '#8B5CF6', fontWeight: 700 }}
-              />
-            </Card>
-          </Col>
-          
-          <Col xs={24} sm={12} lg={6}>
+        <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+          <Col xs={24} sm={12} md={12} lg={6} xl={6}>
             <Card className={componentStyles.professionalStatistic}>
               <Statistic
                 title="Gastos Totais"
@@ -680,7 +523,7 @@ export default function ReportsPage() {
             </Card>
           </Col>
           
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} md={12} lg={6} xl={6}>
             <Card className={componentStyles.professionalStatistic}>
               <Statistic
                 title="Gastos Este Mês"
@@ -688,449 +531,345 @@ export default function ReportsPage() {
                 prefix={<DollarOutlined style={{ color: '#FAAD14' }} />}
                 valueStyle={{ color: '#FAAD14', fontWeight: 700 }}
                 formatter={(value) => currencyBRL(value as number)}
+                suffix={
+                  reportData.monthlyExpensesChange !== 0 && (
+                    <span style={{ 
+                      fontSize: '14px', 
+                      marginLeft: '8px',
+                      color: reportData.monthlyExpensesChange > 0 ? '#ff4d4f' : '#52c41a'
+                    }}>
+                      {reportData.monthlyExpensesChange > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+                      {' '}
+                      {Math.abs(reportData.monthlyExpensesChange).toFixed(1)}%
+                    </span>
+                  )
+                }
               />
             </Card>
           </Col>
           
-          <Col xs={24} sm={12} lg={6}>
+          <Col xs={24} sm={12} md={12} lg={6} xl={6}>
             <Card className={componentStyles.professionalStatistic}>
               <Statistic
-                title="Serviços Realizados"
+                title="Total de Serviços"
                 value={reportData.totalServices}
                 prefix={<ToolOutlined style={{ color: '#1890FF' }} />}
                 valueStyle={{ color: '#1890FF', fontWeight: 700 }}
               />
             </Card>
           </Col>
+          
+          <Col xs={24} sm={12} md={12} lg={6} xl={6}>
+            <Card className={componentStyles.professionalStatistic}>
+              <Statistic
+                title="Custo Médio por Serviço"
+                value={reportData.averageServiceCost}
+                prefix={<DollarOutlined style={{ color: '#8B5CF6' }} />}
+                valueStyle={{ color: '#8B5CF6', fontWeight: 700 }}
+                formatter={(value) => currencyBRL(value as number)}
+              />
+            </Card>
+          </Col>
         </Row>
 
-        {/* Gráficos e Tabelas */}
+        {/* Insights Adicionais */}
+        {(reportData.topSpendingVehicle || reportData.topCategory) && (
+          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            {reportData.topSpendingVehicle && (
+              <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                <Card className={componentStyles.professionalCard}>
+                  <Statistic
+                    title="Veículo que Mais Gastou"
+                    value={reportData.topSpendingVehicle.cost}
+                    prefix={<CarOutlined style={{ color: '#722ed1' }} />}
+                    valueStyle={{ color: '#722ed1', fontWeight: 600 }}
+                    formatter={(value) => currencyBRL(value as number)}
+                    suffix={
+                      <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
+                        {reportData.topSpendingVehicle!.name}
+                      </Text>
+                    }
+                  />
+                </Card>
+              </Col>
+            )}
+            
+            {reportData.topCategory && (
+              <Col xs={24} sm={24} md={12} lg={12} xl={12}>
+                <Card className={componentStyles.professionalCard}>
+                  <Statistic
+                    title="Categoria que Mais Gasta"
+                    value={reportData.topCategory.cost}
+                    prefix={<ToolOutlined style={{ color: '#eb2f96' }} />}
+                    valueStyle={{ color: '#eb2f96', fontWeight: 600 }}
+                    formatter={(value) => currencyBRL(value as number)}
+                    suffix={
+                      <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
+                        {reportData.topCategory!.name}
+                      </Text>
+                    }
+                  />
+                </Card>
+              </Col>
+            )}
+          </Row>
+        )}
+
+        {/* Gráficos */}
         <Row gutter={[24, 24]}>
-          <Col xs={24} lg={12}>
+          <Col xs={24} sm={24} md={24} lg={24} xl={selectedVehicle === 'all' ? 14 : 24}>
             <Card 
               title={
-                <Space>
-                  <BarChartOutlined style={{ color: '#8B5CF6' }} />
-                  <span>Gastos por Mês</span>
+                <Space wrap>
+                  <LineChartOutlined style={{ color: '#8B5CF6' }} />
+                  <span style={{ fontSize: '14px', wordBreak: 'break-word' }}>
+                    {dateRange 
+                      ? `Tendência de Gastos (${formatBRDate(new Date(dateRange[0]))} até ${formatBRDate(new Date(dateRange[1]))})`
+                      : 'Tendência de Gastos (Últimos 12 Meses)'
+                    }
+                  </span>
                 </Space>
               }
               className={componentStyles.professionalCard}
-              extra={
-                <Button 
-                  type="text" 
-                  icon={<DownloadOutlined />}
-                  onClick={exportReport}
-                >
-                  Exportar
-                </Button>
-              }
             >
-              <div className={styles.chartContainer} style={{ height: '700px' }}>
+              <div style={{ height: '350px', minHeight: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyExpensesData} margin={{ top: 30, right: 40, left: 30, bottom: 20 }}>
-                    <defs>
-                      <linearGradient id="maintenanceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#667eea" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#764ba2" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#667eea" stopOpacity={0.7} />
-                      </linearGradient>
-                      <linearGradient id="fuelGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#00f2fe" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#4facfe" stopOpacity={0.7} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="rgba(139, 92, 246, 0.08)" strokeWidth={1} />
+                  <LineChart data={monthlyExpensesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
                     <XAxis 
                       dataKey="month" 
-                      tick={{ 
-                        fontSize: 12, 
-                        fill: 'var(--text-secondary)', 
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                      axisLine={{ stroke: 'rgba(139, 92, 246, 0.3)', strokeWidth: 2 }}
-                      tickLine={{ stroke: 'rgba(139, 92, 246, 0.4)', strokeWidth: 1 }}
+                      tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
+                      stroke="rgba(255, 255, 255, 0.3)"
                     />
                     <YAxis 
-                      tick={{ 
-                        fontSize: 12, 
-                        fill: 'var(--text-secondary)', 
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                      axisLine={{ stroke: 'rgba(139, 92, 246, 0.3)', strokeWidth: 2 }}
-                      tickLine={{ stroke: 'rgba(139, 92, 246, 0.4)', strokeWidth: 1 }}
+                      tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
                       tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                      stroke="rgba(255, 255, 255, 0.3)"
                     />
                     <RechartsTooltip 
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload) return null;
-                        
-                        const totalValue = payload.reduce((sum, item) => sum + (item.value as number), 0);
-                        const averageValue = monthlyExpensesData.reduce((sum, item) => sum + item.total, 0) / monthlyExpensesData.length;
-                        const serviceCount = payload.length;
-                        
-                        return (
-                          <CustomTooltip
-                            active={active}
-                            payload={payload}
-                            label={String(label)}
-                            showPercentage={true}
-                            additionalInfo={{
-                              total: totalValue,
-                              average: averageValue,
-                              count: serviceCount,
-                              period: 'Gastos Mensais'
-                            }}
-                          />
-                        );
+                      contentStyle={{
+                        backgroundColor: '#1a1a2e',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '8px',
+                        color: '#ffffff'
                       }}
-                      cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
+                      formatter={(value: number) => currencyBRL(value)}
+                      labelStyle={{ color: '#8B5CF6', fontWeight: 600 }}
+                      itemStyle={{ color: '#ffffff' }}
                     />
-                    <Legend 
-                      wrapperStyle={{ 
-                        paddingTop: '20px', 
-                        fontSize: '13px', 
-                        fontWeight: '500',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
+                    <Line 
+                      type="monotone" 
+                      dataKey="total" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#8B5CF6', r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="Gastos"
                     />
-                    <Bar 
-                      dataKey="maintenance" 
-                      stackId="a" 
-                      fill="url(#maintenanceGradient)" 
-                      name="Manutenção" 
-                      radius={[0, 0, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                    <Bar 
-                      dataKey="fuel" 
-                      stackId="a" 
-                      fill="url(#fuelGradient)" 
-                      name="Abastecimento" 
-                      radius={[0, 0, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                    <Bar 
-                      dataKey="repair" 
-                      stackId="a" 
-                      fill="#f093fb" 
-                      name="Reparo" 
-                      radius={[0, 0, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                    <Bar 
-                      dataKey="inspection" 
-                      stackId="a" 
-                      fill="#4facfe" 
-                      name="Inspeção" 
-                      radius={[0, 0, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                    <Bar 
-                      dataKey="expense" 
-                      stackId="a" 
-                      fill="#ff9a9e" 
-                      name="Despesa" 
-                      radius={[0, 0, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                    <Bar 
-                      dataKey="other" 
-                      stackId="a" 
-                      fill="#a8edea" 
-                      name="Outros" 
-                      radius={[6, 6, 0, 0]}
-                      className={styles.chartBar}
-                    />
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </Card>
           </Col>
           
-          <Col xs={24} lg={12}>
+          {selectedVehicle === 'all' && (
+            <Col xs={24} sm={24} md={24} lg={24} xl={10}>
             <Card 
               title={
                 <Space>
-                  <PieChartOutlined style={{ color: '#8B5CF6' }} />
-                  <span>Distribuição por Tipo</span>
+                    <CarOutlined style={{ color: '#8B5CF6' }} />
+                    <span>Gastos por Veículo</span>
                 </Space>
               }
               className={componentStyles.professionalCard}
             >
-              <div className={styles.chartContainer} style={{ height: '700px' }}>
+                <div style={{ height: '350px', minHeight: '300px' }}>
+                  {vehicleExpensesData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                      <BarChart 
+                        data={vehicleExpensesData} 
+                        layout="vertical"
+                        margin={{ top: 10, right: 30, left: 100, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
+                      <XAxis 
+                          type="number"
+                          tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
+                          tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                          stroke="rgba(255, 255, 255, 0.3)"
+                      />
+                      <YAxis 
+                          type="category"
+                          dataKey="name"
+                          tick={{ fontSize: 11, fill: 'rgba(255, 255, 255, 0.65)' }}
+                          width={95}
+                          stroke="rgba(255, 255, 255, 0.3)"
+                      />
+                    <RechartsTooltip 
+                          contentStyle={{
+                            backgroundColor: '#1a1a2e',
+                            border: '1px solid rgba(139, 92, 246, 0.3)',
+                            borderRadius: '8px',
+                            color: '#ffffff'
+                          }}
+                          formatter={(value: number, payload: any) => [
+                            currencyBRL(value),
+                            payload[0]?.payload?.fullName || ''
+                          ]}
+                          labelStyle={{ color: '#ffffff', fontWeight: 600 }}
+                          itemStyle={{ color: '#ffffff' }}
+                      />
+                      <Bar 
+                          dataKey="cost" 
+                          fill="#8B5CF6"
+                          radius={[0, 4, 4, 0]}
+                          name="Gastos"
+                      />
+                    </BarChart>
+                </ResponsiveContainer>
+                  ) : (
+                    <div style={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      <Text type="secondary">Sem dados suficientes</Text>
+                    </div>
+                  )}
+              </div>
+            </Card>
+          </Col>
+          )}
+        </Row>
+
+        {/* Seção de Top 5 e Distribuição por Categoria */}
+        <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
+          <Col xs={24} sm={24} md={24} lg={12} xl={12}>
+            <Card 
+              title={
+                <Space>
+                  <TrophyOutlined style={{ color: '#8B5CF6' }} />
+                  <span>Top 5 Serviços Mais Caros</span>
+                </Space>
+              }
+              className={componentStyles.professionalCard}
+            >
+              <div style={{ height: '350px', overflowY: 'auto', paddingRight: '12px' }}>
+                {reportData.topExpensiveServices.length > 0 ? (
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    {reportData.topExpensiveServices.map((service, index) => (
+                      <div 
+                        key={service.id}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '12px',
+                          background: index === 0 ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                          borderRadius: '8px',
+                          border: index === 0 ? '2px solid #8B5CF6' : '1px solid rgba(139, 92, 246, 0.2)',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                            <span style={{ 
+                              fontSize: '18px', 
+                              fontWeight: 700, 
+                              color: '#8B5CF6',
+                              minWidth: '24px'
+                            }}>
+                              #{index + 1}
+                            </span>
+                            <Text strong style={{ fontSize: '14px', wordBreak: 'break-word' }}>{service.description}</Text>
+                          </div>
+                          <Text type="secondary" style={{ fontSize: '12px', marginLeft: '32px', wordBreak: 'break-word' }}>
+                            {service.vehicleName} • {formatBRDate(service.date)}
+                          </Text>
+                        </div>
+                        <Text strong style={{ color: '#ff4d4f', fontSize: '16px', whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                          {currencyBRL(service.cost)}
+                        </Text>
+                      </div>
+                    ))}
+                  </Space>
+                ) : (
+                  <div style={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center'
+                  }}>
+                    <Empty 
+                      description="Nenhum serviço encontrado"
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
+                  </div>
+                )}
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={24} md={24} lg={12} xl={12}>
+        <Card 
+          title={
+            <Space>
+                  <PieChartOutlined style={{ color: '#8B5CF6' }} />
+                  <span>Distribuição por Categoria</span>
+            </Space>
+          }
+          className={componentStyles.professionalCard}
+            >
+              <div style={{ height: '350px', minHeight: '300px' }}>
+                {categoryDistributionData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <defs>
-                      <linearGradient id="maintenancePieGradient" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#667eea" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#764ba2" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#667eea" stopOpacity={0.7} />
-                      </linearGradient>
-                      <linearGradient id="fuelPieGradient" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#00f2fe" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#4facfe" stopOpacity={0.7} />
-                      </linearGradient>
-                    </defs>
-                    <Pie
-                      data={serviceDistributionData}
+                      <Pie
+                        data={categoryDistributionData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }: any) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
                       outerRadius={100}
                       innerRadius={30}
                       fill="#8884d8"
                       dataKey="value"
-                      stroke="rgba(255, 255, 255, 0.8)"
-                      strokeWidth={3}
-                      className={styles.chartPie}
-                    >
-                      {serviceDistributionData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.color}
-                        />
+                      >
+                        {categoryDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <RechartsTooltip 
-                      content={({ active, payload }) => {
-                        if (!active || !payload) return null;
-                        
-                        const totalValue = serviceDistributionData.reduce((sum, item) => sum + item.value, 0);
-                        const itemName = payload[0]?.name || 'Item';
-                        
-                        return (
-                          <CustomTooltip
-                            active={active}
-                            payload={payload}
-                            label={itemName}
-                            showPercentage={true}
-                            customIcon={<PieChartOutlined style={{ color: '#8B5CF6', fontSize: '16px' }} />}
-                            additionalInfo={{
-                              total: totalValue,
-                              count: serviceDistributionData.length,
-                              period: 'Distribuição por Tipo'
-                            }}
-                          />
-                        );
-                      }}
-                    />
-                    <Legend 
-                      wrapperStyle={{ 
-                        paddingTop: '20px', 
-                        fontSize: '13px', 
-                        fontWeight: '500',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
+                        contentStyle={{
+                          backgroundColor: '#1a1a2e',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '8px',
+                          color: '#ffffff'
+                        }}
+                        formatter={(value: number) => currencyBRL(value)}
+                        labelStyle={{ color: '#8B5CF6', fontWeight: 600 }}
+                        itemStyle={{ color: '#ffffff' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div style={{ 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <Text type="secondary">Sem dados suficientes</Text>
               </div>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Gráfico de Tendência */}
-        <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
-          <Col xs={24}>
-            <Card 
-              title={
-                <Space>
-                  <BarChartOutlined style={{ color: '#8B5CF6' }} />
-                  <span>Tendência de Gastos (Últimas 8 Semanas)</span>
-                </Space>
-              }
-              className={componentStyles.professionalCard}
-            >
-              <div className={styles.chartContainer} style={{ height: '700px' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={expenseTrendData} margin={{ top: 30, right: 40, left: 30, bottom: 20 }}>
-                    <defs>
-                      <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                        <stop offset="50%" stopColor="#A855F7" stopOpacity={0.6} />
-                        <stop offset="100%" stopColor="#C084FC" stopOpacity={0.4} />
-                      </linearGradient>
-                      <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.3} />
-                        <stop offset="50%" stopColor="#A855F7" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="#C084FC" stopOpacity={0.1} />
-                      </linearGradient>
-                      <linearGradient id="maintenanceGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#667eea" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#764ba2" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#667eea" stopOpacity={0.7} />
-                      </linearGradient>
-                      <linearGradient id="fuelGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4facfe" stopOpacity={0.9} />
-                        <stop offset="50%" stopColor="#00f2fe" stopOpacity={0.8} />
-                        <stop offset="100%" stopColor="#4facfe" stopOpacity={0.7} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="2 4" stroke="rgba(139, 92, 246, 0.08)" strokeWidth={1} />
-                    <XAxis 
-                      dataKey="week" 
-                      tick={{ 
-                        fontSize: 12, 
-                        fill: 'var(--text-secondary)', 
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                      axisLine={{ stroke: 'rgba(139, 92, 246, 0.3)', strokeWidth: 2 }}
-                      tickLine={{ stroke: 'rgba(139, 92, 246, 0.4)', strokeWidth: 1 }}
-                    />
-                    <YAxis 
-                      tick={{ 
-                        fontSize: 12, 
-                        fill: 'var(--text-secondary)', 
-                        fontWeight: 500,
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                      axisLine={{ stroke: 'rgba(139, 92, 246, 0.3)', strokeWidth: 2 }}
-                      tickLine={{ stroke: 'rgba(139, 92, 246, 0.4)', strokeWidth: 1 }}
-                      tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
-                    />
-                    <RechartsTooltip 
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload) return null;
-                        
-                        const totalValue = payload.reduce((sum, item) => sum + (item.value as number), 0);
-                        const averageValue = expenseTrendData.reduce((sum, item) => sum + item.total, 0) / expenseTrendData.length;
-                        const weekNumber = expenseTrendData.findIndex(item => item.week === label) + 1;
-                        
-                        return (
-                          <CustomTooltip
-                            active={active}
-                            payload={payload}
-                            label={String(label)}
-                            showPercentage={true}
-                            additionalInfo={{
-                              total: totalValue,
-                              average: averageValue,
-                              count: payload.length,
-                              period: `Semana ${weekNumber} - Tendência de Gastos`
-                            }}
-                          />
-                        );
-                      }}
-                      cursor={{ fill: 'rgba(139, 92, 246, 0.1)' }}
-                    />
-                    <Legend 
-                      wrapperStyle={{ 
-                        paddingTop: '20px', 
-                        fontSize: '13px', 
-                        fontWeight: '500',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="total" 
-                      fill="url(#areaGradient)" 
-                      stroke="url(#lineGradient)"
-                      strokeWidth={3}
-                      name="Total"
-                    />
-                    <Bar 
-                      dataKey="maintenance" 
-                      fill="url(#maintenanceGradient)" 
-                      name="Manutenção"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="fuel" 
-                      fill="url(#fuelGradient)" 
-                      name="Abastecimento"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="repair" 
-                      fill="#f093fb" 
-                      name="Reparo"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="inspection" 
-                      fill="#4facfe" 
-                      name="Inspeção"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="expense" 
-                      fill="#ff9a9e" 
-                      name="Despesa"
-                      radius={[2, 2, 0, 0]}
-                    />
-                    <Bar 
-                      dataKey="other" 
-                      fill="#a8edea" 
-                      name="Outros"
-                      radius={[2, 2, 0, 0]}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                )}
               </div>
-            </Card>
-          </Col>
-        </Row>
-
-        {/* Tabela de Serviços */}
-        <Card 
-          title={
-            <Space>
-              <FileTextOutlined style={{ color: '#8B5CF6' }} />
-              <span>Detalhamento dos Serviços</span>
-            </Space>
-          }
-          className={componentStyles.professionalCard}
-          style={{ marginTop: '24px' }}
-          extra={
-            <Button 
-              type="text" 
-              icon={<DownloadOutlined />}
-              onClick={exportTableData}
-              style={{ color: '#8B5CF6' }}
-            >
-              Exportar CSV
-            </Button>
-          }
-        >
-          <Spin spinning={loading}>
-            {(() => {
-              // Aplicar filtros na tabela (mesmos filtros dos gráficos)
-              const filteredTableData = filterServices(services, selectedVehicle, dateRange, vehicles);
-              
-              return filteredTableData.length > 0 ? (
-                <Table
-                  columns={tableColumns}
-                  dataSource={filteredTableData.map(service => ({
-                    ...service,
-                    vehicleName: vehicles.find(v => v.id === service.vehicleId)?.brand + ' ' + 
-                                 vehicles.find(v => v.id === service.vehicleId)?.model,
-                    key: service.id
-                  }))}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: false,
-                    showQuickJumper: true,
-                    showTotal: (total, range) => 
-                      `${range[0]}-${range[1]} de ${total} registros`
-                  }}
-                  className={componentStyles.professionalTable}
-                />
-              ) : (
-                <Empty 
-                  description="Nenhum serviço encontrado com os filtros aplicados"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
-              );
-            })()}
-          </Spin>
         </Card>
+          </Col>
+        </Row>
+
       </div>
     </DefaultFrame>
   );

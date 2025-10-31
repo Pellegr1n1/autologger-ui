@@ -1,4 +1,3 @@
-// FIPE API Types
 export interface FipeBrand {
   codigo: string;
   nome: string;

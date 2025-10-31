@@ -20,7 +20,6 @@ export function useVehicleDetails({
 }: UseVehicleDetailsProps) {
   const [serviceModalOpen, setServiceModalOpen] = React.useState(false)
 
-  // Vehicle handlers
   const handleEditVehicle = () => {
     message.info("Ação de editar")
   }

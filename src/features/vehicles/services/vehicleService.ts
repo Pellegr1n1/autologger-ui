@@ -17,7 +17,6 @@ export class VehicleService {
   static async createVehicle(data: CreateVehicleData): Promise<Vehicle> {
     const formData = new FormData();
     
-    // Adicionar campos de texto
     Object.keys(data).forEach(key => {
       if (key !== 'photo' && data[key as keyof CreateVehicleData] !== undefined) {
         const value = data[key as keyof CreateVehicleData];
@@ -62,7 +61,6 @@ export class VehicleService {
   static async updateVehicle(id: string, data: UpdateVehicleData): Promise<Vehicle> {
     const formData = new FormData();
     
-    // Adicionar campos de texto
     Object.keys(data).forEach(key => {
       if (key !== 'photo' && data[key as keyof UpdateVehicleData] !== undefined) {
         const value = data[key as keyof UpdateVehicleData];
@@ -72,7 +70,6 @@ export class VehicleService {
       }
     });
     
-    // Adicionar foto se existir
     if (data.photo) {
       formData.append('photo', data.photo);
     }

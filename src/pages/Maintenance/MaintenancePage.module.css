@@ -1,4 +1,5 @@
-/* Estilos para a página de manutenções com espaçamentos melhorados */
+/* Estilos para a página de serviços com espaçamentos melhorados */
+
 
 .pageHeader {
   display: flex;
@@ -172,19 +173,114 @@
 }
 
 .filterRow {
-  margin-bottom: 24px;
+  margin: 0 !important;
 }
 
-.filterLabel {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-size: 14px;
+.filterItem {
+  width: 100%;
 }
 
-.filterInput {
-  margin-top: 8px;
+/* Estilos para inputs de filtro */
+.filterInput :global(.ant-input) {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.filterInput :global(.ant-input:hover) {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(22, 27, 34, 0.9);
+}
+
+.filterInput :global(.ant-input:focus) {
+  border-color: var(--primary-color);
+  background: rgba(22, 27, 34, 0.95);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.filterInput :global(.ant-input::placeholder) {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Estilos para Select de filtro */
+.filterSelect :global(.ant-select-selector) {
+  background: rgba(22, 27, 34, 0.8) !important;
+  border: 1px solid rgba(139, 92, 246, 0.3) !important;
+  border-radius: 8px !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  transition: all 0.3s ease;
+  height: 44px !important;
+  padding: 4px 11px !important;
+}
+
+.filterSelect :global(.ant-select-selection-item) {
+  line-height: 34px !important;
+}
+
+.filterSelect :global(.ant-select-selection-placeholder) {
+  line-height: 34px !important;
+}
+
+.filterSelect :global(.ant-select-selector:hover) {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  background: rgba(22, 27, 34, 0.9) !important;
+}
+
+.filterSelect :global(.ant-select-focused .ant-select-selector) {
+  border-color: var(--primary-color) !important;
+  background: rgba(22, 27, 34, 0.95) !important;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1) !important;
+}
+
+.filterSelect :global(.ant-select-arrow) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilos para DatePicker de filtro */
+.filterDatePicker :global(.ant-picker) {
+  background: rgba(22, 27, 34, 0.8);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s ease;
+  height: 42px !important;
+  padding: 4px 11px;
+}
+
+.filterDatePicker :global(.ant-picker-input) {
+  display: flex;
+  align-items: center;
+}
+
+.filterDatePicker :global(.ant-picker-input > input) {
+  height: 32px !important;
+}
+
+.filterDatePicker :global(.ant-picker:hover) {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(22, 27, 34, 0.9);
+}
+
+.filterDatePicker :global(.ant-picker-focused) {
+  border-color: var(--primary-color);
+  background: rgba(22, 27, 34, 0.95);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.filterDatePicker :global(.ant-picker-input input::placeholder) {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.filterDatePicker :global(.ant-picker-suffix),
+.filterDatePicker :global(.ant-picker-separator) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.filterDatePicker :global(.ant-picker-clear) {
+  background: rgba(22, 27, 34, 0.9);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .tableContainer {

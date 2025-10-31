@@ -31,7 +31,6 @@ export const getCategoryChartConfig = (stats: VehicleStats): PieConfig => {
 }
 
 export const getMonthlyChartConfig = (stats: VehicleStats): ColumnConfig => {
-  // Como não temos mais byMonth, vamos criar dados de exemplo ou usar eventos por data
   const monthlyData = [
     { month: 'Jan', value: 0 },
     { month: 'Fev', value: 0 },
@@ -87,7 +86,6 @@ export const getMonthlyChartConfig = (stats: VehicleStats): ColumnConfig => {
 }
 
 export const getMileageChartConfig = (stats: VehicleStats): ColumnConfig => {
-  // Como não temos mais kmByMonth, vamos criar dados de exemplo
   const mileageData = [
     { month: 'Jan', km: 0 },
     { month: 'Fev', km: 0 },

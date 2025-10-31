@@ -10,7 +10,7 @@ import {
   Col,
   Modal,
   Typography,
-  message,
+  notification,
   Upload,
   Divider,
   Checkbox,
@@ -37,7 +37,6 @@ import { EVENT_TYPES } from "../utils/constants";
 import { VehicleServiceService, CreateVehicleServiceData } from "../services/vehicleServiceService";
 import { VehicleService } from "../services/vehicleService";
 
-// Mapeamento de tipos de serviço para categorias válidas
 const SERVICE_TYPE_CATEGORIES = {
   maintenance: [
     { value: "Troca de óleo", label: "Troca de óleo" },
@@ -90,8 +89,8 @@ interface ServiceModalProps {
   vehicles?: Vehicle[];
   loading?: boolean;
   currentMileage?: number;
+  notificationApi?: any;
 }
-
 
 const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   open,
@@ -99,19 +98,19 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   onAdd,
   vehicleId,
   vehicles = [],
-  currentMileage = 0
+  currentMileage = 0,
+  notificationApi
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [fileList, setFileList] = useState<any[]>([]);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // Arquivos para upload
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [serviceData, setServiceData] = useState<CreateVehicleServiceData | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [updateVehicleMileage, setUpdateVehicleMileage] = useState(true);
   const [availableCategories, setAvailableCategories] = useState<any[]>([]);
 
-  // Reset form when modal opens
   useEffect(() => {
     if (open) {
       form.resetFields();
@@ -121,10 +120,8 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       setServiceData(null);
       setSelectedVehicle(null);
       setUpdateVehicleMileage(true);
-      // Inicializar com categorias vazias - as categorias serão carregadas quando o tipo for selecionado
       setAvailableCategories([]);
       
-      // Se há um veículo específico, definir como selecionado
       if (vehicleId) {
         const vehicle = vehicles.find(v => v.id === vehicleId);
         if (vehicle) {
@@ -135,7 +132,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           });
         }
       } else if (vehicles.length === 1) {
-        // Se há apenas um veículo cadastrado, selecionar automaticamente
         const vehicle = vehicles[0];
         setSelectedVehicle(vehicle);
         form.setFieldsValue({ 
@@ -148,16 +144,10 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     }
   }, [open, currentMileage, form, vehicleId, vehicles]);
 
-  // Função para lidar com mudança do tipo de serviço
   const handleServiceTypeChange = (serviceType: string) => {
-    // Atualizar categorias disponíveis baseadas no tipo
     const categories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || [];
     setAvailableCategories(categories);
-    
-    // Resetar categoria selecionada para forçar o usuário a selecionar novamente
     form.setFieldsValue({ category: undefined });
-    
-    // Limpar completamente o estado do campo categoria
     form.setFields([{
       name: 'category',
       value: undefined,
@@ -167,27 +157,20 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     }]);
   };
 
-  // Validações anti-fraude
   const validateDate = (_: any, value: any) => {
     if (!value) {
       return Promise.reject(new Error('Selecione a data do serviço'));
     }
-    
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // Fim do dia atual
-    
+    today.setHours(23, 59, 59, 999);
     if (value.toDate() > today) {
       return Promise.reject(new Error('Não é possível cadastrar serviços com data futura'));
     }
-    
-    // Verificar se a data não é muito antiga (mais de 2 anos)
     const twoYearsAgo = new Date();
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
-    
     if (value.toDate() < twoYearsAgo) {
       return Promise.reject(new Error('Data muito antiga. Serviços devem ser de no máximo 2 anos atrás'));
     }
-    
     return Promise.resolve();
   };
 
@@ -195,36 +178,27 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     if (!value && value !== 0) {
       return Promise.reject(new Error('Informe a quilometragem'));
     }
-    
     if (value < 0) {
       return Promise.reject(new Error('Quilometragem não pode ser negativa'));
     }
-    
-    // Validar contra quilometragem atual do veículo
     const currentVehicle = selectedVehicle || vehicles.find(v => v.id === vehicleId);
     if (currentVehicle && value < currentVehicle.mileage) {
       return Promise.reject(new Error(`Quilometragem deve ser maior que a atual do veículo (${currentVehicle.mileage.toLocaleString()} km)`));
     }
-    
-    // Validar quilometragem máxima razoável baseada na quilometragem atual
     const currentMileage = currentVehicle ? currentVehicle.mileage : 0;
     let maxReasonableMileage;
     let reasonMessage;
     
     if (currentMileage < 10000) {
-      // Veículos novos: permitir até 50.000 km
       maxReasonableMileage = Math.max(currentMileage + 50000, 50000);
       reasonMessage = "50.000 km (veículo novo)";
     } else if (currentMileage < 100000) {
-      // Veículos com até 100k: permitir até 50.000 km a mais
       maxReasonableMileage = currentMileage + 50000;
       reasonMessage = "50.000 km a mais";
     } else if (currentMileage < 200000) {
-      // Veículos entre 100k-200k: permitir até 30.000 km a mais
       maxReasonableMileage = currentMileage + 30000;
       reasonMessage = "30.000 km a mais";
     } else {
-      // Veículos com mais de 200k: permitir até 20.000 km a mais
       maxReasonableMileage = currentMileage + 20000;
       reasonMessage = "20.000 km a mais";
     }
@@ -232,7 +206,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     if (value > maxReasonableMileage) {
       return Promise.reject(new Error(`Quilometragem muito alta. Máximo esperado: ${maxReasonableMileage.toLocaleString()} km (atual: ${currentMileage.toLocaleString()} km + ${reasonMessage})`));
     }
-    
     return Promise.resolve();
   };
 
@@ -240,19 +213,15 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     if (!value && value !== 0) {
       return Promise.reject(new Error('Informe o custo do serviço'));
     }
-    
     if (value < 0) {
       return Promise.reject(new Error('Custo não pode ser negativo'));
     }
-    
     if (value < 10) {
       return Promise.reject(new Error('Custo muito baixo. Mínimo: R$ 10,00'));
     }
-    
     if (value > 50000) {
       return Promise.reject(new Error('Custo muito alto. Máximo: R$ 50.000,00'));
     }
-    
     return Promise.resolve();
   };
 
@@ -260,96 +229,61 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Descreva o serviço realizado'));
     }
-    
     if (value.trim().length < 10) {
       return Promise.reject(new Error('Descrição muito curta. Mínimo 10 caracteres'));
     }
-    
     if (value.trim().length > 500) {
       return Promise.reject(new Error('Descrição muito longa. Máximo 500 caracteres'));
     }
-    
     return Promise.resolve();
   };
 
   const validateLocation = (_: any, value: string) => {
     if (!value || value.trim().length === 0) {
-      return Promise.reject(new Error('Informe o local do serviço'));
+      return Promise.reject(new Error('Informe o local'));
     }
-    
     if (value.trim().length < 3) {
       return Promise.reject(new Error('Local muito curto. Mínimo 3 caracteres'));
     }
-    
     if (value.trim().length > 100) {
       return Promise.reject(new Error('Local muito longo. Máximo 100 caracteres'));
     }
-    
     return Promise.resolve();
   };
 
   const validateCategory = (_: any, value: string) => {
-    // Verificar se a categoria foi selecionada
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Selecione uma categoria'));
     }
-    
-    // Verificar se o tipo de serviço foi selecionado primeiro
     const serviceType = form.getFieldValue('type');
     if (!serviceType) {
       return Promise.reject(new Error('Selecione primeiro o tipo de serviço'));
     }
-    
-    // Verificar se a categoria é válida para o tipo de serviço selecionado
     const validCategories = SERVICE_TYPE_CATEGORIES[serviceType as keyof typeof SERVICE_TYPE_CATEGORIES] || [];
     const isValidCategory = validCategories.some(cat => cat.value === value);
-    
     if (!isValidCategory) {
       return Promise.reject(new Error('Categoria não é válida para o tipo de serviço selecionado'));
     }
-    
     return Promise.resolve();
   };
 
-  // Função para fazer upload de arquivo
   const handleCustomRequest = async ({ file, onSuccess, onError }: any) => {
     try {
-      // Adicionar o arquivo à lista de arquivos para upload
       setUploadedFiles(prev => [...prev, file as File]);
-      
-      // Marcar como sucesso
       onSuccess("ok");
-      
-      console.log('📎 Arquivo adicionado para upload:', file.name);
-      
-      message.success(`Arquivo ${file.name} adicionado!`);
     } catch (error) {
-      console.error('Erro ao adicionar arquivo:', error);
       onError(error);
-      message.error(`Erro ao adicionar arquivo ${file.name}`);
     }
   };
 
   const handleSubmit = async () => {
     try {
-      // Verificar se há veículos disponíveis
-      if (vehicles.length === 0) {
-        message.error('Você precisa cadastrar pelo menos um veículo antes de criar manutenções');
-        return;
-      }
-
-      // Validate form
+      if (vehicles.length === 0) { return; }
       const values = await form.validateFields();
       
       const finalVehicleId = vehicleId || values.selectedVehicleId;
-      if (!finalVehicleId) {
-        message.error('Selecione um veículo para continuar');
-        return;
-      }
+      if (!finalVehicleId) { return; }
 
-      console.log('📎 Arquivos que serão enviados:', uploadedFiles.length);
-
-      // Prepare service data (sem attachments ainda, serão adicionados após upload)
       const preparedServiceData: CreateVehicleServiceData = {
         vehicleId: finalVehicleId,
         type: values.type,
@@ -365,17 +299,13 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         notes: ''
       };
 
-      // Show confirmation modal
       setServiceData(preparedServiceData);
       setShowConfirmModal(true);
 
     } catch (error) {
-      console.error('Erro na validação:', error);
-      message.error('Preencha todos os campos obrigatórios');
     }
   };
 
-  // Função para converter valor do tipo para label em português
   const getTypeLabel = (typeValue: string) => {
     const typeOption = EVENT_TYPES.find(option => option.value === typeValue);
     return typeOption ? typeOption.label : typeValue;
@@ -388,66 +318,49 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       setSubmitting(true);
       setShowConfirmModal(false);
 
-      // Fazer upload dos arquivos se houver
       let attachmentUrls: string[] = [];
       if (uploadedFiles.length > 0) {
-        console.log('📤 Fazendo upload de', uploadedFiles.length, 'arquivo(s)...');
         try {
           attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
-          console.log('✅ Arquivos enviados com sucesso:', attachmentUrls);
-          message.success(`${uploadedFiles.length} arquivo(s) enviado(s) com sucesso!`);
         } catch (uploadError) {
-          console.error('❌ Erro ao fazer upload dos arquivos:', uploadError);
-          message.error('Erro ao fazer upload dos arquivos. O serviço será salvo sem anexos.');
         }
       }
 
-      // Adicionar URLs dos anexos aos dados do serviço
       const serviceDataWithAttachments = {
         ...serviceData,
         ...(attachmentUrls.length > 0 && { attachments: attachmentUrls }),
       };
 
-      console.log('💾 Enviando dados para backend:', serviceDataWithAttachments);
-      console.log('📎 Anexos incluídos:', attachmentUrls);
-
-      // Save service
       const savedService = await VehicleServiceService.createService(serviceDataWithAttachments);
-      console.log('✅ Serviço salvo com sucesso:', savedService);
-      console.log('📎 Anexos do serviço salvo:', savedService.attachments);
       
-      message.success({
-        content: 'Serviço cadastrado com sucesso! Aguardando confirmação da blockchain...',
-        duration: 4,
+      (notificationApi || notification).success({
+        message: 'Serviço cadastrado',
+        description: 'Seu serviço foi cadastrado com sucesso.',
+        placement: 'bottomRight',
+        duration: 4
       });
 
-      // Atualizar quilometragem do veículo se solicitado
       if (updateVehicleMileage && serviceData.vehicleId) {
         try {
           await VehicleService.updateVehicle(serviceData.vehicleId, {
             mileage: serviceData.mileage
           });
-          message.success('Quilometragem do veículo atualizada automaticamente!');
         } catch (mileageError) {
-          console.warn('⚠️ Erro ao atualizar quilometragem:', mileageError);
-          message.warning('Serviço salvo, mas erro ao atualizar quilometragem do veículo');
         }
       }
 
-      // Try to send to blockchain (não precisa mostrar mensagem, já está processando no backend)
       try {
-        console.log('🔗 Solicitando envio para blockchain...');
         await VehicleServiceService.updateBlockchainStatus(
           savedService.id,
           undefined,
           'user'
         );
-        console.log('✅ Solicitação enviada');
       } catch (blockchainError) {
-        console.warn('⚠️ Erro ao solicitar envio para blockchain:', blockchainError);
-        message.warning({
-          content: 'Serviço salvo! A confirmação na blockchain pode levar alguns segundos. Se falhar, você poderá reenviar.',
-          duration: 5,
+        (notificationApi || notification).warning({
+          message: 'Processando na blockchain',
+          description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',
+          placement: 'bottomRight',
+          duration: 5
         });
       }
 
@@ -455,24 +368,36 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       onClose();
 
     } catch (error: any) {
-      console.error('❌ Erro ao salvar serviço:', error);
-      console.error('❌ Detalhes do erro:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      // Tratamento específico para diferentes tipos de erro
       if (error.code === 'ECONNABORTED') {
-        message.error('Timeout na requisição. O serviço pode ter sido salvo, mas a resposta demorou muito. Verifique a lista de serviços.');
+        (notificationApi || notification).error({
+          message: 'Erro ao salvar serviço',
+          description: 'Timeout na requisição. Verifique a lista de serviços.',
+          placement: 'bottomRight'
+        });
       } else if (error.response?.status === 400) {
-        message.error('Dados inválidos. Verifique se todos os campos estão preenchidos corretamente.');
+        (notificationApi || notification).error({
+          message: 'Erro ao salvar serviço',
+          description: error.response?.data?.message || 'Dados inválidos.',
+          placement: 'bottomRight'
+        });
       } else if (error.response?.status === 401) {
-        message.error('Sessão expirada. Faça login novamente.');
+        (notificationApi || notification).error({
+          message: 'Erro ao salvar serviço',
+          description: 'Sessão expirada. Faça login novamente.',
+          placement: 'bottomRight'
+        });
       } else if (error.response?.status >= 500) {
-        message.error('Erro interno do servidor. Tente novamente em alguns minutos.');
+        (notificationApi || notification).error({
+          message: 'Erro ao salvar serviço',
+          description: 'Erro do servidor. Tente novamente.',
+          placement: 'bottomRight'
+        });
       } else {
-        message.error('Erro ao salvar serviço. Tente novamente.');
+        (notificationApi || notification).error({
+          message: 'Erro ao salvar serviço',
+          description: error.message || 'Tente novamente.',
+          placement: 'bottomRight'
+        });
       }
     } finally {
       setSubmitting(false);
@@ -496,7 +421,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         }
       }}
     >
-      {/* Header com gradiente */}
       <div
         style={{
           background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
@@ -506,7 +430,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           overflow: 'hidden'
         }}
       >
-        {/* Decorações de fundo */}
         <div
           style={{
             position: 'absolute',
@@ -532,7 +455,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           }}
         />
 
-        {/* Botão fechar */}
         <Button
           type="text"
           icon={<CloseOutlined />}
@@ -573,12 +495,11 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             Adicionar Serviço
           </Title>
           <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
-            Registre um novo serviço de manutenção
+            Registre um novo serviço
           </Text>
         </div>
       </div>
 
-      {/* Conteúdo da modal */}
       <div 
         style={{ 
           padding: 'var(--space-xxl)',
@@ -591,7 +512,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           layout="vertical"
           onFinish={handleSubmit}
         >
-          {/* Seção 1: Informações do Veículo */}
           <div style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ 
               display: 'flex', 
@@ -643,7 +563,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
 
           <Divider style={{ margin: 'var(--space-xxl) 0', borderColor: 'var(--gray-2)' }} />
 
-          {/* Seção 2: Detalhes do Serviço */}
           <div style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ 
               display: 'flex', 
@@ -690,12 +609,9 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     { required: true, message: 'Selecione a categoria' },
                     { 
                       validator: (_, value) => {
-                        // Não validar se não houver valor (campo vazio após troca de tipo)
                         if (!value) {
                           return Promise.resolve();
                         }
-                        
-                        // Validar apenas se houver valor
                         return validateCategory(_, value);
                       }
                     }
@@ -749,7 +665,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
 
           <Divider style={{ margin: 'var(--space-xxl) 0', borderColor: 'var(--gray-2)' }} />
 
-          {/* Seção 3: Anexos */}
           <div style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ 
               display: 'flex', 
@@ -771,7 +686,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                 fileList={fileList}
                 onChange={({ fileList: newFileList }) => {
                   setFileList(newFileList);
-                  // Remover arquivos da lista uploadedFiles quando removidos da UI
                   if (newFileList.length < fileList.length) {
                     const removedCount = fileList.length - newFileList.length;
                     setUploadedFiles(prev => prev.slice(0, -removedCount));
@@ -814,7 +728,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
 
           <Divider style={{ margin: 'var(--space-xxl) 0', borderColor: 'var(--gray-2)' }} />
 
-          {/* Seção 4: Data e Quilometragem */}
           <div style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ 
               display: 'flex', 
@@ -878,7 +791,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
               </Col>
             </Row>
 
-            {/* Checkbox para atualizar quilometragem do veículo */}
             <div style={{ 
               marginTop: 'var(--space-md)',
               padding: 'var(--space-md)',
@@ -916,7 +828,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
 
           <Divider style={{ margin: 'var(--space-xxl) 0', borderColor: 'var(--gray-2)' }} />
 
-          {/* Seção 5: Custo e Local */}
           <div style={{ marginBottom: 'var(--space-xxl)' }}>
             <div style={{ 
               display: 'flex', 
@@ -967,7 +878,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     </span>
                   }
                   rules={[
-                    { required: true, message: 'Informe o local' },
                     { validator: validateLocation }
                   ]}
                 >
@@ -983,8 +893,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </Row>
           </div>
 
-
-          {/* Botões de Ação */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'flex-end', 
@@ -1056,7 +964,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         </Form>
       </div>
 
-      {/* Modal de Confirmação da Blockchain */}
       <Modal
         title={
           <div style={{ 
