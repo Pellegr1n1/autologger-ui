@@ -120,6 +120,175 @@ describe('tableColumns', () => {
       const rendered = dateColumn.render?.('2024-01-15', mockDoc, 0);
       expect(rendered).toBeDefined();
     });
+
+    it('should handle blockchain status with status', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const blockchainColumn = columns[5];
+      
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      const mockEvent = {
+        id: '1',
+        blockchainStatus: { status: 'confirmed' },
+      } as any;
+
+      const rendered = blockchainColumn.render?.({ status: 'confirmed' }, mockEvent, 0);
+      expect(rendered).toBeDefined();
+
+      jest.restoreAllMocks();
+    });
+
+    it('should handle blockchain status without status', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const blockchainColumn = columns[5];
+
+      const mockEvent = {
+        id: '1',
+        blockchainStatus: null,
+      } as any;
+
+      const rendered = blockchainColumn.render?.(null, mockEvent, 0);
+      expect(rendered).toBeDefined();
+    });
+
+    it('should handle edit action', () => {
+      const onEdit = jest.fn();
+      const onDelete = jest.fn();
+      const mockEvent: VehicleEvent = {
+        id: '1',
+        type: 'maintenance',
+        category: 'oil',
+        date: '2024-01-15',
+        mileage: 50000,
+        cost: 150,
+      } as VehicleEvent;
+
+      const columns = createEventColumns(onEdit, onDelete);
+      const actionsColumn = columns[6];
+
+      const actions = actionsColumn.render?.(null, mockEvent, 0);
+      expect(actions).toBeDefined();
+    });
+
+    it('should render document with PDF type', () => {
+      const columns = createDocumentColumns(jest.fn());
+      const fileColumn = columns[0];
+      const mockDoc: VehicleDocument = {
+        id: '1',
+        name: 'test.pdf',
+        type: 'application/pdf',
+        size: 1024,
+        uploadedAt: '2024-01-15',
+      } as VehicleDocument;
+
+      const rendered = fileColumn.render?.('test.pdf', mockDoc, 0);
+      expect(rendered).toBeDefined();
+    });
+
+    it('should render document with text type', () => {
+      const columns = createDocumentColumns(jest.fn());
+      const fileColumn = columns[0];
+      const mockDoc: VehicleDocument = {
+        id: '1',
+        name: 'test.txt',
+        type: 'text/plain',
+        size: 1024,
+        uploadedAt: '2024-01-15',
+      } as VehicleDocument;
+
+      const rendered = fileColumn.render?.('test.txt', mockDoc, 0);
+      expect(rendered).toBeDefined();
+    });
+
+    it('should handle delete document action', () => {
+      const { Modal } = require('antd');
+      const onDelete = jest.fn();
+      const columns = createDocumentColumns(onDelete);
+      const actionsColumn = columns[3];
+      const mockDoc: VehicleDocument = {
+        id: '1',
+        name: 'test.pdf',
+        type: 'application/pdf',
+        size: 1024,
+        uploadedAt: '2024-01-15',
+      } as VehicleDocument;
+
+      const actions = actionsColumn.render?.(null, mockDoc, 0);
+      expect(actions).toBeDefined();
+    });
+
+    it('should handle blockchain status with different statuses', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const blockchainColumn = columns[5];
+      
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      const statuses = ['CONFIRMED', 'PENDING', 'FAILED', 'SUBMITTED'];
+      
+      statuses.forEach(status => {
+        const mockEvent = {
+          id: '1',
+          blockchainStatus: { status },
+        } as any;
+
+        const rendered = blockchainColumn.render?.({ status }, mockEvent, 0);
+        expect(rendered).toBeDefined();
+      });
+
+      jest.restoreAllMocks();
+    });
+
+    it('should handle blockchain status with null', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const blockchainColumn = columns[5];
+      
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      const mockEvent = {
+        id: '1',
+        blockchainStatus: null,
+      } as any;
+
+      const rendered = blockchainColumn.render?.(null, mockEvent, 0);
+      expect(rendered).toBeDefined();
+
+      jest.restoreAllMocks();
+    });
+
+    it('should handle blockchain status without status property', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const blockchainColumn = columns[5];
+      
+      jest.spyOn(console, 'log').mockImplementation(() => {});
+
+      const mockEvent = {
+        id: '1',
+        blockchainStatus: {},
+      } as any;
+
+      const rendered = blockchainColumn.render?.({}, mockEvent, 0);
+      expect(rendered).toBeDefined();
+
+      jest.restoreAllMocks();
+    });
+
+    it('should handle cost with zero value', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const costColumn = columns[4];
+      const mockEvent = { cost: 0 } as any;
+
+      const rendered = costColumn.render?.(0, mockEvent, 0);
+      expect(rendered).toBeDefined();
+    });
+
+    it('should handle mileage formatting', () => {
+      const columns = createEventColumns(jest.fn(), jest.fn());
+      const mileageColumn = columns[3];
+      const mockEvent = { mileage: 50000 } as any;
+
+      const rendered = mileageColumn.render?.(50000, mockEvent, 0);
+      expect(rendered).toBeDefined();
+    });
   });
 });
 

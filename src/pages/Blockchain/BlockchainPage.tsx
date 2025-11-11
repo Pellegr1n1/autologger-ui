@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Card, Statistic, Space, Row, Col, Typography, Tabs, message, Button } from 'antd';
+import { Card, Statistic, Row, Col, Typography, message, Button } from 'antd';
 import { 
   BlockOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   SafetyCertificateOutlined,
-  GlobalOutlined,
-  LinkOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './BlockchainPage.module.css';
-import BlockchainOverview from '../../features/blockchain/components/BlockchainOverview';
 import TransactionHistory from '../../features/blockchain/components/TransactionHistory';
-import NetworkInfo from '../../features/blockchain/components/NetworkInfo';
-import { BlockchainService, BesuNetworkInfo, BesuContractStats } from '../../features/blockchain/services/blockchainService';
+import { BlockchainService } from '../../features/blockchain/services/blockchainService';
 
 const { Text } = Typography;
 
@@ -32,12 +28,7 @@ export default function BlockchainPage() {
     lastSyncTime: new Date()
   });
 
-  const [besuData, setBesuData] = useState({
-    connectionStatus: false,
-    networkInfo: null as BesuNetworkInfo | null,
-    contractStats: null as BesuContractStats | null,
-    error: null as string | null
-  });
+  const [connectionStatus, setConnectionStatus] = useState(false);
 
   const [dataConsistency, setDataConsistency] = useState({
     isConsistent: true,
@@ -51,21 +42,14 @@ export default function BlockchainPage() {
       try {
         setLoading(true);
         
-        // Carregar dados da rede Besu primeiro
+        // Carregar dados básicos
         try {
-          const [connectionStatus, networkInfo, contractStats, allServices] = await Promise.all([
+          const [connectionStatusResponse, allServices] = await Promise.all([
             BlockchainService.getBesuConnectionStatus(),
-            BlockchainService.getBesuNetworkInfo().catch(() => null),
-            BlockchainService.getBesuContractStats().catch(() => null),
             BlockchainService.getAllServices()
           ]);
 
-          setBesuData({
-            connectionStatus: connectionStatus.connected,
-            networkInfo,
-            contractStats,
-            error: null
-          });
+          setConnectionStatus(connectionStatusResponse.connected);
 
           // Calcular estatísticas baseadas nos dados reais da blockchain
           const services = allServices || [];
@@ -73,28 +57,18 @@ export default function BlockchainPage() {
           const confirmedTransactions = services.filter((service: any) => service.status === 'CONFIRMED').length;
           const pendingTransactions = services.filter((service: any) => service.status === 'PENDING' || service.status === 'SUBMITTED').length;
           const failedTransactions = services.filter((service: any) => service.status === 'FAILED').length;
-          const contractTotalHashes = contractStats?.totalHashes || 0;
-          
           const pendingServices = services.filter((service: any) => 
             service.status === 'PENDING' && service.blockchainHash && service.blockchainHash !== 'pending-hash'
           );
           
           const difference = totalTransactions > 0 ? pendingServices.length : 0;
-          const isDataConsistent = totalTransactions === 0 || difference <= 1; // tolerância de 1 serviço pendente
+          const isDataConsistent = totalTransactions === 0 || difference <= 1;
           
           setDataConsistency({
             isConsistent: isDataConsistent,
             localTransactions: totalTransactions,
-            contractHashes: contractTotalHashes
+            contractHashes: totalTransactions
           });
-          
-          if (!isDataConsistent && totalTransactions > 0) {
-            console.warn(`⚠️ Inconsistência detectada para o usuário: ${pendingServices.length} serviços pendentes que deveriam estar confirmados na blockchain`);
-            
-            if (difference > 1) {
-              message.warning(`Dados inconsistentes: ${pendingServices.length} serviços do usuário pendentes na blockchain`);
-            }
-          }
           
           const reliabilityScore = totalTransactions > 0 ? 
             Math.round((confirmedTransactions / totalTransactions) * 100) : 0;
@@ -115,20 +89,15 @@ export default function BlockchainPage() {
             pendingTransactions,
             failedTransactions,
             reliabilityScore,
-            networkStatus: connectionStatus.connected ? 'connected' : 'disconnected',
+            networkStatus: connectionStatusResponse.connected ? 'connected' : 'disconnected',
             averageConfirmationTime,
             lastSyncTime: new Date()
           });
 
         } catch (besuError) {
-          console.error('Erro ao carregar dados da rede Besu:', besuError);
+          console.error('Erro ao carregar dados:', besuError);
           
-          setBesuData({
-            connectionStatus: false,
-            networkInfo: null,
-            contractStats: null,
-            error: 'Rede Besu não disponível'
-          });
+          setConnectionStatus(false);
 
           // Fallback para dados básicos
           setBlockchainData({
@@ -166,12 +135,7 @@ export default function BlockchainPage() {
           lastSyncTime: new Date()
         });
 
-        setBesuData({
-          connectionStatus: false,
-          networkInfo: null,
-          contractStats: null,
-          error: 'Erro de conexão'
-        });
+        setConnectionStatus(false);
 
         setDataConsistency({
           isConsistent: false,
@@ -233,90 +197,91 @@ export default function BlockchainPage() {
 
   return (
     <DefaultFrame title="Blockchain" loading={loading}>
-      {/* Header da página */}
+      {/* Header simplificado */}
       <div className={styles.pageHeader}>
         <div className={styles.headerContent}>
           <div className={styles.headerInfo}>
             <BlockOutlined className={styles.headerIcon} />
             <div>
-              <Text className={styles.headerTitle}>Dashboard Blockchain</Text>
+              <Text className={styles.headerTitle}>Registros Protegidos</Text>
               <Text className={styles.headerSubtitle}>
-                Monitoramento em tempo real das transações na rede
+                Seus registros de manutenção protegidos por blockchain
               </Text>
             </div>
           </div>
           <div className={styles.networkStatus}>
             <div className={`${styles.statusIndicator} ${styles[networkStatus]}`} />
             <Text className={styles.statusText}>
-              {networkStatus === 'connected' ? 'Conectado' : 'Desconectado'}
+              {connectionStatus ? 'Sistema ativo' : 'Sistema indisponível'}
             </Text>
-            {besuData.networkInfo && (
-              <Text className={styles.networkInfo}>
-                | Chain ID: {besuData.networkInfo.chainId} | Bloco: {besuData.networkInfo.blockNumber}
-              </Text>
-            )}
             {!dataConsistency.isConsistent && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Text className={styles.consistencyWarning}>
-                  ⚠️ Dados inconsistentes: {Math.abs(dataConsistency.localTransactions - dataConsistency.contractHashes)} serviços do usuário pendentes na blockchain
-                </Text>
-                <Button 
-                  type="primary" 
-                  size="small" 
-                  icon={<ReloadOutlined />}
-                  loading={syncing}
-                  onClick={handleSyncData}
-                >
-                  Sincronizar
-                </Button>
-              </div>
+              <Button 
+                type="primary" 
+                size="small" 
+                icon={<ReloadOutlined />}
+                loading={syncing}
+                onClick={handleSyncData}
+                style={{ marginLeft: '12px' }}
+              >
+                Sincronizar
+              </Button>
             )}
           </div>
         </div>
       </div>
 
       <div style={{ padding: '0' }}>
-        {/* Estatísticas */}
+        {/* Estatísticas simplificadas - apenas o essencial */}
         <div className={styles.statsSection}>
           <Row gutter={[24, 24]}>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={8}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
-                  title="Total de Transações"
-                  value={totalTransactions}
-                  prefix={<LinkOutlined style={{ color: 'var(--primary-color)' }} />}
-                  valueStyle={{ color: 'var(--text-primary)' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <Card className={componentStyles.professionalStatistic}>
-                <Statistic
-                  title="Confirmadas"
+                  title="Registros Protegidos"
                   value={confirmedTransactions}
                   prefix={<CheckCircleOutlined style={{ color: 'var(--success-color)' }} />}
                   valueStyle={{ color: 'var(--text-primary)' }}
+                  suffix={`de ${totalTransactions}`}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={8}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
-                  title="Pendentes"
+                  title="Aguardando Confirmação"
                   value={pendingTransactions}
                   prefix={<ClockCircleOutlined style={{ color: 'var(--warning-color)' }} />}
                   valueStyle={{ color: 'var(--text-primary)' }}
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={12} md={6}>
+            <Col xs={24} sm={8}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
-                  title="Confiabilidade"
-                  value={reliabilityScore}
-                  suffix="%"
-                  prefix={<SafetyCertificateOutlined style={{ color: 'var(--primary-color)' }} />}
-                  valueStyle={{ color: 'var(--text-primary)' }}
+                  title="Status"
+                  value={
+                    totalTransactions === 0 
+                      ? 'Sem registros' 
+                      : reliabilityScore >= 90 
+                        ? 'Excelente' 
+                        : reliabilityScore >= 70 
+                          ? 'Bom' 
+                          : 'Atenção'
+                  }
+                  prefix={
+                    <SafetyCertificateOutlined 
+                      style={{ 
+                        color: totalTransactions === 0
+                          ? 'var(--text-secondary)' 
+                          : reliabilityScore >= 90 
+                            ? 'var(--success-color)' 
+                            : reliabilityScore >= 70 
+                              ? 'var(--warning-color)' 
+                              : 'var(--error-color)' 
+                      }} 
+                    />
+                  }
+                  valueStyle={{ color: 'var(--text-primary)', fontSize: '20px' }}
                 />
               </Card>
             </Col>
@@ -324,45 +289,10 @@ export default function BlockchainPage() {
         </div>
 
 
-        {/* Conteúdo principal */}
+        {/* Conteúdo principal - apenas histórico de transações */}
         <div className={styles.contentSection}>
           <Card className={componentStyles.professionalCard}>
-            <Tabs 
-              defaultActiveKey="overview" 
-              className={styles.blockchainTabs}
-              items={[
-                {
-                  key: 'overview',
-                  label: (
-                    <Space>
-                      <BlockOutlined style={{ color: 'var(--primary-color)' }} />
-                      Visão Geral
-                    </Space>
-                  ),
-                  children: <BlockchainOverview data={blockchainData} besuData={besuData} />
-                },
-                {
-                  key: 'transactions',
-                  label: (
-                    <Space>
-                      <LinkOutlined style={{ color: 'var(--primary-color)' }} />
-                      Histórico de Transações
-                    </Space>
-                  ),
-                  children: <TransactionHistory />
-                },
-                {
-                  key: 'network',
-                  label: (
-                    <Space>
-                      <GlobalOutlined style={{ color: 'var(--primary-color)' }} />
-                      Informações da Rede
-                    </Space>
-                  ),
-                  children: <NetworkInfo />
-                }
-              ]}
-            />
+            <TransactionHistory />
           </Card>
         </div>
       </div>

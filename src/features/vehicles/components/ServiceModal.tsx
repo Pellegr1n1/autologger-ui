@@ -417,9 +417,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         content: {
           padding: 0,
           overflow: 'hidden',
-          borderRadius: 'var(--border-radius-lg)'
+          borderRadius: 'var(--border-radius-lg)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }
       }}
+      className="service-modal"
     >
       <div
         style={{
@@ -429,6 +432,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           position: 'relative',
           overflow: 'hidden'
         }}
+        className="service-modal-header"
       >
         <div
           style={{
@@ -491,10 +495,10 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           >
             <ToolOutlined style={{ fontSize: '32px', color: 'var(--text-light)' }} />
           </div>
-          <Title level={2} style={{ margin: 0, color: 'var(--text-light)' }}>
+          <Title level={2} style={{ margin: 0, color: 'var(--text-light)', fontSize: '28px' }} className="service-modal-title">
             Adicionar Serviço
           </Title>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }} className="service-modal-subtitle">
             Registre um novo serviço
           </Text>
         </div>
@@ -530,7 +534,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                 name="selectedVehicleId"
                 label={
                   <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                    * Veículo
+                    Veículo
                   </span>
                 }
                 rules={[{ required: true, message: 'Selecione um veículo' }]}
@@ -577,12 +581,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="type"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Tipo de Serviço
+                      Tipo de Serviço
                     </span>
                   }
                   rules={[{ required: true, message: 'Selecione o tipo' }]}
@@ -596,12 +600,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="category"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Categoria
+                      Categoria
                     </span>
                   }
                   validateTrigger="onSubmit"
@@ -642,7 +646,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
               name="description"
               label={
                 <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  * Descrição
+                  Descrição
                 </span>
               }
               rules={[
@@ -742,12 +746,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="date"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Data do Serviço
+                      Data do Serviço
                     </span>
                   }
                   rules={[
@@ -764,12 +768,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="mileage"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Quilometragem
+                      Quilometragem
                     </span>
                   }
                   rules={[
@@ -842,12 +846,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="cost"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Custo
+                      Custo
                     </span>
                   }
                   rules={[
@@ -869,12 +873,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="location"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Local
+                      Local
                     </span>
                   }
                   rules={[
@@ -893,14 +897,18 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </Row>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: 'var(--space-md)', 
-            marginTop: 'var(--space-xxl)',
-            paddingTop: 'var(--space-lg)',
-            borderTop: '1px solid var(--gray-2)'
-          }}>
+          <div 
+            className="service-modal-buttons"
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'row',
+              justifyContent: 'flex-end', 
+              gap: 'var(--space-md)', 
+              marginTop: 'var(--space-xxl)',
+              paddingTop: 'var(--space-lg)',
+              borderTop: '1px solid var(--gray-2)'
+            }}
+          >
             <Button 
               onClick={onClose}
               size="large"
@@ -963,6 +971,33 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           </div>
         </Form>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .service-modal .ant-modal {
+            width: 90% !important;
+            max-width: 800px !important;
+          }
+          .service-modal-header {
+            padding: clamp(16px, 4vw, 32px) !important;
+          }
+          .service-modal-title {
+            font-size: clamp(20px, 4vw, 28px) !important;
+            word-break: break-word !important;
+            padding: 0 8px !important;
+          }
+          .service-modal-subtitle {
+            font-size: clamp(14px, 2.5vw, 16px) !important;
+            word-break: break-word !important;
+            padding: 0 8px !important;
+          }
+          .service-modal-buttons {
+            flex-direction: column !important;
+          }
+          .service-modal-buttons .ant-btn {
+            width: 100% !important;
+          }
+        }
+      `}</style>
 
       <Modal
         title={
@@ -1001,10 +1036,11 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         confirmLoading={submitting}
         okText="Confirmar e Enviar"
         cancelText="Cancelar"
-        width={600}
-        style={{ top: 50 }}
+        width="90%"
+        style={{ top: 50, maxWidth: 600 }}
+        centered
         styles={{
-          body: { padding: '24px' }
+          body: { padding: 'clamp(16px, 3vw, 24px)' }
         }}
       >
         <div style={{ marginBottom: '20px' }}>

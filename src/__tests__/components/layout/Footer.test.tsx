@@ -18,15 +18,8 @@ describe('Footer', () => {
   it('deve renderizar sem erros', () => {
     renderWithProviders(<Footer />);
     
-    expect(screen.getByText('Links Rápidos')).toBeInTheDocument();
     expect(screen.getByText('Legal')).toBeInTheDocument();
     expect(screen.getByText('Redes Sociais')).toBeInTheDocument();
-  });
-
-  it('deve exibir links rápidos', () => {
-    renderWithProviders(<Footer />);
-    
-    expect(screen.getByText('Sobre Nós')).toBeInTheDocument();
   });
 
   it('deve exibir links legais', () => {

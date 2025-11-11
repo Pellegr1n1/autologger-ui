@@ -49,7 +49,6 @@ export function createEventColumns(
       dataIndex: "blockchainStatus",
       key: "blockchainStatus",
       render: (blockchainStatus: any) => {
-        console.log('blockchainStatus:', blockchainStatus);
         if (!blockchainStatus || !blockchainStatus.status) {
           return <Tag color="default">N/A</Tag>
         }

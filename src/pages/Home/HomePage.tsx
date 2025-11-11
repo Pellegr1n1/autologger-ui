@@ -4,11 +4,10 @@ import { GlobalWireframe } from "../../components/common";
 import {
   CheckCircleOutlined,
   EyeOutlined,
-  RobotOutlined,
-  SafetyOutlined,
-  DashboardOutlined,
-  LockOutlined,
-  SyncOutlined
+  BarChartOutlined,
+  ShareAltOutlined,
+  ToolOutlined,
+  BlockOutlined
 } from '@ant-design/icons';
 import { Footer } from '../../components/layout';
 
@@ -43,30 +42,26 @@ export default function HomePage() {
               A AutoLogger oferece uma solução inovadora para registro imutável de serviços e despesas automotivas, garantindo transparência e segurança através da tecnologia blockchain.
             </Paragraph>
 
-            <Space size="large" className={styles.heroButtons}>
-              <Button type="primary" size="large">Saiba Mais</Button>
-            </Space>
-
             <Row gutter={[24, 24]}>
               <Col xs={24} sm={8}>
                 <Card className={styles.featureCard}>
-                  <SafetyOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Imutável</Title>
-                  <Text style={{ color: 'white' }}>Registros permanentes e à prova de fraudes</Text>
+                  <BlockOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
+                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Blockchain Real</Title>
+                  <Text style={{ color: 'white' }}>Hyperledger Besu - Imutabilidade garantida</Text>
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card className={styles.featureCard}>
                   <EyeOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Transparente</Title>
-                  <Text style={{ color: 'white' }}>Verificação por terceiros em tempo real</Text>
+                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Verificação Pública</Title>
+                  <Text style={{ color: 'white' }}>Qualquer pessoa pode verificar autenticidade</Text>
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
                 <Card className={styles.featureCard}>
-                  <SyncOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Automático</Title>
-                  <Text style={{ color: 'white' }}>Alertas e cálculos inteligentes</Text>
+                  <BarChartOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
+                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Análises Inteligentes</Title>
+                  <Text style={{ color: 'white' }}>Relatórios e insights automáticos</Text>
                 </Card>
               </Col>
             </Row>
@@ -89,18 +84,18 @@ export default function HomePage() {
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
-                  <LockOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Registro Imutável</Title>
+                  <BlockOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
+                  <Title level={3} style={{ margin: 0, color: 'white' }}>Blockchain Privada Besu</Title>
                 </div>
                 <Paragraph style={{ color: 'white' }}>
-                  Cada serviço, abastecimento ou despesa é registrado na blockchain, criando um histórico permanente e à prova de adulterações.
+                  Cada evento de manutenção gera um hash SHA-256 registrado imutavelmente na blockchain Hyperledger Besu, garantindo integridade permanente e impossibilidade de alteração.
                 </Paragraph>
                 <List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Proteção contra fraudes',
-                    'Histórico completo do veículo',
-                    'Valorização na revenda'
+                    'Hash único e imutável por serviço',
+                    'Verificação contínua na blockchain',
+                    'Registros permanentes e transparentes'
                   ]}
                   renderItem={item => (
                     <List.Item>
@@ -117,18 +112,18 @@ export default function HomePage() {
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
-                  <DashboardOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Dashboard Inteligente</Title>
+                  <BarChartOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
+                  <Title level={3} style={{ margin: 0, color: 'white' }}>Relatórios e Análises</Title>
                 </div>
                 <Paragraph style={{ color: 'white' }}>
-                  Visualize todos os dados do seu veículo em um painel intuitivo, com análises e relatórios automáticos.
+                  Dashboard completo com gráficos interativos, comparações mensais e identificação de padrões de gastos para tomada de decisão inteligente.
                 </Paragraph>
                 <List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Custos por quilômetro',
-                    'Serviço programado',
-                    'Alertas personalizados'
+                    'Tendências de gastos e comparações',
+                    'Top veículos e categorias que mais gastam',
+                    'Gráficos interativos e exportação de dados'
                   ]}
                   renderItem={item => (
                     <List.Item>
@@ -145,18 +140,18 @@ export default function HomePage() {
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
-                  <SafetyOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Integração com Mercado</Title>
+                  <ShareAltOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
+                  <Title level={3} style={{ margin: 0, color: 'white' }}>Compartilhamento Público</Title>
                 </div>
                 <Paragraph style={{ color: 'white' }}>
-                  Compradores e seguradoras podem verificar o histórico real do veículo, facilitando negociações e reduzindo riscos.
+                  Gere links seguros e expiráveis para compartilhar histórico veicular. Compradores verificam autenticidade via blockchain sem necessidade de login.
                 </Paragraph>
                 <List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Certificado de autenticidade',
-                    'Relatórios para seguradoras',
-                    'Valorização documentada'
+                    'Links únicos com expiração configurável',
+                    'Página pública profissional e verificável',
+                    'Bloqueio automático quando veículo é vendido'
                   ]}
                   renderItem={item => (
                     <List.Item>
@@ -173,18 +168,18 @@ export default function HomePage() {
             <Col xs={24} md={12}>
               <Card className={styles.featureCard}>
                 <div className={styles.featureCardHeader}>
-                  <RobotOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Smart Contracts</Title>
+                  <ToolOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
+                  <Title level={3} style={{ margin: 0, color: 'white' }}>Gestão Completa de Histórico</Title>
                 </div>
                 <Paragraph style={{ color: 'white' }}>
-                  Automatize processos como cálculos de depreciação, alertas de serviço e transferência de propriedade.
+                  Registre manutenções, despesas, abastecimentos e reparos com upload de comprovantes. Categorização automática e controle completo de custos.
                 </Paragraph>
                 <List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Processos automáticos',
-                    'Redução de burocracia',
-                    'Segurança nas transações'
+                    'Manutenções, despesas e abastecimentos',
+                    'Upload de PDFs e imagens de comprovantes',
+                    'Categorização automática e controle de quilometragem'
                   ]}
                   renderItem={item => (
                     <List.Item>

@@ -21,7 +21,7 @@ import {
 } from '@ant-design/icons';
 import QRCode from 'qrcode';
 import { VehicleShareService, VehicleShareResponse } from '../services/vehicleShareService';
-import { Vehicle } from '../types/vehicle.types';
+import { Vehicle, VehicleStatus } from '../types/vehicle.types';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -45,13 +45,20 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
 
   useEffect(() => {
     if (visible && vehicle) {
+      // Verificar se o veículo foi vendido e fechar o modal
+      if (vehicle.status === VehicleStatus.SOLD) {
+        message.warning('Não é possível gerar link de compartilhamento para veículos vendidos');
+        onClose();
+        return;
+      }
+      
       // Reset quando o modal abre
       setIncludeAttachments(false);
       setShareData(null);
       setQrCodeDataUrl('');
       setCopied(false);
     }
-  }, [visible, vehicle]);
+  }, [visible, vehicle, onClose]);
 
   const generateShareLink = async () => {
     if (!vehicle) return;
@@ -70,9 +77,16 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
         },
       });
       setQrCodeDataUrl(qrCodeUrl);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao gerar link de compartilhamento:', error);
-      message.error('Erro ao gerar link de compartilhamento');
+      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao gerar link de compartilhamento';
+      
+      // Mensagem específica para veículo vendido
+      if (errorMessage.includes('vendido') || errorMessage.includes('vendidos')) {
+        message.error('Não é possível gerar link de compartilhamento para veículos vendidos');
+      } else {
+        message.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

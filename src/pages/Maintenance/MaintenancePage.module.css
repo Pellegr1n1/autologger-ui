@@ -5,9 +5,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
   padding: 24px 0;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  border-bottom: none;
 }
 
 .pageTitle {
@@ -31,12 +31,12 @@
 
 /* Estilos para filtros integrados */
 .filtersContainer {
-  margin-bottom: 24px;
-  padding: 20px 0;
+  margin-bottom: 16px;
+  padding: 0;
 }
 
 .filterField {
-  margin-bottom: 8px;
+  margin-bottom: 0;
   display: flex;
   flex-direction: column;
 }
@@ -314,12 +314,29 @@
   margin-right: auto;
 }
 
+@media (max-width: 1200px) {
+  .filterRow {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .filtersContainer {
+    padding: 16px 0;
+  }
+  
+  .filterRow {
+    gap: 10px;
+  }
+}
+
 @media (max-width: 768px) {
   .pageHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
     margin-bottom: 32px;
+    padding: 20px 0;
   }
 
   .statsSection {
@@ -338,13 +355,26 @@
     margin-bottom: 20px;
     padding: 16px 0;
   }
+  
+  .filterRow {
+    gap: 12px;
+  }
+  
+  .filterItem {
+    margin-bottom: 12px;
+  }
 
   .tableSeparator {
     margin: 20px 0;
   }
+  
+  .sectionTitle {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .pageHeader {
     margin-bottom: 24px;
     padding: 16px 0;
@@ -353,13 +383,58 @@
   .statsSection {
     margin-bottom: 24px;
   }
+  
+  .filtersSection {
+    margin-bottom: 24px;
+  }
 
   .filtersContainer {
     margin-bottom: 16px;
     padding: 12px 0;
   }
+  
+  .filterRow {
+    gap: 10px;
+  }
+  
+  .filterItem {
+    margin-bottom: 10px;
+  }
 
   .tableSeparator {
     margin: 16px 0;
+  }
+  
+  .sectionTitle {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageHeader {
+    margin-bottom: 20px;
+    padding: 12px 0;
+  }
+
+  .statsSection {
+    margin-bottom: 20px;
+  }
+  
+  .filtersContainer {
+    margin-bottom: 12px;
+    padding: 10px 0;
+  }
+  
+  .filterRow {
+    gap: 8px;
+  }
+  
+  .filterItem {
+    margin-bottom: 8px;
+  }
+
+  .tableSeparator {
+    margin: 12px 0;
   }
 }

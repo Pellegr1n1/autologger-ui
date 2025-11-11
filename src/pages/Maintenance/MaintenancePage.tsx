@@ -15,8 +15,11 @@ import {
   FileImageOutlined,
   FileOutlined,
   FilterOutlined,
-  ClearOutlined
+  ClearOutlined,
+  TableOutlined
 } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { Dropdown } from 'antd';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
@@ -265,8 +268,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     let attempts = 0;
     const maxAttempts = 12;
     let consecutiveConfirmed = 0;
-    const startTime = Date.now();
-    const minConfirmMs = 15000;
     const intervalId = setInterval(async () => {
       attempts += 1;
       try {
@@ -280,23 +281,25 @@ const MaintenancePage = React.memo(function MaintenancePage() {
 
           if (status === 'CONFIRMED' && hasDefinitiveProof) {
             consecutiveConfirmed += 1;
+            
+            // Mostrar notificação assim que confirmar 2 vezes consecutivas (máximo ~6 segundos)
+            if (consecutiveConfirmed >= 2) {
+              api.success({
+                key: notifKey,
+                message: 'Confirmado na blockchain',
+                description: 'O serviço foi registrado com sucesso.',
+                placement: 'bottomRight',
+                duration: 4
+              });
+              clearInterval(intervalId);
+              pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+              return;
+            }
           } else {
             consecutiveConfirmed = 0;
           }
 
-          const elapsedMs = Date.now() - startTime;
-
-          if (status === 'CONFIRMED' && consecutiveConfirmed >= 2 && elapsedMs >= minConfirmMs) {
-            api.success({
-              key: notifKey,
-              message: 'Confirmado na blockchain',
-              description: 'O serviço foi registrado com sucesso.',
-              placement: 'bottomRight',
-              duration: 4
-            });
-            clearInterval(intervalId);
-            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
-          } else if (status === 'FAILED') {
+          if (status === 'FAILED') {
             api.error({
               key: notifKey,
               message: 'Falha na blockchain',
@@ -353,14 +356,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           placement: 'bottomRight',
           duration: 6
         });
-        setTimeout(() => {
-          api.info({
-            message: 'Aguardando mineração',
-            description: 'A transação está sendo minerada na rede.',
-            placement: 'bottomRight',
-            duration: 4
-          });
-        }, 1000);
         await loadData();
       } else {
         
@@ -403,55 +398,62 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     }
   }, [loadData]);
 
+  const generateCSVContent = useCallback(() => {
+    const exportData = filteredMaintenance.map(service => {
+      const vehicle = memoizedVehicles.find(v => v.id === service.vehicleId);
+      const maintenanceEvent = service as MaintenanceEvent;
+      const status = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
+      let statusText = 'Pendente';
+      
+      switch (status) {
+        case 'CONFIRMED':
+          statusText = 'Confirmado';
+          break;
+        case 'SUBMITTED':
+          statusText = 'Enviado';
+          break;
+        case 'FAILED':
+          statusText = 'Falhou';
+          break;
+      }
+
+      return {
+        'Veículo': vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
+        'Placa': vehicle?.plate || 'N/A',
+        'Categoria': service.category,
+        'Descrição': service.description,
+        'Data': formatBRDate(service.date || maintenanceEvent.serviceDate || service.createdAt),
+        'Quilometragem': kmFormat(service.mileage),
+        'Custo': currencyBRL(service.cost),
+        'Local': service.location || 'N/A',
+        'Status Blockchain': statusText,
+        'Hash': service.hash || maintenanceEvent.blockchainHash || 'N/A'
+      };
+    });
+
+    if (exportData.length === 0) {
+      return null;
+    }
+
+    const headers = Object.keys(exportData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...exportData.map(row => 
+        headers.map(header => `"${(row as any)[header] || ''}"`).join(',')
+      )
+    ].join('\n');
+
+    return csvContent;
+  }, [filteredMaintenance, memoizedVehicles]);
+
   const exportMaintenanceData = useCallback(() => {
     try {
-      const exportData = filteredMaintenance.map(service => {
-        const vehicle = memoizedVehicles.find(v => v.id === service.vehicleId);
-        const maintenanceEvent = service as MaintenanceEvent;
-        const status = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
-        let statusText = 'Pendente';
-        
-        switch (status) {
-          case 'CONFIRMED':
-            statusText = 'Confirmado';
-            break;
-          case 'SUBMITTED':
-            statusText = 'Enviado';
-            break;
-          case 'FAILED':
-            statusText = 'Falhou';
-            break;
-        }
-
-        return {
-          'Veículo': vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
-          'Placa': vehicle?.plate || 'N/A',
-          'Categoria': service.category,
-          'Descrição': service.description,
-          'Data': formatBRDate(service.date || maintenanceEvent.serviceDate || service.createdAt),
-          'Quilometragem': kmFormat(service.mileage),
-          'Custo': currencyBRL(service.cost),
-          'Local': service.location || 'N/A',
-          'Status Blockchain': statusText,
-          'Hash': maintenanceEvent.blockchainHash || 'N/A',
-          'Técnico': service.technician || 'N/A',
-          'Garantia': service.warranty ? 'Sim' : 'Não',
-          'Observações': service.notes || 'N/A'
-        };
-      });
-
-      if (exportData.length === 0) {
+      const csvContent = generateCSVContent();
+      
+      if (!csvContent) {
         message.warning('Nenhum dado para exportar');
         return;
       }
-
-      const headers = Object.keys(exportData[0] || {});
-      const csvContent = [
-        headers.join(','),
-        ...exportData.map(row => 
-          headers.map(header => `"${(row as any)[header] || ''}"`).join(',')
-        )
-      ].join('\n');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
@@ -462,12 +464,121 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       message.success('Dados exportados com sucesso!');
     } catch (error) {
       message.error('Erro ao exportar dados');
     }
-  }, [filteredMaintenance, memoizedVehicles]);
+  }, [generateCSVContent]);
+
+  const openInGoogleSheets = useCallback(() => {
+    try {
+      const csvContent = generateCSVContent();
+      
+      if (!csvContent) {
+        message.warning('Nenhum dado para exportar');
+        return;
+      }
+
+      // Parse do CSV para converter em formato TSV (tab-separated) que Google Sheets interpreta melhor
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim().replace(/^"|"$/g, ''));
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim().replace(/^"|"$/g, ''));
+        return result;
+      };
+
+      const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+      if (lines.length === 0) {
+        message.warning('Nenhum dado para exportar');
+        return;
+      }
+
+      const headers = parseCSVLine(lines[0]);
+      const rows = lines.slice(1).map(line => parseCSVLine(line));
+
+      // Converter para TSV (Tab-Separated Values) que o Google Sheets interpreta melhor ao colar
+      const tsvContent = [
+        headers.join('\t'),
+        ...rows.map(row => row.join('\t'))
+      ].join('\n');
+
+      // Também criar uma versão CSV melhor formatada (sem aspas desnecessárias para valores simples)
+      const improvedCSV = [
+        headers.join(','),
+        ...rows.map(row => 
+          row.map(cell => {
+            // Se contém vírgula, nova linha ou aspas, precisa de aspas
+            if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
+              return `"${cell.replace(/"/g, '""')}"`;
+            }
+            return cell;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Copiar TSV para área de transferência (Google Sheets interpreta melhor)
+      navigator.clipboard.writeText(tsvContent).then(() => {
+        // Abrir Google Sheets em nova aba
+        window.open('https://sheets.google.com/create', '_blank');
+        
+        // Mostrar notificação com instruções
+        setTimeout(() => {
+          api.success({
+            message: 'Dados copiados com sucesso!',
+            description: 'Os dados foram copiados para a área de transferência. Cole diretamente no Google Sheets (Ctrl+V). Os dados já estão formatados em colunas separadas.',
+            placement: 'bottomRight',
+            duration: 12
+          });
+        }, 1500);
+      }).catch(() => {
+        // Fallback: tentar CSV melhorado
+        navigator.clipboard.writeText(improvedCSV).then(() => {
+          window.open('https://sheets.google.com/create', '_blank');
+          api.info({
+            message: 'Dados copiados (formato CSV)',
+            description: 'Cole no Google Sheets. Se não formatar corretamente, use: Dados → Separar texto em colunas',
+            placement: 'bottomRight',
+            duration: 10
+          });
+        }).catch(() => {
+          // Último fallback: mostrar download
+          const blob = new Blob([improvedCSV], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `servicos_${new Date().toISOString().split('T')[0]}.csv`;
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          window.open('https://sheets.google.com/create', '_blank');
+          api.warning({
+            message: 'Arquivo CSV baixado',
+            description: 'Faça upload do arquivo CSV no Google Sheets: Arquivo → Importar → Upload',
+            placement: 'bottomRight',
+            duration: 10
+          });
+        });
+      });
+    } catch (error) {
+      message.error('Erro ao abrir no Google Sheets');
+      console.error(error);
+    }
+  }, [generateCSVContent, api]);
 
   const columns = useMemo(() => [
     {
@@ -720,20 +831,40 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               <Card
                 title={`Serviços (${filteredMaintenance.length})`}
                 className={componentStyles.professionalCard}
+                bodyStyle={{ padding: '16px 24px' }}
                 extra={
-                  <Button 
-                    type="text" 
-                    icon={<DownloadOutlined />}
-                    onClick={exportMaintenanceData}
-                    style={{ color: '#8B5CF6' }}
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: 'download-csv',
+                          label: 'Baixar CSV',
+                          icon: <DownloadOutlined />,
+                          onClick: exportMaintenanceData
+                        },
+                        {
+                          key: 'google-sheets',
+                          label: 'Abrir no Google Sheets',
+                          icon: <TableOutlined />,
+                          onClick: openInGoogleSheets
+                        }
+                      ]
+                    } as MenuProps}
+                    trigger={['click']}
                   >
-                    Exportar CSV
-                  </Button>
+                    <Button 
+                      type="text" 
+                      icon={<DownloadOutlined />}
+                      style={{ color: '#8B5CF6' }}
+                    >
+                      Exportar CSV
+                    </Button>
+                  </Dropdown>
                 }
               >
                 
                 {/* Filtros - Padrão da página pública */}
-                <div style={{ marginBottom: '24px' }}>
+                <div className={styles.filtersContainer}>
                   {(() => {
                     const activeFiltersCount = [
                       pageState.selectedVehicle !== 'all' ? 1 : 0,
@@ -783,7 +914,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                     
                     return (
                       <Row gutter={[12, 12]} className={styles.filterRow}>
-                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                        <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                           <div className={styles.filterItem}>
                             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                               Veículo
@@ -811,7 +942,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                           </div>
                         </Col>
 
-                        <Col xs={24} sm={12} md={12} lg={5} xl={5}>
+                        <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                           <div className={styles.filterItem}>
                             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                               Buscar
@@ -829,7 +960,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                           </div>
                         </Col>
 
-                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                           <div className={styles.filterItem}>
                             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                               Tipo de Serviço
@@ -848,7 +979,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                           </div>
                         </Col>
 
-                        <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                           <div className={styles.filterItem}>
                             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                               Categoria
@@ -867,7 +998,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                           </div>
                         </Col>
 
-                        <Col xs={24} sm={12} md={12} lg={7} xl={7}>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                           <div className={styles.filterItem}>
                             <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
                               Período
@@ -929,8 +1060,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                       showQuickJumper: false,
                       showTotal: (total, range) =>
                         `${range[0]}-${range[1]} de ${total} serviços`,
+                      responsive: true,
                     }}
-                    scroll={{ x: 1200 }}
+                    scroll={{ x: 'max-content' }}
+                    size="middle"
                   />
                 )}
               </Card>
@@ -957,7 +1090,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             Fechar
           </Button>
         ]}
-        width={600}
+        width="90%"
+        style={{ maxWidth: 600 }}
+        centered
       >
         {pageState.selectedMaintenance && (
           <Descriptions column={1} bordered>

@@ -1,5 +1,5 @@
 .profileContainer {
-  padding: 24px;
+  padding: 24px 0;
   background: var(--background-color);
   min-height: calc(100vh - 72px);
 }
@@ -115,6 +115,30 @@
 .profileContainer > *:nth-child(3) { animation-delay: 0.3s; }
 
 /* Responsividade */
+@media (max-width: 1200px) {
+  .cardsRow {
+    gap: 20px;
+  }
+  
+  .cardsRow .ant-card {
+    min-height: 320px !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .cardsRow {
+    gap: 18px;
+  }
+  
+  .cardsRow .ant-card {
+    min-height: 300px !important;
+  }
+  
+  .profileStats {
+    padding: 12px 0;
+  }
+}
+
 @media (max-width: 768px) {
   .profileContainer {
     padding: 16px;
@@ -132,6 +156,143 @@
     width: 80px !important;
     height: 80px !important;
     font-size: 32px !important;
+  }
+  
+  .cardsRow {
+    gap: 16px;
+  }
+  
+  .cardsRow .ant-card {
+    min-height: auto !important;
+  }
+  
+  .profileStats {
+    padding: 10px 0;
+  }
+  
+  .infoRow {
+    padding: 10px;
+  }
+  
+  .dangerContent,
+  .authContent {
+    padding: 10px 0 !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .profileContainer {
+    padding: 12px;
+  }
+  
+  .profileAvatar {
+    padding: 12px 0;
+  }
+  
+  .statItem {
+    padding: 10px;
+  }
+  
+  .profileContainer .ant-avatar {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 28px !important;
+  }
+  
+  .cardsRow {
+    gap: 12px;
+  }
+  
+  .infoRow {
+    padding: 8px;
+  }
+  
+  .dangerContent,
+  .authContent {
+    padding: 8px 0 !important;
+  }
+  
+  .dangerIcon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 12px;
+  }
+  
+  .dangerIcon .anticon {
+    font-size: 24px;
+  }
+  
+  .googleBadge {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .googleBadge svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileContainer {
+    padding: 10px;
+  }
+  
+  .profileAvatar {
+    padding: 10px 0;
+  }
+  
+  .statItem {
+    padding: 8px;
+  }
+  
+  .profileContainer .ant-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 24px !important;
+  }
+  
+  .cardsRow {
+    gap: 10px;
+  }
+  
+  .infoRow {
+    padding: 6px;
+  }
+  
+  .dangerContent,
+  .authContent {
+    padding: 6px 0 !important;
+  }
+  
+  .dangerIcon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+  }
+  
+  .dangerIcon .anticon {
+    font-size: 20px;
+  }
+  
+  .googleBadge {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .googleBadge svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .securityButtonImproved {
+    height: 40px;
+    font-size: 14px;
+  }
+  
+  .deleteButton {
+    height: 38px;
+    font-size: 12px;
   }
 }
 

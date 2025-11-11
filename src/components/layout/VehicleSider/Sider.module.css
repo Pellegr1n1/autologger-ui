@@ -5,6 +5,8 @@
     padding: 20px 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 64px;
+    position: relative;
+    z-index: 10;
 }
 
 .btn_menu_start {
@@ -14,11 +16,17 @@
     padding: 20px 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 64px;
+    position: relative;
+    z-index: 10;
 }
 
 .sider {
     position: relative;
     padding-bottom: 100px; /* Espaço para o botão de logout */
+    background: transparent;
+    backdrop-filter: blur(5px);
+    position: relative;
+    overflow: hidden;
 }
 
 .menu {
@@ -37,4 +45,6 @@
     border: none;
     height: 1px;
     opacity: 0.6;
+    position: relative;
+    z-index: 10;
 }

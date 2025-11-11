@@ -8,6 +8,7 @@ jest.mock('../../../../shared/services/api', () => ({
       get: jest.fn() as any,
       post: jest.fn() as any,
       put: jest.fn() as any,
+      patch: jest.fn() as any,
       delete: jest.fn() as any,
     },
   },
@@ -143,6 +144,192 @@ describe('VehicleServiceService', () => {
       const result = await VehicleServiceService.getAllServices();
 
       expect(result[0].nextServiceDate).toBeUndefined();
+    });
+  });
+
+  describe('getServicesByVehicle', () => {
+    it('should return services by vehicle', async () => {
+      const mockBackendResponse = [
+        {
+          id: '1',
+          vehicleId: 'vehicle1',
+          type: 'maintenance',
+          category: 'oil',
+          description: 'Oil change',
+          serviceDate: '2024-01-01',
+          mileage: 50000,
+          cost: 200,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+          status: 'pending',
+        },
+      ];
+
+      (apiBase.api.get as any).mockResolvedValue({ data: mockBackendResponse });
+
+      const result = await VehicleServiceService.getServicesByVehicle('vehicle1');
+
+      expect(result).toHaveLength(1);
+      expect(result[0].vehicleId).toBe('vehicle1');
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/vehicle/vehicle1');
+    });
+  });
+
+  describe('getServiceById', () => {
+    it('should return service by id', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: mockVehicleEvent });
+
+      const result = await VehicleServiceService.getServiceById('1');
+
+      expect(result).toEqual(mockVehicleEvent);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/1');
+    });
+  });
+
+  describe('updateService', () => {
+    it('should update service', async () => {
+      const updateData = {
+        description: 'Updated description',
+      };
+
+      (apiBase.api.patch as any).mockResolvedValue({ data: { ...mockVehicleEvent, ...updateData } });
+
+      const result = await VehicleServiceService.updateService('1', updateData);
+
+      expect(result.description).toBe('Updated description');
+      expect(apiBase.api.patch).toHaveBeenCalledWith('/vehicle-services/1', updateData);
+    });
+  });
+
+  describe('deleteService', () => {
+    it('should delete service', async () => {
+      (apiBase.api.delete as any).mockResolvedValue({});
+
+      await VehicleServiceService.deleteService('1');
+
+      expect(apiBase.api.delete).toHaveBeenCalledWith('/vehicle-services/1');
+    });
+  });
+
+  describe('updateBlockchainStatus', () => {
+    it('should update blockchain status', async () => {
+      (apiBase.api.patch as any).mockResolvedValue({ data: mockVehicleEvent });
+
+      const result = await VehicleServiceService.updateBlockchainStatus('1', 'hash123', 'user1');
+
+      expect(result).toEqual(mockVehicleEvent);
+      expect(apiBase.api.patch).toHaveBeenCalledWith('/vehicle-services/1/blockchain-status', {
+        hash: 'hash123',
+        confirmedBy: 'user1',
+      });
+    });
+  });
+
+  describe('getServicesByType', () => {
+    it('should return services by type', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: [mockVehicleEvent] });
+
+      const result = await VehicleServiceService.getServicesByType('maintenance');
+
+      expect(result).toHaveLength(1);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/type/maintenance');
+    });
+  });
+
+  describe('getServicesByStatus', () => {
+    it('should return services by status', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: [mockVehicleEvent] });
+
+      const result = await VehicleServiceService.getServicesByStatus('pending');
+
+      expect(result).toHaveLength(1);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/status/pending');
+    });
+  });
+
+  describe('getServicesByDateRange', () => {
+    it('should return services by date range', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: [mockVehicleEvent] });
+
+      const startDate = new Date('2024-01-01');
+      const endDate = new Date('2024-01-31');
+
+      const result = await VehicleServiceService.getServicesByDateRange(startDate, endDate);
+
+      expect(result).toHaveLength(1);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/date-range', {
+        params: {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+      });
+    });
+  });
+
+  describe('getTotalCostByVehicle', () => {
+    it('should return total cost by vehicle', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: { total: 1000 } });
+
+      const result = await VehicleServiceService.getTotalCostByVehicle('vehicle1');
+
+      expect(result).toBe(1000);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/vehicle/vehicle1/total-cost');
+    });
+  });
+
+  describe('getServicesCountByVehicle', () => {
+    it('should return services count by vehicle', async () => {
+      (apiBase.api.get as any).mockResolvedValue({ data: { count: 5 } });
+
+      const result = await VehicleServiceService.getServicesCountByVehicle('vehicle1');
+
+      expect(result).toBe(5);
+      expect(apiBase.api.get).toHaveBeenCalledWith('/vehicle-services/vehicle/vehicle1/count');
+    });
+  });
+
+  describe('uploadAttachments', () => {
+    it('should upload attachments', async () => {
+      const file1 = new File(['content1'], 'file1.pdf', { type: 'application/pdf' });
+      const file2 = new File(['content2'], 'file2.jpg', { type: 'image/jpeg' });
+
+      (apiBase.api.post as any).mockResolvedValue({
+        data: {
+          success: true,
+          urls: ['http://example.com/file1.pdf', 'http://example.com/file2.jpg'],
+          count: 2,
+        },
+      });
+
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = await VehicleServiceService.uploadAttachments([file1, file2]);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toBe('http://example.com/file1.pdf');
+      expect(apiBase.api.post).toHaveBeenCalled();
+
+      jest.restoreAllMocks();
+    });
+
+    it('should return empty array when no files', async () => {
+      const result = await VehicleServiceService.uploadAttachments([]);
+
+      expect(result).toEqual([]);
+      expect(apiBase.api.post).not.toHaveBeenCalled();
+    });
+
+    it('should handle upload error', async () => {
+      const file1 = new File(['content1'], 'file1.pdf', { type: 'application/pdf' });
+
+      const error = new Error('Upload failed');
+      (apiBase.api.post as any).mockRejectedValue(error);
+
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      await expect(VehicleServiceService.uploadAttachments([file1])).rejects.toThrow('Upload failed');
+
+      jest.restoreAllMocks();
     });
   });
 

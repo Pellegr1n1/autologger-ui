@@ -16,7 +16,14 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    // Support both Vite (import.meta.env) and Jest (process.env) environments
+    let googleClientId: string | undefined;
+    if (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_CLIENT_ID) {
+      googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+    } else if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) {
+      // Vite environment
+      googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    }
     
     if (!googleClientId) {
       onError(new Error('Google Client ID não configurado'));
@@ -58,7 +65,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         return;
       }
       
-      // Verificar se o popup foi fechado
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
@@ -66,7 +72,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         }
       }, 1000);
       
-      // Timeout para fechar o popup após 5 minutos
       setTimeout(() => {
         if (!popup.closed) {
           popup.close();
@@ -82,7 +87,12 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     }
   };
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  let googleClientId: string | undefined;
+  if (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_CLIENT_ID) {
+    googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+  } else if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) {
+    googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  }
   
   if (!googleClientId) {
     return (

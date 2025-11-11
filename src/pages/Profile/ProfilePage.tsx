@@ -4,7 +4,6 @@ import {
   Button, 
   Form, 
   Input, 
-  message, 
   Typography, 
   Space, 
   Row, 
@@ -14,7 +13,9 @@ import {
   Alert,
   Spin,
   Modal,
-  Tooltip
+  Tooltip,
+  Progress,
+  notification
 } from 'antd';
 import { 
   UserOutlined, 
@@ -24,9 +25,11 @@ import {
   LockOutlined,
   DeleteOutlined,
   ExclamationCircleOutlined,
-  CloseOutlined
+  CloseOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../features/auth';
+import { authService } from '../../features/auth/services/apiAuth';
 import { useNavigate } from 'react-router-dom';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
@@ -41,6 +44,7 @@ interface ProfileFormData {
 
 
 export default function ProfilePage() {
+  const [api, contextHolder] = notification.useNotification();
   const { user, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
@@ -52,6 +56,16 @@ export default function ProfilePage() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    checks: {
+      length: false,
+      lowercase: false,
+      uppercase: false,
+      number: false,
+      special: false,
+    },
+  });
 
   useEffect(() => {
     if (user) {
@@ -69,7 +83,12 @@ export default function ProfilePage() {
       email: user?.email
     };
 
-    const changed = Object.keys(currentValues).some(
+    // Para contas Google, não considerar mudanças no email
+    const keysToCheck = user?.authProvider === 'google' 
+      ? ['name'] 
+      : ['name', 'email'];
+
+    const changed = keysToCheck.some(
       key => currentValues[key as keyof ProfileFormData] !== initialValues[key as keyof typeof initialValues]
     );
     setHasChanges(changed);
@@ -78,13 +97,36 @@ export default function ProfilePage() {
   const onFinish = async (values: ProfileFormData) => {
     try {
       setLoading(true);
-      await updateProfile(values);
-      message.success('Perfil atualizado com sucesso!');
+      // Para contas Google, não enviar o email (não pode ser alterado)
+      const updateData: ProfileFormData = {
+        name: values.name,
+        email: user?.authProvider === 'google' ? user.email : values.email
+      };
+      await updateProfile(updateData);
+      api.success({
+        message: 'Perfil atualizado',
+        description: 'Suas informações foram atualizadas com sucesso!',
+        placement: 'bottomRight',
+        duration: 5,
+      });
       setIsEditing(false);
       setHasChanges(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar perfil:', error);
-      message.error('Erro ao atualizar perfil');
+      let errorMessage = 'Erro ao atualizar perfil. Tente novamente.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      api.error({
+        message: 'Erro ao atualizar perfil',
+        description: errorMessage,
+        placement: 'bottomRight',
+        duration: 5,
+      });
     } finally {
       setLoading(false);
     }
@@ -103,18 +145,78 @@ export default function ProfilePage() {
   };
 
 
-  const handlePasswordChange = async () => {
+  const checkPasswordStrength = (password: string) => {
+    const checks = {
+      length: password.length >= 8,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+
+    const score = Object.values(checks).filter(Boolean).length;
+
+    setPasswordStrength({
+      score,
+      checks,
+    });
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score === 5) return "#52c41a";
+    if (passwordStrength.score >= 3) return "#faad14";
+    return "#ff4d4f";
+  };
+
+  const getPasswordStrengthLabel = () => {
+    if (passwordStrength.score === 5) return "Muito forte";
+    if (passwordStrength.score >= 3) return "Médio";
+    return "Fraco";
+  };
+
+  const handlePasswordChange = async (values: any) => {
     try {
       setPasswordLoading(true);
-      // Aqui você implementaria a lógica para alterar a senha
-      // await changePassword(values.currentPassword, values.newPassword);
+      await authService.changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword,
+      });
       
-      message.success('Senha alterada com sucesso!');
+      api.success({
+        message: 'Senha alterada',
+        description: 'Sua senha foi alterada com sucesso!',
+        placement: 'bottomRight',
+        duration: 5,
+      });
       setPasswordModalVisible(false);
       passwordForm.resetFields();
-    } catch (error) {
+      setPasswordStrength({
+        score: 0,
+        checks: {
+          length: false,
+          lowercase: false,
+          uppercase: false,
+          number: false,
+          special: false,
+        },
+      });
+    } catch (error: any) {
       console.error('Erro ao alterar senha:', error);
-      message.error('Erro ao alterar senha. Verifique sua senha atual.');
+      let errorMessage = 'Erro ao alterar senha. Verifique sua senha atual.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      api.error({
+        message: 'Erro ao alterar senha',
+        description: errorMessage,
+        placement: 'bottomRight',
+        duration: 5,
+      });
     } finally {
       setPasswordLoading(false);
     }
@@ -123,18 +225,46 @@ export default function ProfilePage() {
   const handlePasswordModalCancel = () => {
     setPasswordModalVisible(false);
     passwordForm.resetFields();
+    setPasswordStrength({
+      score: 0,
+      checks: {
+        length: false,
+        lowercase: false,
+        uppercase: false,
+        number: false,
+        special: false,
+      },
+    });
   };
 
   const handleDeleteAccount = async () => {
     try {
       setDeleteLoading(true);
       await deleteAccount();
-      message.success('Conta excluída com sucesso');
+      api.success({
+        message: 'Conta excluída',
+        description: 'Sua conta foi excluída com sucesso.',
+        placement: 'bottomRight',
+        duration: 5,
+      });
       setDeleteModalVisible(false);
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao deletar conta:', error);
-      message.error('Erro ao excluir conta. Tente novamente.');
+      let errorMessage = 'Erro ao excluir conta. Tente novamente.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      api.error({
+        message: 'Erro ao excluir conta',
+        description: errorMessage,
+        placement: 'bottomRight',
+        duration: 5,
+      });
     } finally {
       setDeleteLoading(false);
     }
@@ -146,6 +276,8 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
+      <>
+        {contextHolder}
       <DefaultFrame title="Perfil" loading={true}>
         <div style={{ textAlign: 'center', padding: '48px' }}>
           <Spin size="large" />
@@ -154,10 +286,13 @@ export default function ProfilePage() {
           </Text>
         </div>
       </DefaultFrame>
+      </>
     );
   }
 
   return (
+    <>
+      {contextHolder}
     <DefaultFrame title="Meu Perfil">
       <div className={styles.profileContainer}>
         {/* Header do Perfil */}
@@ -327,8 +462,23 @@ export default function ProfilePage() {
                   <Input 
                     placeholder="seu@email.com"
                     className={componentStyles.professionalInput}
+                    disabled={user.authProvider === 'google'}
+                    suffix={
+                      user.authProvider === 'google' ? (
+                        <Tooltip title="O email é sincronizado automaticamente com sua conta Google e não pode ser alterado aqui">
+                          <InfoCircleOutlined style={{ color: 'var(--text-secondary)' }} />
+                        </Tooltip>
+                      ) : null
+                    }
                   />
                 </Form.Item>
+                {user.authProvider === 'google' && (
+                  <div style={{ marginTop: '-16px', marginBottom: '16px' }}>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      O email é sincronizado automaticamente com sua conta Google
+                    </Text>
+                  </div>
+                )}
               </Form>
             </Card>
           </Col>
@@ -498,7 +648,8 @@ export default function ProfilePage() {
           open={passwordModalVisible}
           onCancel={handlePasswordModalCancel}
           footer={null}
-          width={500}
+          width="90%"
+          style={{ maxWidth: 500 }}
           centered
         >
           <Form
@@ -512,7 +663,7 @@ export default function ProfilePage() {
               label="Senha Atual"
               rules={[
                 { required: true, message: 'Por favor, insira sua senha atual' },
-                { min: 6, message: 'A senha deve ter pelo menos 6 caracteres' }
+                { min: 8, message: 'A senha deve ter pelo menos 8 caracteres' }
               ]}
             >
               <Input.Password 
@@ -526,14 +677,55 @@ export default function ProfilePage() {
               label="Nova Senha"
               rules={[
                 { required: true, message: 'Por favor, insira a nova senha' },
-                { min: 6, message: 'A senha deve ter pelo menos 6 caracteres' }
+                { min: 8, message: '' },
+                {
+                  pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/,
+                  message: '',
+                },
               ]}
+              hasFeedback
             >
               <Input.Password 
-                placeholder="Digite a nova senha"
+                placeholder="Sua senha (mín. 8 caracteres)"
                 className={componentStyles.professionalInput}
+                onChange={(e) => checkPasswordStrength(e.target.value)}
               />
             </Form.Item>
+
+            <div style={{ marginBottom: 20, height: '140px', minWidth: '100%' }}>
+              <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>Força da senha:</Text>
+                  <Text strong style={{ color: getPasswordStrengthColor(), fontSize: 12 }}>
+                    {getPasswordStrengthLabel()}
+                  </Text>
+                </div>
+                <Progress
+                  percent={(passwordStrength.score / 5) * 100}
+                  strokeColor={passwordStrength.score > 0 ? getPasswordStrengthColor() : '#888'}
+                  trailColor="#444"
+                  showInfo={false}
+                  size="small"
+                />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: 11 }}>
+                  <Text type={passwordStrength.checks.length ? "success" : "secondary"}>
+                    ✓ Mínimo 8 caracteres
+                  </Text>
+                  <Text type={passwordStrength.checks.lowercase ? "success" : "secondary"}>
+                    ✓ Letra minúscula
+                  </Text>
+                  <Text type={passwordStrength.checks.uppercase ? "success" : "secondary"}>
+                    ✓ Letra maiúscula
+                  </Text>
+                  <Text type={passwordStrength.checks.number ? "success" : "secondary"}>
+                    ✓ Número
+                  </Text>
+                  <Text type={passwordStrength.checks.special ? "success" : "secondary"} style={{ gridColumn: "1 / -1" }}>
+                    ✓ Caractere especial
+                  </Text>
+                </div>
+              </Space>
+            </div>
 
             <Form.Item
               name="confirmPassword"
@@ -541,6 +733,8 @@ export default function ProfilePage() {
               dependencies={['newPassword']}
               rules={[
                 { required: true, message: 'Por favor, confirme a nova senha' },
+                { min: 8, message: '' },
+                { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: '' },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || getFieldValue('newPassword') === value) {
@@ -550,10 +744,12 @@ export default function ProfilePage() {
                   },
                 }),
               ]}
+              hasFeedback
             >
               <Input.Password 
-                placeholder="Confirme a nova senha"
+                placeholder="Confirme sua senha"
                 className={componentStyles.professionalInput}
+                maxLength={50}
               />
             </Form.Item>
 
@@ -600,9 +796,9 @@ export default function ProfilePage() {
               Excluir Conta
             </Button>
           ]}
-          width={500}
+          width="90%"
+          style={{ top: 20, maxWidth: 500 }}
           centered
-          style={{ top: 20 }}
         >
           <Alert
             message="Esta ação é irreversível"
@@ -629,5 +825,6 @@ export default function ProfilePage() {
         </Modal>
       </div>
     </DefaultFrame>
+    </>
   );
 }

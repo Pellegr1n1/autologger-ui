@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Form, Input, Button, Card, Typography, Checkbox, Divider, notification } from "antd"
 import { UserOutlined, LockOutlined } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
@@ -14,6 +14,47 @@ export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [isProcessingAuth, setIsProcessingAuth] = useState(false)
+
+  const handleGoogleError = useCallback((error: any) => {
+    const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
+    
+    api.error({
+      message: 'Erro no login',
+      description: errorMessage,
+      placement: 'bottomRight',
+      duration: 5,
+    })
+    
+    setIsProcessingAuth(false)
+  }, [api])
+
+  const handleGoogleSuccess = useCallback(async (response: any) => {
+    setLoading(true)
+
+    try {
+      // Token é gerenciado automaticamente via cookie httpOnly pelo backend
+      // Não precisamos mais armazenar no localStorage
+      if (response.user) {
+        // Login user
+        await login(response.user)
+        navigate("/vehicles")
+      } else {
+        throw new Error('Dados do usuário não recebidos')
+      }
+    } catch (err: any) {
+      const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
+      
+      api.error({
+        message: 'Erro no login',
+        description: errorMessage,
+        placement: 'bottomRight',
+        duration: 5,
+      })
+    } finally {
+      setLoading(false)
+      setIsProcessingAuth(false)
+    }
+  }, [login, navigate, api])
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -37,7 +78,7 @@ export default function LoginPage() {
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [isProcessingAuth]);
+  }, [isProcessingAuth, handleGoogleSuccess, handleGoogleError]);
 
   const onFinish = async (values: any) => {
     setLoading(true)
@@ -64,66 +105,13 @@ export default function LoginPage() {
     }
   }
 
-  const handleGoogleSuccess = async (response: any) => {
-    setLoading(true)
-
-    try {
-      
-      if (response.user && response.token) {
-        // Store token in localStorage first
-        localStorage.setItem('autologger_token', response.token)
-        
-        // Import and set token in apiBase
-        const { apiBase } = await import('../../shared/services/api')
-        apiBase.setToken(response.token)
-        
-        // Verify token is properly set
-        const storedToken = apiBase.getToken()
-        
-        // Login user
-        await login(response.user)
-        
-        // Small delay to ensure token is properly set before navigation
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        navigate("/vehicles")
-      } else {
-        throw new Error('Dados do usuário não recebidos')
-      }
-    } catch (err: any) {
-      const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
-      
-      api.error({
-        message: 'Erro no login',
-        description: errorMessage,
-        placement: 'bottomRight',
-        duration: 5,
-      })
-    } finally {
-      setLoading(false)
-      setIsProcessingAuth(false)
-    }
-  }
-
-  const handleGoogleError = (error: any) => {
-    const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
-    
-    api.error({
-      message: 'Erro no login',
-      description: errorMessage,
-      placement: 'bottomRight',
-      duration: 5,
-    })
-    
-    setIsProcessingAuth(false)
-  }
 
   return (
     <>
       {contextHolder}
       <div className={styles.authContainer}>
       <div className={styles.authContent}>
-        <Card className={styles.authCard} style={{ width: '480px' }}>
+        <Card className={styles.authCard}>
           <div className={styles.authHeader}>
             <Title level={2} className={styles.authTitle}>
               Bem-vindo de volta

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/apiAuth';
-import { apiBase } from '../../../shared/services/api';
 import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types"
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,14 +18,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      
-      if (authService.isAuthenticated()) {
-        const userData = await authService.getProfile();
-        setUser(userData);
-      } else {
-      }
+      // Tentar buscar o perfil do usuário
+      // Se o cookie httpOnly existir e for válido, o backend retornará o perfil
+      // Se não existir ou for inválido, o backend retornará 401
+      const userData = await authService.getProfile();
+      setUser(userData);
     } catch (error) {
-      apiBase.removeToken();
+      // Se houver erro (401, etc), o usuário não está autenticado
+      // O cookie será removido pelo backend se necessário
       setUser(null);
     } finally {
       setLoading(false);
@@ -66,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: RegisterData): Promise<User> => {
     try {
       const response = await authService.register(data);
       const tempUser = convertAuthUserToUser(response.user);
@@ -75,7 +74,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
+        return fullUser;
       } catch (profileError) {
+        return tempUser;
       }
     } catch (error) {
       throw error;
@@ -98,11 +99,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (authService.isAuthenticated()) {
-        const userData = await authService.getProfile();
-        setUser(userData);
-      }
+      // Tentar buscar o perfil do usuário
+      // Se o cookie httpOnly existir e for válido, o backend retornará o perfil
+      const userData = await authService.getProfile();
+      setUser(userData);
     } catch (error) {
+      // Se houver erro, limpar o usuário
+      setUser(null);
       throw error;
     }
   };

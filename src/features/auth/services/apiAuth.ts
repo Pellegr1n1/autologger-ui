@@ -5,15 +5,23 @@ import { AuthResponse, LoginData, RegisterData, UpdateProfileData, User } from "
 class AuthService {
     // Métodos de autenticação
     async register(data: RegisterData): Promise<AuthResponse> {
-        const response: AxiosResponse<AuthResponse> = await apiBase.api.post('/auth/register', data);
-        apiBase.setToken(response.data.access_token);
-        return response.data;
+        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/register', data);
+        // Token é gerenciado automaticamente via cookie httpOnly
+        // Retornamos apenas os dados do usuário
+        return {
+            user: response.data.user,
+            access_token: '', // Não retornamos mais o token no body
+        };
     }
 
     async login(data: LoginData): Promise<AuthResponse> {
-        const response: AxiosResponse<AuthResponse> = await apiBase.api.post('/auth/login', data);
-        apiBase.setToken(response.data.access_token);
-        return response.data;
+        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/login', data);
+        // Token é gerenciado automaticamente via cookie httpOnly
+        // Retornamos apenas os dados do usuário
+        return {
+            user: response.data.user,
+            access_token: '', // Não retornamos mais o token no body
+        };
     }
 
     async logout(): Promise<void> {
@@ -69,7 +77,10 @@ class AuthService {
     }
 
     isAuthenticated(): boolean {
-        return apiBase.isAuthenticated();
+        // Não podemos verificar diretamente se o cookie httpOnly existe
+        // A verificação real é feita nas requisições ao backend
+        // Retornamos true por padrão e deixamos o backend validar
+        return true;
     }
 
     getToken(): string | null {
@@ -77,9 +88,12 @@ class AuthService {
     }
 
     async refreshToken(): Promise<AuthResponse> {
-        const response: AxiosResponse<AuthResponse> = await apiBase.api.post('/auth/refresh');
-        apiBase.setToken(response.data.access_token);
-        return response.data;
+        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/refresh');
+        // Token é gerenciado automaticamente via cookie httpOnly
+        return {
+            user: response.data.user,
+            access_token: '', // Não retornamos mais o token no body
+        };
     }
 }
 

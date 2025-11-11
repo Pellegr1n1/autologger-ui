@@ -36,7 +36,14 @@ export default function VehicleCard({
       return url;
     }
     
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    // Support both Vite (import.meta.env) and Jest (process.env) environments
+    let apiBaseUrl: string;
+    if (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) {
+      apiBaseUrl = process.env.VITE_API_BASE_URL;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      apiBaseUrl = (globalThis as any).import?.meta?.env?.VITE_API_BASE_URL as string | undefined || 'http://localhost:3001';
+    }
     const fullUrl = `${apiBaseUrl}${url}`;
     return fullUrl;
   };

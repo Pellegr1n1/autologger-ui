@@ -101,11 +101,6 @@ describe('HomePage', () => {
     expect(screen.getByText(/A AutoLogger oferece uma solução inovadora/)).toBeInTheDocument();
   });
 
-  it('deve exibir botões de ação', () => {
-    render(<HomePage />);
-    expect(screen.getByText('Saiba Mais')).toBeInTheDocument();
-  });
-
   it('deve exibir links de navegação', () => {
     render(<HomePage />);
     expect(screen.getByText('Login')).toBeInTheDocument();

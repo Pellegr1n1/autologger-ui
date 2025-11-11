@@ -43,13 +43,13 @@ describe('API Base', () => {
   });
 
   it('should have api instance', () => {
-    const { apiBase } = require('../../shared/api');
+    const { apiBase } = require('../../shared/services/api');
     expect(apiBase).toBeDefined();
     expect(apiBase.api).toBeDefined();
   });
 
   it('should have HTTP methods', () => {
-    const { apiBase } = require('../../shared/api');
+    const { apiBase } = require('../../shared/services/api');
     expect(apiBase.api.get).toBeDefined();
     expect(apiBase.api.post).toBeDefined();
     expect(apiBase.api.put).toBeDefined();

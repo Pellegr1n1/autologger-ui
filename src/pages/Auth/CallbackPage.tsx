@@ -14,7 +14,6 @@ export default function CallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const token = searchParams.get('token');
         const userParam = searchParams.get('user');
         const error = searchParams.get('error');
 
@@ -24,22 +23,15 @@ export default function CallbackPage() {
           throw new Error(`Erro do Google: ${error}`);
         }
 
-        if (!token || !userParam) {
-          throw new Error('Token ou dados do usuário não recebidos');
+        if (!userParam) {
+          throw new Error('Dados do usuário não recebidos');
         }
 
         // Parse do usuário
         const userData = JSON.parse(decodeURIComponent(userParam));
 
-        // Salvar token no localStorage e no apiBase
-        localStorage.setItem('autologger_token', token);
-        
-        // Importar apiBase para definir o token
-        const { apiBase } = await import('../../shared/services/api');
-        apiBase.setToken(token);
-        
-        // Verify token is properly set
-        const storedToken = apiBase.getToken();
+        // Token é gerenciado automaticamente via cookie httpOnly pelo backend
+        // Não precisamos mais armazenar no localStorage
 
         // Fazer login do usuário
         const tempUser = {
@@ -51,15 +43,12 @@ export default function CallbackPage() {
 
         await login(tempUser as any);
 
-        // Small delay to ensure token is properly set
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         // Fechar popup e redirecionar
         if (window.opener) {
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_SUCCESS',
             user: tempUser,
-            token: token
+            // Não enviamos mais o token por segurança
           }, window.location.origin);
           window.close();
         } else {

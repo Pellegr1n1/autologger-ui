@@ -13,18 +13,19 @@ class ApiBase {
             headers: {
                 'Content-Type': 'application/json',
             },
+            // Configurar para enviar cookies automaticamente (httpOnly cookies)
+            withCredentials: true,
         });
 
         this.setupInterceptors();
     }
 
     private setupInterceptors(): void {
+        // Não é mais necessário adicionar token manualmente no header
+        // O cookie httpOnly é enviado automaticamente pelo navegador
         this.api.interceptors.request.use(
             (config) => {
-                const token = this.getToken();
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
+                // Cookies são enviados automaticamente pelo navegador
                 return config;
             },
             (error) => {
@@ -38,28 +39,37 @@ class ApiBase {
                 // Não redireciona automaticamente em caso de erro 401
                 // Deixa o erro ser tratado pela página que fez a requisição
                 if (error.response?.status === 401) {
-                    // Apenas remove o token, mas não redireciona
-                    this.removeToken();
+                    // O cookie será removido pelo backend no logout
+                    // Não precisamos fazer nada aqui, pois não temos acesso ao cookie httpOnly
                 }
                 return Promise.reject(error);
             }
         );
     }
 
-    setToken(token: string): void {
-        localStorage.setItem('autologger_token', token);
+    // Métodos mantidos para compatibilidade, mas não fazem nada
+    // O token agora está em um cookie httpOnly gerenciado pelo backend
+    setToken(_token: string): void {
+        // Token é gerenciado pelo backend via cookie httpOnly
+        // Não precisamos armazenar no frontend
     }
 
     getToken(): string | null {
-        return localStorage.getItem('autologger_token');
+        // Não podemos acessar cookies httpOnly do JavaScript
+        // O token é gerenciado automaticamente pelo navegador
+        return null;
     }
 
     removeToken(): void {
-        localStorage.removeItem('autologger_token');
+        // O cookie será removido pelo backend no endpoint de logout
+        // Não podemos remover cookies httpOnly do JavaScript
     }
 
     isAuthenticated(): boolean {
-        return !!this.getToken();
+        // Não podemos verificar diretamente se o cookie existe
+        // A verificação será feita nas requisições ao backend
+        // Retornamos true por padrão e deixamos o backend validar
+        return true;
     }
 
     logout(navigate?: (path: string) => void): void {

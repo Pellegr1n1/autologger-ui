@@ -27,7 +27,6 @@ export interface Vehicle {
   model: string
   year: number
   color: string
-  renavam: string
   mileage: number
   status: VehicleStatus
   soldAt?: Date
@@ -82,7 +81,6 @@ export interface CreateVehicleData {
   model: string
   year: number
   color: string
-  renavam: string
   mileage?: number
   photo?: File
 }
@@ -106,7 +104,6 @@ export interface VehicleFormData {
   model: string
   year: string
   color: string
-  renavam: string
   mileage: string
   photo?: File
 }
@@ -117,7 +114,6 @@ export interface VehicleFormErrors {
   model?: string
   year?: string
   color?: string
-  renavam?: string
   mileage?: string
 }
 

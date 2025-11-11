@@ -21,15 +21,19 @@ export default function DefaultFrame({
   showHeader = true,
   loading = false
 }: DefaultFrameProps): React.JSX.Element {
-  const [siderCollapsed, setSiderCollapsed] = useState(false);
+  // Sider inicia fechado, mas pode abrir em telas maiores
+  const [siderCollapsed, setSiderCollapsed] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
 
   const handleSiderCollapse = (collapsed: boolean) => {
+    // Permitir mudança apenas se a tela for grande o suficiente
+    // A verificação é feita no VehicleSider
     setSiderCollapsed(collapsed);
   };
 
   const handleMenuToggle = () => {
-    setSiderCollapsed(!siderCollapsed);
+    // Funcionalidade gerenciada pelo VehicleSider
+    // setSiderCollapsed(!siderCollapsed);
   };
 
   // Efeito para gerenciar o estado de carregamento do conteúdo
@@ -53,7 +57,7 @@ export default function DefaultFrame({
         <Layout 
           className={styles.contentLayout}
           style={{
-            marginTop: showHeader ? '72px' : '0',
+            marginTop: showHeader ? '0' : '0',
             marginLeft: showSider ? (siderCollapsed ? '80px' : '200px') : '0',
             transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
