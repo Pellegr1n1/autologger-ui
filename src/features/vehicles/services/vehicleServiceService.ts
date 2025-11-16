@@ -1,5 +1,6 @@
 import { apiBase } from '../../../shared/services/api';
 import { VehicleEvent } from '../types/vehicle.types';
+import { mapServicesToFrontend } from '../utils/serviceMapper';
 
 export interface CreateVehicleServiceData {
   vehicleId: string;
@@ -46,82 +47,9 @@ export class VehicleServiceService {
   /**
    * Buscar todos os serviços
    */
-  /**
-   * Mapear status do backend para frontend
-   */
-  private static mapBackendStatusToFrontend(backendStatus: string): 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED' | 'REVERTED' {
-    const statusMap: Record<string, 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED' | 'REVERTED'> = {
-      'pending': 'PENDING',
-      'confirmed': 'CONFIRMED',
-      'rejected': 'FAILED',
-      'expired': 'FAILED',
-    };
-    return statusMap[backendStatus?.toLowerCase()] || 'PENDING';
-  }
-
-  /**
-   * Obter mensagem do status
-   */
-  private static getStatusMessage(status: string): string {
-    const messages: Record<string, string> = {
-      'pending': 'Aguardando confirmação na blockchain',
-      'confirmed': 'Transação confirmada na blockchain',
-      'rejected': 'Falha ao registrar na blockchain',
-      'expired': 'Transação expirada',
-    };
-    return messages[status?.toLowerCase()] || 'Status desconhecido';
-  }
-
   static async getAllServices(): Promise<VehicleEvent[]> {
     const response = await apiBase.api.get<any[]>(this.BASE_PATH);
-    
-    const parseDate = (dateStr: string | Date): Date => {
-      if (!dateStr) return new Date();
-      if (dateStr instanceof Date) return dateStr;
-      
-      const dateStrNormalized = typeof dateStr === 'string' ? dateStr.split('T')[0] : dateStr;
-      if (typeof dateStrNormalized === 'string') {
-        const [year, month, day] = dateStrNormalized.split('-').map(Number);
-        if (year && month && day) {
-          return new Date(year, month - 1, day, 12, 0, 0, 0);
-        }
-      }
-      return new Date(dateStr);
-    };
-    
-    return response.data.map(service => ({
-      id: service.id,
-      vehicleId: service.vehicleId,
-      type: service.type,
-      category: service.category,
-      description: service.description,
-      date: parseDate(service.serviceDate),
-      mileage: service.mileage,
-      cost: service.cost,
-      location: service.location,
-      attachments: service.attachments || [],
-      technician: service.technician,
-      warranty: service.warranty,
-      nextServiceDate: service.nextServiceDate ? parseDate(service.nextServiceDate) : undefined,
-      notes: service.notes,
-      createdAt: new Date(service.createdAt),
-      updatedAt: new Date(service.updatedAt),
-      blockchainStatus: {
-        status: this.mapBackendStatusToFrontend(service.status),
-        message: this.getStatusMessage(service.status),
-        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.updatedAt || service.createdAt),
-        retryCount: 0,
-        maxRetries: 3
-      },
-      hash: service.blockchainHash,
-      previousHash: service.previousHash,
-      merkleRoot: service.merkleRoot,
-      isImmutable: service.isImmutable,
-      canEdit: service.canEdit,
-      requiresConfirmation: false,
-      confirmedBy: service.confirmedBy,
-      confirmedAt: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : undefined
-    }));
+    return mapServicesToFrontend(response.data);
   }
 
   /**
@@ -129,54 +57,7 @@ export class VehicleServiceService {
    */
   static async getServicesByVehicle(vehicleId: string): Promise<VehicleEvent[]> {
     const response = await apiBase.api.get<any[]>(`${this.BASE_PATH}/vehicle/${vehicleId}`);
-    
-    const parseDate = (dateStr: string | Date): Date => {
-      if (!dateStr) return new Date();
-      if (dateStr instanceof Date) return dateStr;
-      
-      const dateStrNormalized = typeof dateStr === 'string' ? dateStr.split('T')[0] : dateStr;
-      if (typeof dateStrNormalized === 'string') {
-        const [year, month, day] = dateStrNormalized.split('-').map(Number);
-        if (year && month && day) {
-          return new Date(year, month - 1, day, 12, 0, 0, 0);
-        }
-      }
-      return new Date(dateStr);
-    };
-    
-    return response.data.map(service => ({
-      id: service.id,
-      vehicleId: service.vehicleId,
-      type: service.type,
-      category: service.category,
-      description: service.description,
-      date: parseDate(service.serviceDate),
-      mileage: service.mileage,
-      cost: service.cost,
-      location: service.location,
-      attachments: service.attachments || [],
-      technician: service.technician,
-      warranty: service.warranty,
-      nextServiceDate: service.nextServiceDate ? parseDate(service.nextServiceDate) : undefined,
-      notes: service.notes,
-      createdAt: new Date(service.createdAt),
-      updatedAt: new Date(service.updatedAt),
-      blockchainStatus: {
-        status: this.mapBackendStatusToFrontend(service.status),
-        message: this.getStatusMessage(service.status),
-        lastUpdate: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : new Date(service.updatedAt || service.createdAt),
-        retryCount: 0,
-        maxRetries: 3
-      },
-      hash: service.blockchainHash,
-      previousHash: service.previousHash,
-      merkleRoot: service.merkleRoot,
-      isImmutable: service.isImmutable,
-      canEdit: service.canEdit,
-      requiresConfirmation: false,
-      confirmedBy: service.confirmedBy,
-      confirmedAt: service.blockchainConfirmedAt ? new Date(service.blockchainConfirmedAt) : undefined
-    }));
+    return mapServicesToFrontend(response.data);
   }
 
   /**

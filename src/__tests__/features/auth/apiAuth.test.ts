@@ -12,6 +12,7 @@ jest.mock('../../../shared/services/api', () => ({
       delete: jest.fn(),
     },
     setToken: jest.fn(),
+    getToken: jest.fn(),
     removeToken: jest.fn(),
     isAuthenticated: jest.fn(),
     logout: jest.fn(),
@@ -25,15 +26,19 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('deve fazer login com sucesso', async () => {
+      // Backend agora retorna apenas user, não access_token (token está em cookie httpOnly)
       (apiBase.api.post as jest.Mock).mockResolvedValue({
-        data: mockAuthResponse,
+        data: { user: mockAuthResponse.user },
       });
 
       const result = await authService.login(mockLoginData);
 
       expect(apiBase.api.post).toHaveBeenCalledWith('/auth/login', mockLoginData);
-      expect(apiBase.setToken).toHaveBeenCalledWith(mockAuthResponse.access_token);
-      expect(result).toEqual(mockAuthResponse);
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
+      expect(apiBase.setToken).not.toHaveBeenCalled();
+      // Resultado agora tem access_token vazio, pois não retornamos mais o token no body
+      expect(result.user).toEqual(mockAuthResponse.user);
+      expect(result.access_token).toBe('');
     });
 
     it('deve lidar com erro no login', async () => {
@@ -41,6 +46,7 @@ describe('AuthService', () => {
       (apiBase.api.post as jest.Mock).mockRejectedValue(error);
 
       await expect(authService.login(mockLoginData)).rejects.toThrow('Login failed');
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
       expect(apiBase.setToken).not.toHaveBeenCalled();
     });
 
@@ -61,15 +67,19 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('deve fazer registro com sucesso', async () => {
+      // Backend agora retorna apenas user, não access_token (token está em cookie httpOnly)
       (apiBase.api.post as jest.Mock).mockResolvedValue({
-        data: mockAuthResponse,
+        data: { user: mockAuthResponse.user },
       });
 
       const result = await authService.register(mockRegisterData);
 
       expect(apiBase.api.post).toHaveBeenCalledWith('/auth/register', mockRegisterData);
-      expect(apiBase.setToken).toHaveBeenCalledWith(mockAuthResponse.access_token);
-      expect(result).toEqual(mockAuthResponse);
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
+      expect(apiBase.setToken).not.toHaveBeenCalled();
+      // Resultado agora tem access_token vazio, pois não retornamos mais o token no body
+      expect(result.user).toEqual(mockAuthResponse.user);
+      expect(result.access_token).toBe('');
     });
 
     it('deve lidar com erro no registro', async () => {
@@ -77,6 +87,7 @@ describe('AuthService', () => {
       (apiBase.api.post as jest.Mock).mockRejectedValue(error);
 
       await expect(authService.register(mockRegisterData)).rejects.toThrow('Registration failed');
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
       expect(apiBase.setToken).not.toHaveBeenCalled();
     });
 
@@ -177,27 +188,203 @@ describe('AuthService', () => {
 
       expect(apiBase.logout).toHaveBeenCalled();
     });
+
+    it('deve fazer logout mesmo com erro no servidor', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      (apiBase.api.post as jest.Mock).mockRejectedValue(new Error('Server error'));
+      
+      await authService.logout();
+
+      expect(apiBase.logout).toHaveBeenCalled();
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('deve deletar conta com sucesso', async () => {
+      (apiBase.api.delete as jest.Mock).mockResolvedValue({
+        data: { message: 'Conta deletada' }
+      });
+      
+      const result = await authService.deleteAccount();
+
+      expect(apiBase.api.delete).toHaveBeenCalledWith('/users/account');
+      expect(apiBase.removeToken).toHaveBeenCalled();
+      expect(result).toEqual({ message: 'Conta deletada' });
+    });
+
+    it('deve lidar com erro ao deletar conta', async () => {
+      const error = new Error('Delete failed');
+      (apiBase.api.delete as jest.Mock).mockRejectedValue(error);
+
+      await expect(authService.deleteAccount()).rejects.toThrow('Delete failed');
+    });
+  });
+
+  describe('validateToken', () => {
+    it('deve validar token com sucesso', async () => {
+      (apiBase.api.get as jest.Mock).mockResolvedValue({});
+      
+      const result = await authService.validateToken();
+
+      expect(apiBase.api.get).toHaveBeenCalledWith('/auth/validate');
+      expect(result).toBe(true);
+    });
+
+    it('deve retornar false e remover token quando inválido', async () => {
+      (apiBase.api.get as jest.Mock).mockRejectedValue(new Error('Invalid token'));
+      
+      const result = await authService.validateToken();
+
+      expect(apiBase.removeToken).toHaveBeenCalled();
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('deve enviar email de recuperação com sucesso', async () => {
+      (apiBase.api.post as jest.Mock).mockResolvedValue({
+        data: { message: 'Email enviado' }
+      });
+      
+      const result = await authService.forgotPassword('test@example.com');
+
+      expect(apiBase.api.post).toHaveBeenCalledWith('/auth/forgot-password', { email: 'test@example.com' });
+      expect(result).toEqual({ message: 'Email enviado' });
+    });
+
+    it('deve lidar com erro ao enviar email de recuperação', async () => {
+      const error = new Error('Email failed');
+      (apiBase.api.post as jest.Mock).mockRejectedValue(error);
+
+      await expect(authService.forgotPassword('test@example.com')).rejects.toThrow('Email failed');
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('deve redefinir senha com sucesso', async () => {
+      (apiBase.api.post as jest.Mock).mockResolvedValue({
+        data: { message: 'Senha redefinida' }
+      });
+      
+      const result = await authService.resetPassword({
+        token: 'token123',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      });
+
+      expect(apiBase.api.post).toHaveBeenCalledWith('/auth/reset-password', {
+        token: 'token123',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      });
+      expect(result).toEqual({ message: 'Senha redefinida' });
+    });
+
+    it('deve lidar com erro ao redefinir senha', async () => {
+      const error = new Error('Reset failed');
+      (apiBase.api.post as jest.Mock).mockRejectedValue(error);
+
+      await expect(authService.resetPassword({
+        token: 'token123',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      })).rejects.toThrow('Reset failed');
+    });
+  });
+
+  describe('changePassword', () => {
+    it('deve alterar senha com sucesso', async () => {
+      (apiBase.api.put as jest.Mock).mockResolvedValue({
+        data: { message: 'Senha alterada' }
+      });
+      
+      const result = await authService.changePassword({
+        currentPassword: 'oldpass',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      });
+
+      expect(apiBase.api.put).toHaveBeenCalledWith('/auth/change-password', {
+        currentPassword: 'oldpass',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      });
+      expect(result).toEqual({ message: 'Senha alterada' });
+    });
+
+    it('deve lidar com erro ao alterar senha', async () => {
+      const error = new Error('Change password failed');
+      (apiBase.api.put as jest.Mock).mockRejectedValue(error);
+
+      await expect(authService.changePassword({
+        currentPassword: 'oldpass',
+        newPassword: 'newpass123',
+        confirmPassword: 'newpass123'
+      })).rejects.toThrow('Change password failed');
+    });
+  });
+
+  describe('getToken', () => {
+    it('deve retornar token quando existe', () => {
+      (apiBase.getToken as jest.Mock).mockReturnValue('token123');
+
+      expect(authService.getToken()).toBe('token123');
+      expect(apiBase.getToken).toHaveBeenCalled();
+    });
+
+    it('deve retornar null quando não há token', () => {
+      (apiBase.getToken as jest.Mock).mockReturnValue(null);
+
+      expect(authService.getToken()).toBe(null);
+    });
+  });
+
+  describe('refreshToken', () => {
+    it('deve atualizar token com sucesso', async () => {
+      // Backend agora retorna apenas user, não access_token (token está em cookie httpOnly)
+      const newAuthResponse = { ...mockAuthResponse, access_token: 'new_token' };
+      (apiBase.api.post as jest.Mock).mockResolvedValue({
+        data: { user: newAuthResponse.user }
+      });
+      
+      const result = await authService.refreshToken();
+
+      expect(apiBase.api.post).toHaveBeenCalledWith('/auth/refresh');
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
+      expect(apiBase.setToken).not.toHaveBeenCalled();
+      // Resultado agora tem access_token vazio, pois não retornamos mais o token no body
+      expect(result.user).toEqual(newAuthResponse.user);
+      expect(result.access_token).toBe('');
+    });
+
+    it('deve lidar com erro ao atualizar token', async () => {
+      const error = new Error('Refresh failed');
+      (apiBase.api.post as jest.Mock).mockRejectedValue(error);
+
+      await expect(authService.refreshToken()).rejects.toThrow('Refresh failed');
+    });
   });
 
   describe('isAuthenticated', () => {
     it('deve retornar true quando autenticado', () => {
-      (apiBase.isAuthenticated as jest.Mock).mockReturnValue(true);
-
+      // isAuthenticated sempre retorna true, pois não podemos verificar cookies httpOnly
+      // A validação real é feita pelo backend nas requisições
       expect(authService.isAuthenticated()).toBe(true);
     });
 
-    it('deve retornar false quando não autenticado', () => {
-      (apiBase.isAuthenticated as jest.Mock).mockReturnValue(false);
-
-      expect(authService.isAuthenticated()).toBe(false);
+    it('deve sempre retornar true (validação feita pelo backend)', () => {
+      // isAuthenticated sempre retorna true, pois não podemos verificar cookies httpOnly
+      // A validação real é feita pelo backend nas requisições
+      expect(authService.isAuthenticated()).toBe(true);
     });
   });
 
   describe('Integration Tests', () => {
     it('deve fazer fluxo completo de login e obtenção de perfil', async () => {
-      // Mock do login
+      // Mock do login - backend agora retorna apenas user
       (apiBase.api.post as jest.Mock).mockResolvedValueOnce({
-        data: mockAuthResponse,
+        data: { user: mockAuthResponse.user },
       });
 
       // Mock do getProfile
@@ -207,14 +394,15 @@ describe('AuthService', () => {
 
       // Executar login
       const loginResult = await authService.login(mockLoginData);
-      expect(loginResult).toEqual(mockAuthResponse);
+      expect(loginResult.user).toEqual(mockAuthResponse.user);
+      expect(loginResult.access_token).toBe(''); // Token não é mais retornado no body
 
       // Executar getProfile
       const profileResult = await authService.getProfile();
       expect(profileResult).toEqual(mockUser);
 
-      // Verificar se token foi definido
-      expect(apiBase.setToken).toHaveBeenCalledWith(mockAuthResponse.access_token);
+      // setToken não é mais chamado, pois o token é gerenciado pelo backend via cookie httpOnly
+      expect(apiBase.setToken).not.toHaveBeenCalled();
     });
 
     it('deve lidar com erro de rede', async () => {

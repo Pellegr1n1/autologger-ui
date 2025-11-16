@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Space, Typography, Row, Col, Tag, Divider, Button } from 'antd';
 import { 
   GlobalOutlined,
@@ -116,12 +116,14 @@ export default function NetworkInfo() {
           border: '1px solid var(--border-color)',
           background: 'var(--surface-color)'
         }}
-        headStyle={{ 
-          borderBottom: '1px solid var(--border-color)',
-          background: 'var(--surface-color)',
-          color: 'var(--text-primary)'
+        styles={{ 
+          header: { 
+            borderBottom: '1px solid var(--border-color)',
+            background: 'var(--surface-color)',
+            color: 'var(--text-primary)'
+          },
+          body: { background: 'var(--surface-color)' }
         }}
-        bodyStyle={{ background: 'var(--surface-color)' }}
         extra={
           <Button 
             type="primary" 
@@ -210,12 +212,14 @@ export default function NetworkInfo() {
           border: '1px solid var(--border-color)',
           background: 'var(--surface-color)'
         }}
-        headStyle={{ 
-          borderBottom: '1px solid var(--border-color)',
-          background: 'var(--surface-color)',
-          color: 'var(--text-primary)'
+        styles={{ 
+          header: { 
+            borderBottom: '1px solid var(--border-color)',
+            background: 'var(--surface-color)',
+            color: 'var(--text-primary)'
+          },
+          body: { background: 'var(--surface-color)' }
         }}
-        bodyStyle={{ background: 'var(--surface-color)' }}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>

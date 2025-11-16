@@ -14,7 +14,6 @@ export default function CallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const token = searchParams.get('token');
         const userParam = searchParams.get('user');
         const error = searchParams.get('error');
 
@@ -24,45 +23,28 @@ export default function CallbackPage() {
           throw new Error(`Erro do Google: ${error}`);
         }
 
-        if (!token || !userParam) {
-          throw new Error('Token ou dados do usuário não recebidos');
+        if (!userParam) {
+          throw new Error('Dados do usuário não recebidos');
         }
 
-        // Parse do usuário
         const userData = JSON.parse(decodeURIComponent(userParam));
 
-        // Salvar token no localStorage e no apiBase
-        localStorage.setItem('autologger_token', token);
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Importar apiBase para definir o token
-        const { apiBase } = await import('../../shared/services/api');
-        apiBase.setToken(token);
-        
-        // Verify token is properly set
-        const storedToken = apiBase.getToken();
-
-        // Fazer login do usuário
-        const tempUser = {
+        const loggedInUser = {
           ...userData,
+          authProvider: 'google',
           isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         };
 
-        await login(tempUser as any);
-
-        // Small delay to ensure token is properly set
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        // Fechar popup e redirecionar
         if (window.opener) {
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_SUCCESS',
-            user: tempUser,
-            token: token
+            user: loggedInUser,
           }, window.location.origin);
           window.close();
         } else {
+          await login(loggedInUser);
           navigate('/vehicles');
         }
 

@@ -14,7 +14,6 @@ import {
   HistoryOutlined,
   SettingOutlined,
   CloseOutlined,
-  IdcardOutlined,
   CheckCircleOutlined,
   StopOutlined,
   ShareAltOutlined
@@ -45,6 +44,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     if (visible && vehicle) {
       loadMaintenanceCount();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, vehicle]);
 
   const loadMaintenanceCount = async () => {
@@ -212,22 +212,25 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     <Modal
       open={visible}
       onCancel={onClose}
-      width={900}
-      style={{ top: 20 }}
+      width="90%"
+      style={{ top: 20, maxWidth: 900 }}
       footer={null}
       closeIcon={null}
+      centered
       styles={{
         content: {
           padding: 0,
           overflow: 'hidden',
-          borderRadius: 'var(--border-radius-lg)'
+          borderRadius: 'var(--border-radius-lg)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }
       }}
     >
       <div
         style={{
           background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
-          padding: 'var(--space-xxl)',
+          padding: 'clamp(16px, 4vw, 32px)',
           color: 'var(--text-light)',
           position: 'relative',
           overflow: 'hidden'
@@ -258,28 +261,30 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         />
 
         <div style={{ position: 'absolute', top: 'var(--space-lg)', right: 'var(--space-lg)', display: 'flex', gap: 'var(--space-sm)', zIndex: 10 }}>
-          <Button
-            type="text"
-            icon={<ShareAltOutlined />}
-            onClick={() => setShareModalVisible(true)}
-            style={{
-              color: 'var(--text-light)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
-            title="Compartilhar veículo"
-          />
+          {vehicle.status !== VehicleStatus.SOLD && (
+            <Button
+              type="text"
+              icon={<ShareAltOutlined />}
+              onClick={() => setShareModalVisible(true)}
+              style={{
+                color: 'var(--text-light)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
+              title="Compartilhar veículo"
+            />
+          )}
 
           <Button
             type="text"
@@ -327,8 +332,10 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
             style={{
               color: 'var(--text-light)',
               margin: '0 0 var(--space-sm) 0',
-              fontSize: '28px',
-              fontWeight: 700
+              fontSize: 'clamp(20px, 4vw, 28px)',
+              fontWeight: 700,
+              wordBreak: 'break-word',
+              padding: '0 8px'
             }}
           >
             {vehicle.brand} {vehicle.model}
@@ -378,9 +385,9 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
         </div>
       </div>
 
-      <div style={{ padding: 'var(--space-xxl)' }}>
+      <div style={{ padding: 'clamp(12px, 3vw, 24px)' }}>
         <Row gutter={[16, 16]} style={{ marginBottom: 'var(--space-xxl)' }}>
-          <Col span={6}>
+          <Col xs={12} sm={12} md={6} lg={6}>
             <StatCard
               icon={<CalendarOutlined />}
               title="Idade"
@@ -389,7 +396,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
               color="var(--primary-color)"
             />
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={12} md={6} lg={6}>
             <StatCard
               icon={<DashboardOutlined />}
               title="Quilometragem"
@@ -398,7 +405,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
               color="var(--success-color)"
             />
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={12} md={6} lg={6}>
             <StatCard
               icon={<HistoryOutlined />}
               title="No Sistema"
@@ -407,7 +414,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
               color="var(--secondary-color)"
             />
           </Col>
-          <Col span={6}>
+          <Col xs={12} sm={12} md={6} lg={6}>
             <StatCard
               icon={<SettingOutlined />}
               title="Serviços"
@@ -429,25 +436,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
           <Title level={4} style={{ marginBottom: 'var(--space-lg)', color: 'var(--text-dark)' }}>
             Informações do Veículo
           </Title>
-
-          <InfoRow
-            icon={<IdcardOutlined />}
-            label="RENAVAM"
-            value={
-              <Text
-                code
-                style={{
-                  background: 'var(--card-background)',
-                  padding: 'var(--space-xs) var(--space-sm)',
-                  borderRadius: 'var(--border-radius-sm)',
-                  fontFamily: 'monospace',
-                  fontSize: '14px'
-                }}
-              >
-                {vehicle.renavam}
-              </Text>
-            }
-          />
 
           <InfoRow
             icon={<CalendarOutlined />}
@@ -500,7 +488,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
             background: 'var(--card-background)',
             border: '1px solid var(--gray-2)',
             borderRadius: 'var(--border-radius-md)',
-            padding: 'var(--space-lg)',
+            padding: 'clamp(12px, 3vw, 24px)',
             marginBottom: 'var(--space-xxl)'
           }}
         >

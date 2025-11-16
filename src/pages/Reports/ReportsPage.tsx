@@ -86,10 +86,6 @@ export default function ReportsPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
 
-  useEffect(() => {
-    loadReportData();
-  }, [selectedVehicle, dateRange]);
-
   const loadReportData = useCallback(async () => {
     try {
       setLoading(true);
@@ -108,7 +104,7 @@ export default function ReportsPage() {
       
       setServices(servicesData);
 
-      const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, activeVehicles);
+      const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, 'all', 'all', activeVehicles);
       
       const totalExpenses = filteredServices.reduce((sum, service) => {
         const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
@@ -217,9 +213,14 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVehicle, dateRange]);
 
-  const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null, vehiclesList?: Vehicle[]) => {
+  useEffect(() => {
+    loadReportData();
+  }, [loadReportData]);
+
+  const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null, serviceType: string, category: string, vehiclesList?: Vehicle[]) => {
     let filtered = services;
 
     // Sempre filtrar apenas pelos veículos do usuário logado
@@ -229,6 +230,14 @@ export default function ReportsPage() {
 
     if (vehicleId !== 'all') {
       filtered = filtered.filter(service => service.vehicleId === vehicleId);
+    }
+
+    if (serviceType !== 'all') {
+      filtered = filtered.filter(service => service.type === serviceType);
+    }
+
+    if (category !== 'all') {
+      filtered = filtered.filter(service => service.category === category);
     }
 
     if (dateRange) {
@@ -254,7 +263,7 @@ export default function ReportsPage() {
 
   // Gráfico: Tendência mensal de gastos (adaptável ao filtro de período)
   const monthlyExpensesData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
+    const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const monthlyData: { [key: string]: { month: string; total: number } } = {};
     
     // Se há filtro de período, usar o período selecionado; senão, últimos 12 meses
@@ -347,13 +356,14 @@ export default function ReportsPage() {
     // Retornar dados ordenados cronologicamente
     const sortedKeys = Object.keys(monthlyData).sort();
     return sortedKeys.map(key => monthlyData[key]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Gráfico: Comparação de gastos por veículo (respeita filtro de veículo)
   const vehicleExpensesData = useMemo(() => {
     // Se há filtro de veículo específico, mostrar apenas ele; senão, todos
     const vehicleToShow = selectedVehicle !== 'all' ? selectedVehicle : 'all';
-    const filteredServices = filterServices(services, vehicleToShow, dateRange, vehicles);
+    const filteredServices = filterServices(services, vehicleToShow, dateRange, 'all', 'all', vehicles);
     const vehicleCosts: { [key: string]: number } = {};
 
     filteredServices.forEach(service => {
@@ -370,11 +380,12 @@ export default function ReportsPage() {
       }))
       .sort((a, b) => b.cost - a.cost)
       .slice(0, 10); // Top 10 veículos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Gráfico: Distribuição por categoria
   const categoryDistributionData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, vehicles);
+    const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const categoryCosts: { [key: string]: number } = {};
 
     filteredServices.forEach(service => {
@@ -392,6 +403,7 @@ export default function ReportsPage() {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Top 8 categorias
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Verificar se há serviços para exibir
@@ -433,80 +445,98 @@ export default function ReportsPage() {
     <DefaultFrame title="Relatórios e Análises" loading={loading}>
       <div className={styles.reportsContainer}>
         {/* Filtros */}
-        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
-            <Space size="large" wrap>
-              <div>
-                <Text strong style={{ display: 'block', marginBottom: '8px' }}>Veículo</Text>
-                <Select 
-                  value={selectedVehicle} 
-                  onChange={setSelectedVehicle}
-                  style={{ width: 200 }}
-                  allowClear={false}
-                >
-                  <Option value="all">Todos os veículos</Option>
-                  {vehicles.map(vehicle => (
-                    <Option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.brand} {vehicle.model} - {vehicle.plate}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-              
-              <div>
-                <Text strong style={{ display: 'block', marginBottom: '8px' }}>Período</Text>
-                <RangePicker 
-                  value={dateRange ? [
-                    dayjs(dateRange[0]),
-                    dayjs(dateRange[1])
-                  ] as [dayjs.Dayjs, dayjs.Dayjs] : null}
-                  onChange={(dates) => {
-                    if (dates && dates[0] && dates[1]) {
-                      setDateRange([dates[0].toISOString(), dates[1].toISOString()]);
-                    } else {
-                      setDateRange(null);
+        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }} styles={{ body: { padding: '16px 24px' } }}>
+          <div className={styles.filtersContainer}>
+            <Row gutter={[12, 12]} className={styles.filterRow}>
+              <Col xs={24} sm={12} md={12} lg={4} xl={4}>
+                <div className={styles.filterItem}>
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                    Veículo
+                  </Text>
+                  <Select
+                    value={selectedVehicle}
+                    onChange={setSelectedVehicle}
+                    style={{ width: '100%' }}
+                    className={styles.filterSelect}
+                    placeholder="Selecione o veículo"
+                    showSearch
+                    filterOption={(input, option) =>
+                      (String(option?.label ?? '')).toLowerCase().includes(input.toLowerCase())
                     }
-                  }}
-                  format="DD/MM/YYYY"
-                />
-              </div>
-            
-              {(selectedVehicle !== 'all' || dateRange) && (
-            <Button 
-                  type="link"
-                  onClick={() => {
-                    setSelectedVehicle('all');
-                    setDateRange(null);
-                  }}
-                  style={{ color: '#8B5CF6', padding: '0' }}
-                >
-                  Limpar filtros
-            </Button>
-              )}
-            </Space>
-          </div>
-          
-          {(selectedVehicle !== 'all' || dateRange) && (
-            <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
-              <Space size="middle">
-                <Text type="secondary" style={{ fontSize: '12px' }}>Filtros ativos:</Text>
-                {selectedVehicle !== 'all' && (
-                  <Tag color="purple" closable onClose={() => setSelectedVehicle('all')}>
-                    Veículo: {vehicles.find(v => v.id === selectedVehicle)?.brand} {vehicles.find(v => v.id === selectedVehicle)?.model}
-                  </Tag>
-                )}
-                {dateRange && (
-                  <Tag 
-                    color="purple" 
-                    closable 
-                    onClose={() => setDateRange(null)}
                   >
-                    Período: {formatBRDate(new Date(dateRange[0]))} até {formatBRDate(new Date(dateRange[1]))}
-                  </Tag>
-                )}
-              </Space>
-            </div>
-          )}
+                    <Option value="all">Todos os veículos</Option>
+                    {vehicles.map(vehicle => (
+                      <Option key={vehicle.id} value={vehicle.id} label={`${vehicle.brand} ${vehicle.model} - ${vehicle.plate}`}>
+                        {vehicle.brand} {vehicle.model} - {vehicle.plate}
+                      </Option>
+                    ))}
+                  </Select>
+                </div>
+              </Col>
+              
+              <Col xs={24} sm={12} md={12} lg={8} xl={8}>
+                <div className={styles.filterItem}>
+                  <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>
+                    Período
+                  </Text>
+                  <RangePicker
+                    value={dateRange ? [
+                      dayjs(dateRange[0]),
+                      dayjs(dateRange[1])
+                    ] as [dayjs.Dayjs, dayjs.Dayjs] : null}
+                    onChange={(dates) => {
+                      if (dates && dates[0] && dates[1]) {
+                        setDateRange([dates[0].toISOString(), dates[1].toISOString()]);
+                      } else {
+                        setDateRange(null);
+                      }
+                    }}
+                    format="DD/MM/YYYY"
+                    placeholder={['Data inicial', 'Data final']}
+                    style={{ width: '100%' }}
+                    className={styles.filterDatePicker}
+                  />
+                </div>
+              </Col>
+            </Row>
+
+            {(selectedVehicle !== 'all' || dateRange) && (
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
+                <Space size="middle" wrap>
+                  <Text type="secondary" style={{ fontSize: '12px' }}>Filtros ativos:</Text>
+                  {selectedVehicle !== 'all' && (
+                    <Tag color="purple" closable onClose={() => setSelectedVehicle('all')}>
+                      Veículo: {vehicles.find(v => v.id === selectedVehicle)?.brand} {vehicles.find(v => v.id === selectedVehicle)?.model}
+                    </Tag>
+                  )}
+                  {dateRange && (
+                    <Tag 
+                      color="purple" 
+                      closable 
+                      onClose={() => setDateRange(null)}
+                    >
+                      Período: {formatBRDate(new Date(dateRange[0]))} até {formatBRDate(new Date(dateRange[1]))}
+                    </Tag>
+                  )}
+                  <Button 
+                    type="text"
+                    size="small"
+                    onClick={() => {
+                      setSelectedVehicle('all');
+                      setDateRange(null);
+                    }}
+                    style={{ 
+                      color: 'rgba(255,255,255,0.7)',
+                      fontSize: '12px',
+                      padding: 0
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
+                </Space>
+              </div>
+            )}
+          </div>
         </Card>
 
         {/* Estatísticas Principais */}
@@ -533,11 +563,7 @@ export default function ReportsPage() {
                 formatter={(value) => currencyBRL(value as number)}
                 suffix={
                   reportData.monthlyExpensesChange !== 0 && (
-                    <span style={{ 
-                      fontSize: '14px', 
-                      marginLeft: '8px',
-                      color: reportData.monthlyExpensesChange > 0 ? '#ff4d4f' : '#52c41a'
-                    }}>
+                    <span className={styles.expenseChangeSuffix}>
                       {reportData.monthlyExpensesChange > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
                       {' '}
                       {Math.abs(reportData.monthlyExpensesChange).toFixed(1)}%
@@ -583,7 +609,7 @@ export default function ReportsPage() {
                     value={reportData.topSpendingVehicle.cost}
                     prefix={<CarOutlined style={{ color: '#722ed1' }} />}
                     valueStyle={{ color: '#722ed1', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value as number)}
+                    formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topSpendingVehicle!.name}
@@ -602,7 +628,7 @@ export default function ReportsPage() {
                     value={reportData.topCategory.cost}
                     prefix={<ToolOutlined style={{ color: '#eb2f96' }} />}
                     valueStyle={{ color: '#eb2f96', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value as number)}
+                    formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topCategory!.name}
@@ -632,7 +658,7 @@ export default function ReportsPage() {
               }
               className={componentStyles.professionalCard}
             >
-              <div style={{ height: '350px', minHeight: '300px' }}>
+              <div className={styles.chartContainer}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={monthlyExpensesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
@@ -640,11 +666,14 @@ export default function ReportsPage() {
                       dataKey="month" 
                       tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
                       stroke="rgba(255, 255, 255, 0.3)"
+                      className={styles.chartXAxis}
                     />
                     <YAxis 
                       tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
                       tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
                       stroke="rgba(255, 255, 255, 0.3)"
+                      width={60}
+                      className={styles.chartYAxis}
                     />
                     <RechartsTooltip 
                       contentStyle={{
@@ -683,13 +712,13 @@ export default function ReportsPage() {
               }
               className={componentStyles.professionalCard}
             >
-                <div style={{ height: '350px', minHeight: '300px' }}>
+                <div className={styles.barChartContainer} style={{ height: '350px', minHeight: '300px' }}>
                   {vehicleExpensesData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
                         data={vehicleExpensesData} 
                         layout="vertical"
-                        margin={{ top: 10, right: 30, left: 100, bottom: 0 }}
+                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(139, 92, 246, 0.1)" />
                       <XAxis 
@@ -697,13 +726,15 @@ export default function ReportsPage() {
                           tick={{ fontSize: 12, fill: 'rgba(255, 255, 255, 0.65)' }}
                           tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
                           stroke="rgba(255, 255, 255, 0.3)"
+                          className={styles.chartXAxis}
                       />
                       <YAxis 
                           type="category"
                           dataKey="name"
                           tick={{ fontSize: 11, fill: 'rgba(255, 255, 255, 0.65)' }}
-                          width={95}
+                          width={0}
                           stroke="rgba(255, 255, 255, 0.3)"
+                          className={styles.barChartYAxis}
                       />
                     <RechartsTooltip 
                           contentStyle={{
@@ -822,7 +853,7 @@ export default function ReportsPage() {
           }
           className={componentStyles.professionalCard}
             >
-              <div style={{ height: '350px', minHeight: '300px' }}>
+              <div className={styles.pieChartContainer} style={{ height: '350px', minHeight: '300px' }}>
                 {categoryDistributionData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -836,6 +867,7 @@ export default function ReportsPage() {
                       innerRadius={30}
                       fill="#8884d8"
                       dataKey="value"
+                      className={styles.pieChartElement}
                       >
                         {categoryDistributionData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />

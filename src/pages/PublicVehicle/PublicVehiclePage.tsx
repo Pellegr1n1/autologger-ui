@@ -71,6 +71,7 @@ const PublicVehiclePage: React.FC = () => {
     if (shareToken) {
       loadVehicleInfo();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareToken]);
 
   const loadVehicleInfo = async () => {
@@ -259,12 +260,12 @@ const PublicVehiclePage: React.FC = () => {
     return sum + cost;
   }, 0);
   
-  // Ordenar histórico completo por data de serviço
-  const sortedHistory = vehicleInfo.maintenanceHistory
+  // Ordenar histórico completo por data de serviço (criar cópia para não mutar original)
+  const sortedHistory = [...vehicleInfo.maintenanceHistory]
     .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
   
   // Ordenar últimos serviços registrados por createdAt (mais recentes primeiro)
-  const sortedByCreatedAt = vehicleInfo.maintenanceHistory
+  const sortedByCreatedAt = [...vehicleInfo.maintenanceHistory]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Aplicar filtros
@@ -304,8 +305,8 @@ const PublicVehiclePage: React.FC = () => {
   });
 
   // Extrair tipos e categorias únicos para os filtros
-  const uniqueTypes = Array.from(new Set(sortedHistory.map(s => s.type)));
-  const uniqueCategories = Array.from(new Set(sortedHistory.map(s => s.category)));
+  const uniqueTypes: string[] = Array.from(new Set(sortedHistory.map(s => s.type)));
+  const uniqueCategories: string[] = Array.from(new Set(sortedHistory.map(s => s.category)));
 
   // Calcular itens da página atual
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -527,7 +528,7 @@ const PublicVehiclePage: React.FC = () => {
                 </div>
               ) : (
                 <div className={styles.maintenanceList}>
-                  {sortedByCreatedAt.slice(0, 2).map((service, index) => (
+                  {sortedByCreatedAt.slice(0, 2).map((service: typeof sortedByCreatedAt[0], index: number) => (
                     <div key={index} className={styles.maintenanceListItem}>
                       <div className={styles.maintenanceItemHeader}>
                         <div className={styles.maintenanceItemIcon}>
@@ -580,9 +581,9 @@ const PublicVehiclePage: React.FC = () => {
                 <HistoryOutlined className="icon" />
                 <span>Histórico Completo de Serviços ({sortedHistory.length})</span>
               </div>
-            }
+              }
             className={styles.statisticCard}
-            bodyStyle={{ padding: '24px' }}
+            styles={{ body: { padding: '24px' } }}
           >
             {/* Filtros */}
             <div className={styles.filterSection}>
@@ -713,7 +714,7 @@ const PublicVehiclePage: React.FC = () => {
                         </div>
             ) : (
               <div className={styles.maintenanceGrid}>
-              {currentItems.map((service, index) => (
+              {currentItems.map((service: typeof currentItems[0], index: number) => (
                 <div key={startIndex + index} className={styles.maintenanceCard}>
                   {/* Header */}
                   <div className={styles.maintenanceCardHeader}>

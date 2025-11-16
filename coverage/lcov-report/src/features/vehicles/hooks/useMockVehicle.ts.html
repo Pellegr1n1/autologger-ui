@@ -241,19 +241,8 @@
 <a name='L176'></a><a href='#L176'>176</a>
 <a name='L177'></a><a href='#L177'>177</a>
 <a name='L178'></a><a href='#L178'>178</a>
-<a name='L179'></a><a href='#L179'>179</a>
-<a name='L180'></a><a href='#L180'>180</a>
-<a name='L181'></a><a href='#L181'>181</a>
-<a name='L182'></a><a href='#L182'>182</a>
-<a name='L183'></a><a href='#L183'>183</a>
-<a name='L184'></a><a href='#L184'>184</a>
-<a name='L185'></a><a href='#L185'>185</a>
-<a name='L186'></a><a href='#L186'>186</a>
-<a name='L187'></a><a href='#L187'>187</a>
-<a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L179'></a><a href='#L179'>179</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -393,14 +382,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -423,7 +404,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -444,7 +424,6 @@ import {
   Vehicle, 
   VehicleEvent, 
   VehicleDocument,
-  ChainStatus,
   VehicleEventType,
   VehicleStatus 
 } from "../types/vehicle.types"
@@ -464,8 +443,7 @@ export function useMockVehicle(id: string) {
       attachments: ["NF_Troca_Oleo_2025-05-10.pdf"],
       createdAt: new Date("2025-05-10"),
       updatedAt: new Date("2025-05-10"),
-      
-      // Blockchain fields
+&nbsp;
       blockchainStatus: {
         status: 'CONFIRMED',
         message: 'Confirmado na blockchain',
@@ -479,7 +457,6 @@ export function useMockVehicle(id: string) {
       isImmutable: true,
       canEdit: false,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: "user",
       confirmedAt: new Date("2025-05-10"),
@@ -499,7 +476,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-06-02"),
       updatedAt: new Date("2025-06-02"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'PENDING',
         message: 'Aguardando confirmação blockchain',
@@ -513,7 +489,6 @@ export function useMockVehicle(id: string) {
       isImmutable: false,
       canEdit: true,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: undefined,
       confirmedAt: undefined,
@@ -533,7 +508,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-07-15"),
       updatedAt: new Date("2025-07-15"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'CONFIRMED',
         message: 'Confirmado na blockchain',
@@ -547,7 +521,6 @@ export function useMockVehicle(id: string) {
       isImmutable: true,
       canEdit: false,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: "user",
       confirmedAt: new Date("2025-07-15"),
@@ -567,7 +540,6 @@ export function useMockVehicle(id: string) {
       createdAt: new Date("2025-07-22"),
       updatedAt: new Date("2025-07-22"),
       
-      // Blockchain fields
       blockchainStatus: {
         status: 'PENDING',
         message: 'Aguardando confirmação blockchain',
@@ -581,7 +553,6 @@ export function useMockVehicle(id: string) {
       isImmutable: false,
       canEdit: true,
       
-      // Two-factor confirmation
       requiresConfirmation: true,
       confirmedBy: undefined,
       confirmedAt: undefined,
@@ -618,7 +589,6 @@ export function useMockVehicle(id: string) {
     year: 2019,
     mileage: 47020,
     color: "Prata",
-    renavam: "12345678901",
     status: VehicleStatus.ACTIVE,
     soldAt: undefined,
     createdAt: new Date("2023-10-02"),
@@ -634,7 +604,7 @@ export function useMockVehicle(id: string) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-26T21:46:03.951Z
+                at 2025-11-11T21:08:27.551Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

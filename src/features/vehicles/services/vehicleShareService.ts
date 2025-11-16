@@ -9,7 +9,6 @@ export interface VehicleShareResponse {
 
 export interface PublicVehicleInfo {
   id: string;
-  plate: string;
   brand: string;
   model: string;
   year: number;

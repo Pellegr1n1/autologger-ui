@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   CarOutlined, 
@@ -14,6 +14,8 @@ import type { MenuProps } from "antd";
 import styles from './Sider.module.css';
 
 const { Sider } = Layout;
+
+const SIDER_TOGGLE_BREAKPOINT = 768;
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -36,12 +38,41 @@ interface VehicleSiderProps {
 }
 
 const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
-    const [collapsed, setCollapsed] = useState<boolean>(false);
+    const [collapsed, setCollapsed] = useState<boolean>(true);
+    const [canToggle, setCanToggle] = useState<boolean>(false);
     const navigate = useNavigate();
     const location = useLocation();
 
+    useEffect(() => {
+        const checkScreenSize = () => {
+            const isLargeScreen = window.innerWidth >= SIDER_TOGGLE_BREAKPOINT;
+            setCanToggle(isLargeScreen);
+            
+            if (!isLargeScreen && !collapsed) {
+                setCollapsed(true);
+                onCollapseChange?.(true);
+            }
+        };
+
+        checkScreenSize();
+
+        window.addEventListener('resize', checkScreenSize);
+        
+        return () => {
+            window.removeEventListener('resize', checkScreenSize);
+        };
+    }, [collapsed, onCollapseChange]);
+
     const handleMenuClick = (key: string) => {
         navigate(key);
+    };
+
+    const handleToggle = () => {
+        if (canToggle) {
+            const newCollapsed = !collapsed;
+            setCollapsed(newCollapsed);
+            onCollapseChange?.(newCollapsed);
+        }
     };
 
     const items: MenuItem[] = [
@@ -52,7 +83,6 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
         getItem("Perfil", "/profile", <UserOutlined />)
     ];
 
-    // Determinar qual item está ativo baseado na rota atual
     const getActiveKey = () => {
         const path = location.pathname;
         if (path === "/") return ["/"];
@@ -71,7 +101,6 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
                 position: "fixed",
                 height: "100%",
                 zIndex: "1000",
-                background: "var(--surface-color)",
                 borderRight: "1px solid rgba(139, 92, 246, 0.1)"
             }}
             collapsible
@@ -84,28 +113,30 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
             <Button
                 type="text"
                 icon={<FiMenu size={20} />}
-                onClick={() => {
-                    const newCollapsed = !collapsed;
-                    setCollapsed(newCollapsed);
-                    onCollapseChange?.(newCollapsed);
-                }}
+                onClick={handleToggle}
+                disabled={!canToggle}
                 style={{ 
-                    color: 'var(--text-primary)',
-                    background: 'transparent'
+                    color: canToggle ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    background: 'transparent',
+                    cursor: canToggle ? 'pointer' : 'not-allowed',
+                    opacity: canToggle ? 1 : 0.5
                 }}
+                title={canToggle ? 'Abrir/Fechar menu' : 'Menu disponível apenas em telas maiores'}
             />
             {!collapsed && <span className={styles.menu}>AutoLogger</span>}
         </div>
             <Divider className={styles.divider} />
             <Menu
-                onClick={({ key }) => handleMenuClick(key as string)}
+                onClick={({ key }) => handleMenuClick(key)}
                 selectedKeys={getActiveKey()}
                 mode="inline"
                 items={items}
                 theme="light"
                 style={{
-                    background: "var(--surface-color)",
-                    border: "none"
+                    background: "transparent",
+                    border: "none",
+                    position: "relative",
+                    zIndex: 10
                 }}
             />
             
@@ -115,7 +146,8 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
                 bottom: '24px', 
                 left: '0', 
                 right: '0',
-                padding: '0 16px'
+                padding: '0 16px',
+                zIndex: 10
             }}>
                 <Button
                     type="text"

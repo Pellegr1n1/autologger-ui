@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<any>({})
   const [form] = Form.useForm()
-  const { register, user } = useAuth()
+  const { register } = useAuth()
   const navigate = useNavigate()
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -100,10 +100,7 @@ export default function RegisterPage() {
         confirmPassword: allFormData.confirmPassword,
       }
 
-      await register(registerData)
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const currentUser = user
+      const currentUser = await register(registerData)
       
       if (currentUser?.id) {
         try {
@@ -156,6 +153,7 @@ export default function RegisterPage() {
     },
   ]
 
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
@@ -188,7 +186,6 @@ export default function RegisterPage() {
                 placeholder="seu@email.com"
               />
             </Form.Item>
-
           </>
         )
 
@@ -210,7 +207,7 @@ export default function RegisterPage() {
             >
               <Password
                 prefix={<LockOutlined />}
-                placeholder="Sua senha"
+                placeholder="Sua senha (mín. 8 caracteres)"
                 onChange={(e) => checkPasswordStrength(e.target.value)}
               />
             </Form.Item>
@@ -385,9 +382,17 @@ export default function RegisterPage() {
           >
             {renderStepContent()}
 
-            <Form.Item style={{ marginBottom: 0 }}>
-              {renderStepButtons()}
-            </Form.Item>
+            {currentStep === 0 && (
+              <Form.Item style={{ marginBottom: 0 }}>
+                {renderStepButtons()}
+              </Form.Item>
+            )}
+
+            {currentStep === 1 && (
+              <Form.Item style={{ marginBottom: 0 }}>
+                {renderStepButtons()}
+              </Form.Item>
+            )}
           </Form>
 
 

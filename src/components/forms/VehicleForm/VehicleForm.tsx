@@ -9,36 +9,46 @@ import {
   Col,
   Typography,
   Space,
-  Alert,
   Spin,
   message,
   Button,
   Tooltip,
   Upload,
-  Image
+  Image,
+  Divider
 } from 'antd';
 import {
   CarOutlined,
-  NumberOutlined,
-  ReloadOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
   CloseOutlined,
-  DatabaseOutlined,
   UploadOutlined,
   PictureOutlined,
   DeleteOutlined
 } from '@ant-design/icons';
 import { Vehicle, FipeBrand, FipeModel, FipeYear } from '../../../features/vehicles';
 import { FipeService } from '../../../features/vehicles/services/fipeService';
+import { formatNumberWithDots, parseFormattedNumber } from '../../../shared/utils/numberFormatters';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
 
+interface VehicleFormValues {
+  plate?: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  photo?: File | null;
+  [key: string]: unknown;
+}
+
 interface VehicleFormProps {
   visible: boolean;
   vehicle?: Vehicle | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (values: any) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -99,7 +109,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           model: vehicle.model,
           year: vehicle.year,
           color: vehicle.color,
-          renavam: vehicle.renavam,
           mileage: vehicle.mileage
         });
 
@@ -163,7 +172,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleBrandChange = (_: string, option: any) => {
+  const handleBrandChange = (_: string, option: { key: string; children: string } | { key: string; children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const brandCode = option.key;
     const brandName = option.children;
 
@@ -176,7 +187,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleModelChange = (_: string, option: any) => {
+  const handleModelChange = (_: string, option: { key: number; children: string } | { key: number; children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const modelCode = option.key;
     const modelName = option.children;
 
@@ -188,7 +201,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleYearChange = (_: string, option: any) => {
+  const handleYearChange = (_: string, option: { children: string } | { children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const yearName = option.children;
     const year = FipeService.extractYear(yearName);
     form.setFieldsValue({ year });
@@ -198,13 +213,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
       message.error('Apenas arquivos de imagem são permitidos!');
-      return false;
+      return Upload.LIST_IGNORE;
     }
 
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
       message.error('A imagem deve ser menor que 5MB!');
-      return false;
+      return Upload.LIST_IGNORE;
     }
 
     setPhotoFile(file);
@@ -216,7 +231,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     };
     reader.readAsDataURL(file);
 
-    return false; // Não fazer upload automático
+    // Retornar false para não fazer upload automático, mas aceitar o arquivo
+    return false;
   };
 
   const removePhoto = () => {
@@ -226,28 +242,23 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   };
 
   const handleSubmit = () => {
-    form.validateFields().then(values => {
-      let formattedValues = {
-        ...values,
-        year: parseInt(values.year),
-        mileage: values.mileage || 0,
-        brand: values.brand?.trim() || '',
-        model: values.model?.trim() || '',
-        color: values.color?.trim() || '',
-        photo: photoFile // Incluir arquivo de foto
+    form.validateFields().then((values: Record<string, string | number>) => {
+      const formattedValues: VehicleFormValues = {
+        year: Number.parseInt(String(values.year)),
+        mileage: Number(values.mileage) || 0,
+        brand: String(values.brand || '').trim(),
+        model: String(values.model || '').trim(),
+        color: String(values.color || '').trim(),
+        photo: photoFile
       };
 
-      if (isEditing) {
-        const { plate, renavam, ...editableFields } = formattedValues;
-        formattedValues = editableFields;
-      } else {
-        formattedValues.plate = values.plate ? values.plate.toUpperCase().replace('-', '') : '';
-        formattedValues.renavam = values.renavam ? values.renavam.replace(/\D/g, '') : '';
+      if (!isEditing) {
+        formattedValues.plate = values.plate ? String(values.plate).toUpperCase().replace('-', '') : '';
       }
 
       onSubmit(formattedValues);
-    }).catch(errorInfo => {
-      console.log('Validation failed:', errorInfo);
+    }).catch(() => {
+      // Form validation failed - errors are already shown in the form
     });
   };
 
@@ -258,7 +269,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     onCancel();
   };
 
-  const validatePlate = (_: any, value: string) => {
+  const validatePlate = (_: unknown, value: string) => {
     if (value) {
       const cleanValue = value.toUpperCase().replace('-', '');
       const oldFormat = /^[A-Z]{3}[0-9]{4}$/;
@@ -267,13 +278,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       if (!oldFormat.test(cleanValue) && !mercosulFormat.test(cleanValue)) {
         return Promise.reject(new Error('Formato inválido. Use ABC1234 ou ABC1D23'));
       }
-    }
-    return Promise.resolve();
-  };
-
-  const validateRenavam = (_: any, value: string) => {
-    if (value && value.length !== 11) {
-      return Promise.reject(new Error('RENAVAM deve ter 11 dígitos'));
     }
     return Promise.resolve();
   };
@@ -289,35 +293,17 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   );
 
   const FormSection: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <div
-      style={{
-        background: 'var(--card-background)',
-        border: '1px solid var(--gray-2)',
-        borderRadius: 'var(--border-radius-md)',
-        padding: 'var(--space-lg)',
-        marginBottom: 'var(--space-lg)'
-      }}
-    >
-      <div style={{ marginBottom: 'var(--space-md)' }}>
-        <Space>
-          <div
-            style={{
-              width: '32px',
-              height: '32px',
-              background: 'var(--primary-color)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-light)'
-            }}
-          >
-            {icon}
-          </div>
-          <Text style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-dark)' }}>
-            {title}
-          </Text>
-        </Space>
+    <div style={{ marginBottom: 'var(--space-xxl)' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 'var(--space-sm)', 
+        marginBottom: 'var(--space-lg)' 
+      }}>
+        {icon}
+        <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
+          {title}
+        </Title>
       </div>
       {children}
     </div>
@@ -335,9 +321,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         content: {
           padding: 0,
           overflow: 'hidden',
-          borderRadius: 'var(--border-radius-lg)'
+          borderRadius: 'var(--border-radius-lg)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }
       }}
+      className="vehicle-form-modal"
     >
       {/* Header com gradiente */}
       <div
@@ -348,6 +337,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           position: 'relative',
           overflow: 'hidden'
         }}
+        className="vehicle-form-header"
       >
         {/* Decorações de fundo */}
         <div
@@ -412,11 +402,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
               fontSize: '28px',
               fontWeight: 700
             }}
+            className="vehicle-form-title"
           >
             {isEditing ? 'Editar Veículo' : 'Cadastrar Novo Veículo'}
           </Title>
 
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }} className="vehicle-form-subtitle">
             {isEditing ? 'Atualize as informações do seu veículo' : 'Preencha os dados do seu veículo'}
           </Text>
         </div>
@@ -433,10 +424,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             // Sem lógica de progresso - formulário funciona normalmente
           }}
         >
-          {/* Seção 1: Identificação */}
-          <FormSection title="Identificação do Veículo" icon={<NumberOutlined />}>
-            <Row gutter={16}>
-              <Col span={12}>
+          {/* Seção 1: Dados do Veículo */}
+          <FormSection title="Dados do Veículo" icon={<CarOutlined style={{ color: 'var(--primary-color)', fontSize: '18px' }} />}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="plate"
                   label={
@@ -455,63 +446,27 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                   <Input
                     placeholder="ABC1234 ou ABC1D23"
                     maxLength={8}
+                    size="large"
                     style={{
                       textTransform: 'uppercase',
-                      borderColor: 'var(--gray-3)',
-                      borderRadius: 'var(--border-radius-sm)',
-                      height: '48px'
+                      borderRadius: 'var(--radius-md)'
                     }}
                     disabled={isEditing || loading}
                   />
                 </Form.Item>
               </Col>
-
-              <Col span={12}>
-                <Form.Item
-                  name="renavam"
-                  label={
-                    <Space>
-                      <Text strong style={{ color: 'var(--text-dark)' }}>RENAVAM</Text>
-                      {isEditing && (
-                        <Text style={{ fontSize: '12px', color: 'var(--gray-5)' }}>(não editável)</Text>
-                      )}
-                    </Space>
-                  }
-                  rules={[
-                    { required: true, message: 'RENAVAM é obrigatório' },
-                    { validator: validateRenavam }
-                  ]}
-                >
-                  <Input
-                    placeholder="12345678901"
-                    maxLength={11}
-                    style={{
-                      borderColor: 'var(--gray-3)',
-                      borderRadius: 'var(--border-radius-sm)',
-                      height: '48px'
-                    }}
-                    disabled={isEditing || loading}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </FormSection>
-
-          {/* Seção 2: Dados do Veículo */}
-          <FormSection title="Dados do Veículo" icon={<CarOutlined />}>
-            <Row gutter={16}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="brand"
                   label={
-                    <Space>
-                      <Text strong style={{ color: 'var(--text-dark)' }}>Marca</Text>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                      Marca
                       {fipeApiAvailable && !isEditing && (
                         <Tooltip title="Dados da base FIPE - selecionando a marca, os modelos serão carregados automaticamente">
-                          <InfoCircleOutlined style={{ color: 'var(--primary-color)' }} />
+                          <InfoCircleOutlined style={{ color: 'var(--primary-color)', marginLeft: '8px' }} />
                         </Tooltip>
                       )}
-                    </Space>
+                    </span>
                   }
                   rules={[{ required: true, message: 'Marca é obrigatória' }]}
                 >
@@ -520,10 +475,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       placeholder="Selecione a marca"
                       showSearch
                       loading={loadingBrands}
-                      style={{ height: '48px' }}
-                      filterOption={(input, option) =>
-                        option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                      filterOption={(input, option) => {
+                        if (!option?.children) return false;
+                        return option.children.toLowerCase().includes(input.toLowerCase());
+                      }}
                       onChange={handleBrandChange}
                       notFoundContent={loadingBrands ? <Spin size="small" /> : "Nenhuma marca encontrada"}
                     >
@@ -537,28 +494,27 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     <Input
                       placeholder="Digite a marca"
                       disabled={isEditing}
-                      style={{
-                        borderColor: 'var(--gray-3)',
-                        borderRadius: 'var(--border-radius-sm)',
-                        height: '48px'
-                      }}
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
                     />
                   )}
                 </Form.Item>
               </Col>
+            </Row>
 
-              <Col span={12}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={24} md={24} lg={24}>
                 <Form.Item
                   name="model"
                   label={
-                    <Space>
-                      <Text strong style={{ color: 'var(--text-dark)' }}>Modelo</Text>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                      Modelo
                       {fipeModels.length > 0 && (
-                        <Text style={{ fontSize: '12px', color: 'var(--success-color)' }}>
+                        <Text style={{ fontSize: '12px', color: 'var(--success-color)', marginLeft: '8px' }}>
                           {fipeModels.length} modelos disponíveis
                         </Text>
                       )}
-                    </Space>
+                    </span>
                   }
                   rules={[{ required: true, message: 'Modelo é obrigatório' }]}
                 >
@@ -568,10 +524,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       showSearch
                       loading={loadingModels}
                       disabled={!selectedBrandCode || loadingModels}
-                      style={{ height: '48px' }}
-                      filterOption={(input, option) =>
-                        option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
+                      filterOption={(input, option) => {
+                        if (!option?.children) return false;
+                        return option.children.toLowerCase().includes(input.toLowerCase());
+                      }}
                       onChange={handleModelChange}
                       notFoundContent={
                         loadingModels ? <Spin size="small" /> :
@@ -589,28 +547,25 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     <Input
                       placeholder="Ex: Corolla, Civic, Golf"
                       disabled={isEditing}
-                      style={{
-                        borderColor: 'var(--gray-3)',
-                        borderRadius: 'var(--border-radius-sm)',
-                        height: '48px'
-                      }}
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
                     />
                   )}
                 </Form.Item>
               </Col>
             </Row>
 
-            <Row gutter={16}>
-              <Col span={8}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={8} lg={8}>
                 <Form.Item
                   name="year"
                   label={
-                    <Space>
-                      <Text strong style={{ color: 'var(--text-dark)' }}>Ano</Text>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                      Ano
                       {fipeYears.length > 0 && (
-                        <CheckCircleOutlined style={{ color: 'var(--success-color)', fontSize: '12px' }} />
+                        <CheckCircleOutlined style={{ color: 'var(--success-color)', fontSize: '12px', marginLeft: '8px' }} />
                       )}
-                    </Space>
+                    </span>
                   }
                   rules={[{ required: true, message: 'Ano é obrigatório' }]}
                 >
@@ -620,7 +575,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       showSearch
                       loading={loadingYears}
                       disabled={!selectedModelCode || loadingYears}
-                      style={{ height: '48px' }}
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
                       onChange={handleYearChange}
                       notFoundContent={
                         loadingYears ? <Spin size="small" /> :
@@ -639,7 +595,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       placeholder="Selecione o ano"
                       showSearch
                       disabled={isEditing}
-                      style={{ height: '48px' }}
+                      size="large"
+                      style={{ borderRadius: 'var(--radius-md)' }}
                     >
                       {fallbackYears.map(year => (
                         <Option key={year} value={year}>
@@ -651,16 +608,17 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 </Form.Item>
               </Col>
 
-              <Col span={8}>
+              <Col xs={24} sm={12} md={8} lg={8}>
                 <Form.Item
                   name="color"
-                  label={<Text strong style={{ color: 'var(--text-dark)' }}>Cor</Text>}
+                  label={<span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Cor</span>}
                   rules={[{ required: true, message: 'Cor é obrigatória' }]}
                 >
                   <Select
                     placeholder="Selecione a cor"
                     showSearch
-                    style={{ height: '48px' }}
+                    size="large"
+                    style={{ borderRadius: 'var(--radius-md)' }}
                   >
                     {colors.map(color => (
                       <Option key={color} value={color}>
@@ -697,10 +655,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 </Form.Item>
               </Col>
 
-              <Col span={8}>
+              <Col xs={24} sm={12} md={8} lg={8}>
                 <Form.Item
                   name="mileage"
-                  label={<Text strong style={{ color: 'var(--text-dark)' }}>Quilometragem</Text>}
+                  label={<span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Quilometragem</span>}
                   rules={[
                     { required: true, message: 'Quilometragem é obrigatória' },
                     { type: 'number', min: 0, message: 'Quilometragem deve ser positiva' }
@@ -708,14 +666,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 >
                   <InputNumber
                     placeholder="0 km"
+                    size="large"
                     style={{
                       width: '100%',
-                      height: '48px',
-                      borderColor: 'var(--gray-3)',
-                      borderRadius: 'var(--border-radius-sm)'
+                      borderRadius: 'var(--radius-md)'
                     }}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                    parser={(value: any) => Number(value.replace(/\./g, ''))}
+                    formatter={value => formatNumberWithDots(value)}
+                    parser={parseFormattedNumber}
                     min={0}
                     max={999999}
                   />
@@ -724,8 +681,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             </Row>
           </FormSection>
 
+          <Divider style={{ margin: 'var(--space-xxl) 0', borderColor: 'var(--gray-2)' }} />
+
           {/* Seção 3: Foto do Veículo */}
-          <FormSection title="Foto do Veículo" icon={<PictureOutlined />}>
+          <FormSection title="Foto do Veículo" icon={<PictureOutlined style={{ color: 'var(--primary-color)', fontSize: '18px' }} />}>
             <Row gutter={16}>
               <Col span={24}>
                 {photoPreview ? (
@@ -785,15 +744,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
 
           {/* Botões */}
           <div
+            className="vehicle-form-buttons"
             style={{
               display: 'flex',
+              flexDirection: 'row',
               gap: 'var(--space-md)',
               justifyContent: 'flex-end',
+              marginTop: 'var(--space-xxl)',
               paddingTop: 'var(--space-lg)',
-              borderTop: '1px solid var(--gray-2)',
-              background: 'var(--card-background)',
-              margin: '0 calc(-1 * var(--space-xxl)) calc(-1 * var(--space-xxl))',
-              padding: 'var(--space-lg) var(--space-xxl)'
+              borderTop: '1px solid var(--gray-2)'
             }}
           >
             <Button
@@ -801,13 +760,26 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
               onClick={handleCancel}
               disabled={loading}
               style={{
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-sm) var(--space-lg)',
                 height: '48px',
-                paddingLeft: 'var(--space-xxl)',
-                paddingRight: 'var(--space-xxl)',
-                borderColor: 'var(--gray-3)',
-                color: 'var(--gray-6)',
-                borderRadius: 'var(--border-radius-sm)',
-                fontWeight: 600
+                fontWeight: 500,
+                border: '1px solid var(--gray-3)',
+                color: 'var(--text-secondary)',
+                background: 'transparent',
+                transition: 'all var(--transition-fast)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--gray-4)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--gray-3)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               Cancelar
@@ -818,20 +790,62 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
               size="large"
               onClick={handleSubmit}
               loading={loading}
+              icon={isEditing ? undefined : <CarOutlined />}
               style={{
+                borderRadius: 'var(--radius-md)',
+                padding: 'var(--space-sm) var(--space-lg)',
                 height: '48px',
-                paddingLeft: 'var(--space-xxl)',
-                paddingRight: 'var(--space-xxl)',
-                background: 'var(--primary-color)',
-                borderColor: 'var(--primary-color)',
-                borderRadius: 'var(--border-radius-sm)',
-                fontWeight: 600,
-                boxShadow: 'var(--shadow-md)'
+                fontWeight: 500,
+                background: 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))',
+                border: 'none',
+                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.3)',
+                transition: 'all var(--transition-fast)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(139, 92, 246, 0.4)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #7C3AED, #6D28D9)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, var(--primary-color), var(--secondary-color))';
               }}
             >
               {isEditing ? 'Atualizar Veículo' : 'Cadastrar Veículo'}
             </Button>
           </div>
+          <style>{`
+            @media (max-width: 768px) {
+              .vehicle-form-modal .ant-modal {
+                width: 90% !important;
+                max-width: 800px !important;
+              }
+              .vehicle-form-header {
+                padding: clamp(16px, 4vw, 32px) !important;
+              }
+              .vehicle-form-title {
+                font-size: clamp(20px, 4vw, 28px) !important;
+                word-break: break-word !important;
+                padding: 0 8px !important;
+              }
+              .vehicle-form-subtitle {
+                font-size: clamp(14px, 2.5vw, 16px) !important;
+                word-break: break-word !important;
+                padding: 0 8px !important;
+              }
+              .vehicle-form-buttons {
+                flex-direction: column !important;
+                padding: var(--space-lg) !important;
+                margin: 0 calc(-1 * var(--space-lg)) calc(-1 * var(--space-lg)) !important;
+              }
+              .vehicle-form-buttons .ant-btn {
+                width: 100% !important;
+              }
+            }
+          `}</style>
         </Form>
       </div>
     </Modal>

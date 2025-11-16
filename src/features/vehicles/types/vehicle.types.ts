@@ -27,7 +27,6 @@ export interface Vehicle {
   model: string
   year: number
   color: string
-  renavam: string
   mileage: number
   status: VehicleStatus
   soldAt?: Date
@@ -76,18 +75,17 @@ export interface VehicleDocument {
   url?: string
 }
 
-export interface CreateVehicleData {
+export interface CreateVehicleData extends Record<string, unknown> {
   plate: string
   brand: string
   model: string
   year: number
   color: string
-  renavam: string
   mileage?: number
   photo?: File
 }
 
-export interface UpdateVehicleData {
+export interface UpdateVehicleData extends Record<string, unknown> {
   brand?: string
   model?: string
   year?: number
@@ -106,7 +104,6 @@ export interface VehicleFormData {
   model: string
   year: string
   color: string
-  renavam: string
   mileage: string
   photo?: File
 }
@@ -117,7 +114,6 @@ export interface VehicleFormErrors {
   model?: string
   year?: string
   color?: string
-  renavam?: string
   mileage?: string
 }
 

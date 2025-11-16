@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../../shared/utils/logger';
 import {
   Button,
   DatePicker,
@@ -36,6 +37,7 @@ import {
 import { EVENT_TYPES } from "../utils/constants";
 import { VehicleServiceService, CreateVehicleServiceData } from "../services/vehicleServiceService";
 import { VehicleService } from "../services/vehicleService";
+import { formatCurrency, parseCurrency } from "../../../shared/utils/numberFormatters";
 
 const SERVICE_TYPE_CATEGORIES = {
   maintenance: [
@@ -210,9 +212,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   };
 
   const validateCost = (_: any, value: number) => {
-    if (!value && value !== 0) {
-      return Promise.reject(new Error('Informe o custo do serviço'));
-    }
     if (value < 0) {
       return Promise.reject(new Error('Custo não pode ser negativo'));
     }
@@ -323,6 +322,8 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         try {
           attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
         } catch (uploadError) {
+          // Continue sem anexos se o upload falhar
+          logger.warn('Falha ao fazer upload de anexos, continuando sem anexos', uploadError);
         }
       }
 
@@ -346,6 +347,8 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             mileage: serviceData.mileage
           });
         } catch (mileageError) {
+          // Não crítico - serviço foi criado, apenas km não foi atualizado
+          logger.warn('Falha ao atualizar quilometragem do veículo', mileageError);
         }
       }
 
@@ -356,6 +359,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           'user'
         );
       } catch (blockchainError) {
+        logger.warn('Falha ao enviar para blockchain, pode tentar novamente', blockchainError);
         (notificationApi || notification).warning({
           message: 'Processando na blockchain',
           description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',
@@ -412,14 +416,16 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       style={{ top: 20 }}
       footer={null}
       closeIcon={null}
-      destroyOnClose
       styles={{
         content: {
           padding: 0,
           overflow: 'hidden',
-          borderRadius: 'var(--border-radius-lg)'
+          borderRadius: 'var(--border-radius-lg)',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }
       }}
+      className="service-modal"
     >
       <div
         style={{
@@ -429,6 +435,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           position: 'relative',
           overflow: 'hidden'
         }}
+        className="service-modal-header"
       >
         <div
           style={{
@@ -491,10 +498,10 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           >
             <ToolOutlined style={{ fontSize: '32px', color: 'var(--text-light)' }} />
           </div>
-          <Title level={2} style={{ margin: 0, color: 'var(--text-light)' }}>
+          <Title level={2} style={{ margin: 0, color: 'var(--text-light)', fontSize: '28px' }} className="service-modal-title">
             Adicionar Serviço
           </Title>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
+          <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }} className="service-modal-subtitle">
             Registre um novo serviço
           </Text>
         </div>
@@ -530,7 +537,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                 name="selectedVehicleId"
                 label={
                   <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                    * Veículo
+                    Veículo
                   </span>
                 }
                 rules={[{ required: true, message: 'Selecione um veículo' }]}
@@ -577,12 +584,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="type"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Tipo de Serviço
+                      Tipo de Serviço
                     </span>
                   }
                   rules={[{ required: true, message: 'Selecione o tipo' }]}
@@ -596,12 +603,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="category"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Categoria
+                      Categoria
                     </span>
                   }
                   validateTrigger="onSubmit"
@@ -642,11 +649,11 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
               name="description"
               label={
                 <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  * Descrição
+                  Descrição
                 </span>
               }
               rules={[
-                { required: true, message: 'Descreva o serviço' },
+                { required: true, message: '' },
                 { validator: validateDescription }
               ]}
             >
@@ -742,16 +749,16 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="date"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Data do Serviço
+                      Data do Serviço
                     </span>
                   }
                   rules={[
-                    { required: true, message: 'Selecione a data' },
+                    { required: true, message: '' },
                     { validator: validateDate }
                   ]}
                 >
@@ -764,12 +771,12 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="mileage"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Quilometragem
+                      Quilometragem
                     </span>
                   }
                   rules={[
@@ -842,16 +849,16 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </div>
 
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="cost"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Custo
+                      Custo
                     </span>
                   }
                   rules={[
-                    { required: true, message: 'Informe o custo' },
+                    { required: true, message: 'Informe o custo do serviço' },
                     { validator: validateCost }
                   ]}
                 >
@@ -864,19 +871,20 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     placeholder="0,00"
                     min={0}
                     precision={2}
-                    formatter={value => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                    parser={(value: any) => Number(value.replace(/R\$\s?|\./g, ''))}
+                    formatter={formatCurrency}
+                    parser={parseCurrency}
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col xs={24} sm={24} md={12} lg={12}>
                 <Form.Item
                   name="location"
                   label={
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                      * Local
+                      Local
                     </span>
                   }
+                  required={true}
                   rules={[
                     { validator: validateLocation }
                   ]}
@@ -893,14 +901,18 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             </Row>
           </div>
 
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: 'var(--space-md)', 
-            marginTop: 'var(--space-xxl)',
-            paddingTop: 'var(--space-lg)',
-            borderTop: '1px solid var(--gray-2)'
-          }}>
+          <div 
+            className="service-modal-buttons"
+            style={{ 
+              display: 'flex', 
+              flexDirection: 'row',
+              justifyContent: 'flex-end', 
+              gap: 'var(--space-md)', 
+              marginTop: 'var(--space-xxl)',
+              paddingTop: 'var(--space-lg)',
+              borderTop: '1px solid var(--gray-2)'
+            }}
+          >
             <Button 
               onClick={onClose}
               size="large"
@@ -963,6 +975,33 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           </div>
         </Form>
       </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .service-modal .ant-modal {
+            width: 90% !important;
+            max-width: 800px !important;
+          }
+          .service-modal-header {
+            padding: clamp(16px, 4vw, 32px) !important;
+          }
+          .service-modal-title {
+            font-size: clamp(20px, 4vw, 28px) !important;
+            word-break: break-word !important;
+            padding: 0 8px !important;
+          }
+          .service-modal-subtitle {
+            font-size: clamp(14px, 2.5vw, 16px) !important;
+            word-break: break-word !important;
+            padding: 0 8px !important;
+          }
+          .service-modal-buttons {
+            flex-direction: column !important;
+          }
+          .service-modal-buttons .ant-btn {
+            width: 100% !important;
+          }
+        }
+      `}</style>
 
       <Modal
         title={
@@ -1001,10 +1040,11 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         confirmLoading={submitting}
         okText="Confirmar e Enviar"
         cancelText="Cancelar"
-        width={600}
-        style={{ top: 50 }}
+        width="90%"
+        style={{ top: 50, maxWidth: 600 }}
+        centered
         styles={{
-          body: { padding: '24px' }
+          body: { padding: 'clamp(16px, 3vw, 24px)' }
         }}
       >
         <div style={{ marginBottom: '20px' }}>

@@ -168,7 +168,6 @@ export function useMockVehicle(id: string) {
     year: 2019,
     mileage: 47020,
     color: "Prata",
-    renavam: "12345678901",
     status: VehicleStatus.ACTIVE,
     soldAt: undefined,
     createdAt: new Date("2023-10-02"),

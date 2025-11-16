@@ -149,5 +149,107 @@ describe('FipeService', () => {
       expect(result).toEqual(mockBrands);
       expect(mockedAxios.get).toHaveBeenCalled();
     });
+
+    it('should handle invalid cache data', async () => {
+      localStorage.setItem('fipe_brands', 'invalid json');
+      const mockBrands = [{ codigo: '1', nome: 'Test' }];
+      mockedAxios.get.mockResolvedValue({ data: mockBrands });
+
+      const result = await FipeService.getBrandsWithCache();
+
+      expect(result).toEqual(mockBrands);
+      expect(mockedAxios.get).toHaveBeenCalled();
+    });
+
+    it('should fallback to API when cache fails', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const mockBrands = [{ codigo: '1', nome: 'Test' }];
+      
+      // Simular erro ao ler do localStorage
+      jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('Storage error');
+      });
+      
+      mockedAxios.get.mockResolvedValue({ data: mockBrands });
+
+      const result = await FipeService.getBrandsWithCache();
+
+      expect(result).toEqual(mockBrands);
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('getVehicleInfo', () => {
+    it('should return vehicle info', async () => {
+      const mockVehicle = {
+        valor: 'R$ 50.000,00',
+        marca: 'Toyota',
+        modelo: 'Corolla',
+        anoModelo: 2020,
+        combustivel: 'Gasolina',
+      };
+
+      mockedAxios.get.mockResolvedValue({ data: mockVehicle });
+
+      const result = await FipeService.getVehicleInfo('1', 2, '2020-3');
+
+      expect(result).toEqual(mockVehicle);
+      expect(mockedAxios.get).toHaveBeenCalledWith(
+        'https://parallelum.com.br/fipe/api/v1/carros/marcas/1/modelos/2/anos/2020-3'
+      );
+    });
+
+    it('should throw error when API fails', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockedAxios.get.mockRejectedValue(new Error('Network error'));
+
+      await expect(FipeService.getVehicleInfo('1', 2, '2020-3')).rejects.toThrow(
+        'Não foi possível carregar as informações do veículo'
+      );
+
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('clearCache', () => {
+    it('should clear cache successfully', () => {
+      localStorage.setItem('fipe_brands', JSON.stringify({ data: [], timestamp: Date.now() }));
+      
+      FipeService.clearCache();
+      
+      expect(localStorage.getItem('fipe_brands')).toBeNull();
+    });
+
+    it('should handle error when clearing cache', () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+        throw new Error('Storage error');
+      });
+      
+      FipeService.clearCache();
+      
+      expect(console.warn).toHaveBeenCalled();
+      jest.restoreAllMocks();
+    });
+  });
+
+  describe('checkApiAvailability', () => {
+    it('should return true when API is available', async () => {
+      mockedAxios.get.mockResolvedValue({ data: [] });
+
+      const result = await FipeService.checkApiAvailability();
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when API is unavailable', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockedAxios.get.mockRejectedValue(new Error('Network error'));
+
+      const result = await FipeService.checkApiAvailability();
+
+      expect(result).toBe(false);
+      jest.restoreAllMocks();
+    });
   });
 });

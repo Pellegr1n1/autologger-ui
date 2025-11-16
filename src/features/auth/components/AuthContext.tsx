@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/apiAuth';
-import { apiBase } from '../../../shared/services/api';
-import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types"
+import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types";
+import { logger } from '../../../shared/utils/logger';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -19,14 +19,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      
-      if (authService.isAuthenticated()) {
-        const userData = await authService.getProfile();
-        setUser(userData);
-      } else {
-      }
+      // Tentar buscar o perfil do usuário
+      // Se o cookie httpOnly existir e for válido, o backend retornará o perfil
+      // Se não existir ou for inválido, o backend retornará 401
+      const userData = await authService.getProfile();
+      setUser(userData);
     } catch (error) {
-      apiBase.removeToken();
+      // Se houver erro (401, etc), o usuário não está autenticado
+      // O cookie será removido pelo backend se necessário
       setUser(null);
     } finally {
       setLoading(false);
@@ -43,15 +43,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
-  const login = async (data: LoginData | User | any) => {
+  const login = async (data: LoginData | User): Promise<void> => {
     try {
-      // Se é um usuário do Google (já autenticado), apenas define o token e o usuário
-      if ('id' in data && 'authProvider' in data) {
-        setUser(data as User);
+      if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
+        setUser(data);
+        
+        authService.getProfile()
+          .then(fullUser => setUser(fullUser))
+          .catch(err => {
+            logger.warn('Não foi possível buscar perfil completo, usando dados do Google', err);
+          });
+        
         return;
       }
 
-      // Login tradicional com email/senha
       const response = await authService.login(data as LoginData);
       const tempUser = convertAuthUserToUser(response.user);
       setUser(tempUser);
@@ -60,13 +65,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
+        // Fallback: Mantém tempUser já setado se não conseguir buscar o perfil completo
+        logger.warn('Perfil completo não disponível após login, usando dados básicos', profileError);
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const register = async (data: RegisterData) => {
+  const register = async (data: RegisterData): Promise<User> => {
     try {
       const response = await authService.register(data);
       const tempUser = convertAuthUserToUser(response.user);
@@ -75,7 +82,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
+        return fullUser;
       } catch (profileError) {
+        // Fallback: Retorna tempUser se não conseguir buscar o perfil completo
+        logger.warn('Perfil completo não disponível após registro, usando dados básicos', profileError);
+        return tempUser;
       }
     } catch (error) {
       throw error;
@@ -98,11 +109,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (authService.isAuthenticated()) {
-        const userData = await authService.getProfile();
-        setUser(userData);
-      }
+      const userData = await authService.getProfile();
+      setUser(userData);
     } catch (error) {
+      setUser(null);
       throw error;
     }
   };

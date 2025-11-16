@@ -14,20 +14,6 @@ export default function Footer() {
             <Col xs={12} sm={8} md={4} lg={4}>
               <div className={styles.linksSection}>
                 <Title level={4} className={styles.sectionTitle}>
-                  Links Rápidos
-                </Title>
-                <ul className={styles.linksList}>
-                  <li>
-                    <a href="#about" className={styles.link}>
-                      Sobre Nós
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </Col>
-            <Col xs={12} sm={8} md={4} lg={4}>
-              <div className={styles.linksSection}>
-                <Title level={4} className={styles.sectionTitle}>
                   Legal
                 </Title>
                 <ul className={styles.linksList}>

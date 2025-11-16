@@ -51,7 +51,7 @@ export default function PrivacyPage() {
                   Para fornecer nossos serviços, coletamos informações sobre seus veículos:
                 </Paragraph>
                 <ul className={styles.sectionList}>
-                  <li><strong>Identificação do Veículo:</strong> Placa, marca, modelo, ano, cor, RENAVAM</li>
+                  <li><strong>Identificação do Veículo:</strong> Placa, marca, modelo, ano, cor</li>
                   <li><strong>Dados de Uso:</strong> Quilometragem atual e histórico de quilometragem</li>
                   <li><strong>Documentação:</strong> Fotos do veículo (opcional)</li>
                   <li><strong>Status:</strong> Se o veículo está ativo ou foi vendido</li>

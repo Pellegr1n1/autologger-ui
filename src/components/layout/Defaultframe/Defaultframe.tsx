@@ -21,23 +21,34 @@ export default function DefaultFrame({
   showHeader = true,
   loading = false
 }: DefaultFrameProps): React.JSX.Element {
-  const [siderCollapsed, setSiderCollapsed] = useState(false);
+  const [siderCollapsed, setSiderCollapsed] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(72);
 
   const handleSiderCollapse = (collapsed: boolean) => {
     setSiderCollapsed(collapsed);
   };
 
-  const handleMenuToggle = () => {
-    setSiderCollapsed(!siderCollapsed);
-  };
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (window.innerWidth <= 576) {
+        setHeaderHeight(60);
+      } else if (window.innerWidth <= 768) {
+        setHeaderHeight(64);
+      } else {
+        setHeaderHeight(72);
+      }
+    };
 
-  // Efeito para gerenciar o estado de carregamento do conteúdo
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
+
   useEffect(() => {
     if (loading) {
       setContentLoading(true);
     } else {
-      // Delay pequeno para transição suave
       const timer = setTimeout(() => {
         setContentLoading(false);
       }, 100);
@@ -53,9 +64,9 @@ export default function DefaultFrame({
         <Layout 
           className={styles.contentLayout}
           style={{
-            marginTop: showHeader ? '72px' : '0',
+            marginTop: showHeader ? `${headerHeight}px` : '0',
             marginLeft: showSider ? (siderCollapsed ? '80px' : '200px') : '0',
-            transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
           {breadcrumb && <div className={styles.breadcrumb}>{breadcrumb}</div>}

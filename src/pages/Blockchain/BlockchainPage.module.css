@@ -1,5 +1,5 @@
 .pageHeader {
-  margin-bottom: 24px;
+  margin: 24px 0;
   padding: 24px;
   background: var(--surface-color);
   border-radius: 16px;
@@ -97,12 +97,12 @@
 }
 
 .blockchainTabs :global(.ant-tabs-tab-active) {
-  background: var(--primary-color);
+  background: rgba(167, 139, 250, 0.25) !important;
   border-radius: 8px;
 }
 
 .blockchainTabs :global(.ant-tabs-tab-active .ant-tabs-tab-btn) {
-  color: white !important;
+  color: rgba(167, 139, 250, 1) !important;
 }
 
 .blockchainTabs :global(.ant-tabs-content-holder) {
@@ -110,30 +110,83 @@
 }
 
 /* Responsividade */
+@media (max-width: 1200px) {
+  .headerContent {
+    gap: 12px;
+  }
+  
+  .statsSection {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  .headerContent {
+    flex-wrap: wrap;
+  }
+  
+  .networkStatus {
+    margin-top: 12px;
+  }
+}
+
 @media (max-width: 768px) {
+  .pageHeader {
+    margin: 20px 0;
+    padding: 20px;
+  }
+  
   .headerContent {
     flex-direction: column;
     align-items: flex-start;
+    gap: 16px;
   }
   
   .headerInfo {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     gap: 12px;
+    width: 100%;
+  }
+  
+  .headerIcon {
+    font-size: 28px;
   }
   
   .headerTitle {
     font-size: 20px;
   }
   
+  .headerSubtitle {
+    font-size: 13px;
+  }
+  
   .networkStatus {
-    align-self: flex-end;
+    align-self: stretch;
+    justify-content: flex-start;
+    width: 100%;
+    margin-top: 0;
+  }
+  
+  .statsSection {
+    margin-bottom: 20px;
+  }
+  
+  .contentSection {
+    margin-bottom: 20px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .pageHeader {
     padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .headerInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
   
   .headerIcon {
@@ -142,5 +195,59 @@
   
   .headerTitle {
     font-size: 18px;
+    margin-bottom: 2px;
+  }
+  
+  .headerSubtitle {
+    font-size: 12px;
+  }
+  
+  .networkStatus {
+    padding: 6px 12px;
+    flex-wrap: wrap;
+  }
+  
+  .statusText {
+    font-size: 11px;
+  }
+  
+  .statsSection {
+    margin-bottom: 16px;
+  }
+  
+  .contentSection {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageHeader {
+    padding: 12px;
+    margin: 12px 0;
+  }
+  
+  .headerIcon {
+    font-size: 20px;
+  }
+  
+  .headerTitle {
+    font-size: 16px;
+  }
+  
+  .headerSubtitle {
+    font-size: 11px;
+  }
+  
+  .networkStatus {
+    padding: 6px 10px;
+  }
+  
+  .statusIndicator {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .statusText {
+    font-size: 10px;
   }
 }

@@ -263,16 +263,10 @@
 <a name='L198'></a><a href='#L198'>198</a>
 <a name='L199'></a><a href='#L199'>199</a>
 <a name='L200'></a><a href='#L200'>200</a>
-<a name='L201'></a><a href='#L201'>201</a>
-<a name='L202'></a><a href='#L202'>202</a>
-<a name='L203'></a><a href='#L203'>203</a>
-<a name='L204'></a><a href='#L204'>204</a>
-<a name='L205'></a><a href='#L205'>205</a>
-<a name='L206'></a><a href='#L206'>206</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L201'></a><a href='#L201'>201</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -285,7 +279,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -369,11 +363,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -397,11 +391,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -425,11 +419,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -453,11 +447,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -479,11 +469,10 @@ import { GlobalWireframe } from "../../components/common";
 import {
   CheckCircleOutlined,
   EyeOutlined,
-  RobotOutlined,
-  SafetyOutlined,
-  DashboardOutlined,
-  LockOutlined,
-  SyncOutlined
+  BarChartOutlined,
+  ShareAltOutlined,
+  ToolOutlined,
+  BlockOutlined
 } from '@ant-design/icons';
 import { Footer } from '../../components/layout';
 &nbsp;
@@ -518,30 +507,26 @@ export default function HomePage() {
               A AutoLogger oferece uma solução inovadora para registro imutável de serviços e despesas automotivas, garantindo transparência e segurança através da tecnologia blockchain.
             &lt;/Paragraph&gt;
 &nbsp;
-            &lt;Space size="large" className={styles.heroButtons}&gt;
-              &lt;Button type="primary" size="large"&gt;Saiba Mais&lt;/Button&gt;
-            &lt;/Space&gt;
-&nbsp;
             &lt;Row gutter={[24, 24]}&gt;
               &lt;Col xs={24} sm={8}&gt;
                 &lt;Card className={styles.featureCard}&gt;
-                  &lt;SafetyOutlined style={{ fontSize: 28, color: '#8B5CF6' }} /&gt;
-                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Imutável&lt;/Title&gt;
-                  &lt;Text style={{ color: 'white' }}&gt;Registros permanentes e à prova de fraudes&lt;/Text&gt;
+                  &lt;BlockOutlined style={{ fontSize: 28, color: '#8B5CF6' }} /&gt;
+                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Blockchain Real&lt;/Title&gt;
+                  &lt;Text style={{ color: 'white' }}&gt;Hyperledger Besu - Imutabilidade garantida&lt;/Text&gt;
                 &lt;/Card&gt;
               &lt;/Col&gt;
               &lt;Col xs={24} sm={8}&gt;
                 &lt;Card className={styles.featureCard}&gt;
                   &lt;EyeOutlined style={{ fontSize: 28, color: '#8B5CF6' }} /&gt;
-                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Transparente&lt;/Title&gt;
-                  &lt;Text style={{ color: 'white' }}&gt;Verificação por terceiros em tempo real&lt;/Text&gt;
+                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Verificação Pública&lt;/Title&gt;
+                  &lt;Text style={{ color: 'white' }}&gt;Qualquer pessoa pode verificar autenticidade&lt;/Text&gt;
                 &lt;/Card&gt;
               &lt;/Col&gt;
               &lt;Col xs={24} sm={8}&gt;
                 &lt;Card className={styles.featureCard}&gt;
-                  &lt;SyncOutlined style={{ fontSize: 28, color: '#8B5CF6' }} /&gt;
-                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Automático&lt;/Title&gt;
-                  &lt;Text style={{ color: 'white' }}&gt;Alertas e cálculos inteligentes&lt;/Text&gt;
+                  &lt;BarChartOutlined style={{ fontSize: 28, color: '#8B5CF6' }} /&gt;
+                  &lt;Title level={4} style={{ marginTop: 16, color: 'white' }}&gt;Análises Inteligentes&lt;/Title&gt;
+                  &lt;Text style={{ color: 'white' }}&gt;Relatórios e insights automáticos&lt;/Text&gt;
                 &lt;/Card&gt;
               &lt;/Col&gt;
             &lt;/Row&gt;
@@ -564,18 +549,18 @@ export default function HomePage() {
             &lt;Col xs={24} md={12}&gt;
               &lt;Card className={styles.featureCard}&gt;
                 &lt;div className={styles.featureCardHeader}&gt;
-                  &lt;LockOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
-                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Registro Imutável&lt;/Title&gt;
+                  &lt;BlockOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
+                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Blockchain Privada Besu&lt;/Title&gt;
                 &lt;/div&gt;
                 &lt;Paragraph style={{ color: 'white' }}&gt;
-                  Cada serviço, abastecimento ou despesa é registrado na blockchain, criando um histórico permanente e à prova de adulterações.
+                  Cada evento de manutenção gera um hash SHA-256 registrado imutavelmente na blockchain Hyperledger Besu, garantindo integridade permanente e impossibilidade de alteração.
                 &lt;/Paragraph&gt;
                 &lt;List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Proteção contra fraudes',
-                    'Histórico completo do veículo',
-                    'Valorização na revenda'
+                    'Hash único e imutável por serviço',
+                    'Verificação contínua na blockchain',
+                    'Registros permanentes e transparentes'
                   ]}
                   renderItem={item =&gt; (
                     &lt;List.Item&gt;
@@ -592,18 +577,18 @@ export default function HomePage() {
             &lt;Col xs={24} md={12}&gt;
               &lt;Card className={styles.featureCard}&gt;
                 &lt;div className={styles.featureCardHeader}&gt;
-                  &lt;DashboardOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
-                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Dashboard Inteligente&lt;/Title&gt;
+                  &lt;BarChartOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
+                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Relatórios e Análises&lt;/Title&gt;
                 &lt;/div&gt;
                 &lt;Paragraph style={{ color: 'white' }}&gt;
-                  Visualize todos os dados do seu veículo em um painel intuitivo, com análises e relatórios automáticos.
+                  Dashboard completo com gráficos interativos, comparações mensais e identificação de padrões de gastos para tomada de decisão inteligente.
                 &lt;/Paragraph&gt;
                 &lt;List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Custos por quilômetro',
-                    'Manutenção programada',
-                    'Alertas personalizados'
+                    'Tendências de gastos e comparações',
+                    'Top veículos e categorias que mais gastam',
+                    'Gráficos interativos e exportação de dados'
                   ]}
                   renderItem={item =&gt; (
                     &lt;List.Item&gt;
@@ -620,18 +605,18 @@ export default function HomePage() {
             &lt;Col xs={24} md={12}&gt;
               &lt;Card className={styles.featureCard}&gt;
                 &lt;div className={styles.featureCardHeader}&gt;
-                  &lt;SafetyOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
-                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Integração com Mercado&lt;/Title&gt;
+                  &lt;ShareAltOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
+                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Compartilhamento Público&lt;/Title&gt;
                 &lt;/div&gt;
                 &lt;Paragraph style={{ color: 'white' }}&gt;
-                  Compradores e seguradoras podem verificar o histórico real do veículo, facilitando negociações e reduzindo riscos.
+                  Gere links seguros e expiráveis para compartilhar histórico veicular. Compradores verificam autenticidade via blockchain sem necessidade de login.
                 &lt;/Paragraph&gt;
                 &lt;List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Certificado de autenticidade',
-                    'Relatórios para seguradoras',
-                    'Valorização documentada'
+                    'Links únicos com expiração configurável',
+                    'Página pública profissional e verificável',
+                    'Bloqueio automático quando veículo é vendido'
                   ]}
                   renderItem={item =&gt; (
                     &lt;List.Item&gt;
@@ -648,18 +633,18 @@ export default function HomePage() {
             &lt;Col xs={24} md={12}&gt;
               &lt;Card className={styles.featureCard}&gt;
                 &lt;div className={styles.featureCardHeader}&gt;
-                  &lt;RobotOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
-                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Smart Contracts&lt;/Title&gt;
+                  &lt;ToolOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} /&gt;
+                  &lt;Title level={3} style={{ margin: 0, color: 'white' }}&gt;Gestão Completa de Histórico&lt;/Title&gt;
                 &lt;/div&gt;
                 &lt;Paragraph style={{ color: 'white' }}&gt;
-                  Automatize processos como cálculos de depreciação, alertas de manutenção e transferência de propriedade.
+                  Registre manutenções, despesas, abastecimentos e reparos com upload de comprovantes. Categorização automática e controle completo de custos.
                 &lt;/Paragraph&gt;
                 &lt;List
                   itemLayout="horizontal"
                   dataSource={[
-                    'Processos automáticos',
-                    'Redução de burocracia',
-                    'Segurança nas transações'
+                    'Manutenções, despesas e abastecimentos',
+                    'Upload de PDFs e imagens de comprovantes',
+                    'Categorização automática e controle de quilometragem'
                   ]}
                   renderItem={item =&gt; (
                     &lt;List.Item&gt;
@@ -685,7 +670,7 @@ export default function HomePage() {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-10-26T21:46:04.059Z
+                at 2025-11-11T21:08:28.254Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -15,7 +15,7 @@ const { Text } = Typography
 
 export function createEventColumns(
   onEdit: (event: VehicleEvent) => void,
-  onDelete: (eventId: string) => void
+  _onDelete: (eventId: string) => void
 ): TableColumnsType<VehicleEvent> {
   return [
     {
@@ -49,7 +49,6 @@ export function createEventColumns(
       dataIndex: "blockchainStatus",
       key: "blockchainStatus",
       render: (blockchainStatus: any) => {
-        console.log('blockchainStatus:', blockchainStatus);
         if (!blockchainStatus || !blockchainStatus.status) {
           return <Tag color="default">N/A</Tag>
         }

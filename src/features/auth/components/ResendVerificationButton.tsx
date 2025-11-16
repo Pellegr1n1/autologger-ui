@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button, Space, Typography } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { emailVerificationService } from "../services/emailVerificationService";
+import { logger } from "../../../shared/utils/logger";
 
 const { Text } = Typography;
 
@@ -77,7 +78,7 @@ export const ResendVerificationButton: React.FC<ResendVerificationButtonProps> =
         onSuccess();
       }
     } catch (error) {
-      console.error('Erro ao reenviar email:', error);
+      logger.error('Erro ao reenviar email', error);
     } finally {
       setLoading(false);
     }

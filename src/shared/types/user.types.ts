@@ -43,7 +43,7 @@ export interface AuthContextType {
     user: User | null;
     loading: boolean;
     login: (data: LoginData) => Promise<void>;
-    register: (data: RegisterData) => Promise<void>;
+    register: (data: RegisterData) => Promise<User>;
     logout: () => void;
     updateProfile: (data: Partial<User>) => Promise<void>;
     refreshUser: () => Promise<void>;

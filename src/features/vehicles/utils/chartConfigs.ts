@@ -30,7 +30,7 @@ export const getCategoryChartConfig = (stats: VehicleStats): PieConfig => {
   }
 }
 
-export const getMonthlyChartConfig = (stats: VehicleStats): ColumnConfig => {
+export const getMonthlyChartConfig = (_stats: VehicleStats): ColumnConfig => {
   const monthlyData = [
     { month: 'Jan', value: 0 },
     { month: 'Fev', value: 0 },
@@ -85,7 +85,7 @@ export const getMonthlyChartConfig = (stats: VehicleStats): ColumnConfig => {
   }
 }
 
-export const getMileageChartConfig = (stats: VehicleStats): ColumnConfig => {
+export const getMileageChartConfig = (_stats: VehicleStats): ColumnConfig => {
   const mileageData = [
     { month: 'Jan', km: 0 },
     { month: 'Fev', km: 0 },

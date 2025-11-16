@@ -1,5 +1,4 @@
-import React from "react";
-import { Result, Button, Typography, Space } from "antd";
+import { Button, Typography, Space } from "antd";
 import {
   HomeOutlined,
   ArrowLeftOutlined,
@@ -7,7 +6,6 @@ import {
   SearchOutlined,
   BulbOutlined,
 } from "@ant-design/icons";
-import { ErrorBoundary } from "../../components/common";
 import styles from "./NotFound.module.css";
 
 const { Title, Paragraph } = Typography;

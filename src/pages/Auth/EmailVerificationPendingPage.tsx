@@ -47,6 +47,7 @@ export default function EmailVerificationPendingPage() {
       clearInterval(pollInterval);
       clearInterval(countdownInterval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const checkVerificationStatus = async () => {

@@ -7,6 +7,7 @@ import {
   VehicleStats,
   UserVehicles
 } from '../types/vehicle.types';
+import { createFormDataWithFile } from '../../../shared/utils/formData';
 
 export class VehicleService {
   private static readonly BASE_PATH = '/vehicles';
@@ -15,21 +16,7 @@ export class VehicleService {
    * Criar novo veículo
    */
   static async createVehicle(data: CreateVehicleData): Promise<Vehicle> {
-    const formData = new FormData();
-    
-    Object.keys(data).forEach(key => {
-      if (key !== 'photo' && data[key as keyof CreateVehicleData] !== undefined) {
-        const value = data[key as keyof CreateVehicleData];
-        if (value !== undefined) {
-          formData.append(key, value.toString());
-        }
-      }
-    });
-    
-    // Adicionar foto se existir
-    if (data.photo) {
-      formData.append('photo', data.photo);
-    }
+    const formData = createFormDataWithFile(data, data.photo, ['photo'], 'photo');
 
     const response = await apiBase.api.post<Vehicle>(this.BASE_PATH, formData, {
       headers: {
@@ -59,20 +46,7 @@ export class VehicleService {
    * Atualizar dados do veículo
    */
   static async updateVehicle(id: string, data: UpdateVehicleData): Promise<Vehicle> {
-    const formData = new FormData();
-    
-    Object.keys(data).forEach(key => {
-      if (key !== 'photo' && data[key as keyof UpdateVehicleData] !== undefined) {
-        const value = data[key as keyof UpdateVehicleData];
-        if (value !== undefined) {
-          formData.append(key, value.toString());
-        }
-      }
-    });
-    
-    if (data.photo) {
-      formData.append('photo', data.photo);
-    }
+    const formData = createFormDataWithFile(data, data.photo, ['photo'], 'photo');
 
     const response = await apiBase.api.put<Vehicle>(`${this.BASE_PATH}/${id}`, formData, {
       headers: {
@@ -117,14 +91,6 @@ export class VehicleService {
   }
 
   /**
-   * Validar RENAVAM
-   */
-  static validateRenavam(renavam: string): boolean {
-    const cleanRenavam = renavam.replace(/\D/g, '');
-    return cleanRenavam.length === 11;
-  }
-
-  /**
    * Formatar placa para exibição
    */
   static formatPlate(plate: string): string {
@@ -135,19 +101,6 @@ export class VehicleService {
     }
 
     return cleanPlate;
-  }
-
-  /**
-   * Formatar RENAVAM para exibição
-   */
-  static formatRenavam(renavam: string): string {
-    const cleanRenavam = renavam.replace(/\D/g, '');
-
-    if (cleanRenavam.length === 11) {
-      return cleanRenavam.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
-    }
-
-    return cleanRenavam;
   }
 
   /**

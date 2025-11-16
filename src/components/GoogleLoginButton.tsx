@@ -58,7 +58,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         return;
       }
       
-      // Verificar se o popup foi fechado
       const checkClosed = setInterval(() => {
         if (popup.closed) {
           clearInterval(checkClosed);
@@ -66,7 +65,6 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         }
       }, 1000);
       
-      // Timeout para fechar o popup após 5 minutos
       setTimeout(() => {
         if (!popup.closed) {
           popup.close();

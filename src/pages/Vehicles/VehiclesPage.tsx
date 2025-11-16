@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button, Typography, message, Modal, Card, Statistic, Space, Row, Col, Empty, Tabs, Tooltip, notification } from 'antd';
 import { 
   FireOutlined, 
@@ -18,7 +17,6 @@ import styles from './VehiclesPage.module.css';
 const { Text } = Typography;
 
 export default function VehiclesPage() {
-  const navigate = useNavigate();
   const [api, contextHolder] = notification.useNotification();
   const [vehicles, setVehicles] = useState<UserVehicles>({ active: [], sold: [] });
   const [loading, setLoading] = useState(true);
@@ -30,17 +28,8 @@ export default function VehiclesPage() {
   const [vehicleToSell, setVehicleToSell] = useState<Vehicle | null>(null);
 
   useEffect(() => {
-    const checkAuthAndLoad = async () => {
-      const { apiBase } = await import('../../shared/services/api');
-      
-      if (apiBase.isAuthenticated()) {
-        loadVehicles();
-      } else {
-        navigate('/login');
-      }
-    };
-    
-    checkAuthAndLoad();
+    loadVehicles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadVehicles = async () => {
@@ -96,20 +85,23 @@ export default function VehiclesPage() {
     if (!vehicleToSell) return;
     
     try {
-      const result = await VehicleService.markVehicleAsSold(vehicleToSell.id);
+      await VehicleService.markVehicleAsSold(vehicleToSell.id);
       api.success({
-        message: 'Veículo vendido',
-        description: 'O veículo foi marcado como vendido com sucesso.',
-        placement: 'bottomRight'
+        message: 'Veículo vendido com sucesso!',
+        description: `${vehicleToSell.brand} ${vehicleToSell.model} foi marcado como vendido e movido para a seção de veículos vendidos.`,
+        placement: 'bottomRight',
+        duration: 4.5,
+        icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />
       });
       setSellModalVisible(false);
       setVehicleToSell(null);
       loadVehicles();
-    } catch (error) {
+    } catch (error: any) {
       api.error({
-        message: 'Falha ao marcar como vendido',
-        description: error.response?.data?.message || error.message,
-        placement: 'bottomRight'
+        message: 'Falha ao marcar veículo como vendido',
+        description: error?.response?.data?.message || error?.message || 'Ocorreu um erro ao tentar marcar o veículo como vendido.',
+        placement: 'bottomRight',
+        duration: 4.5
       });
     }
   };
@@ -204,7 +196,7 @@ export default function VehiclesPage() {
                 disabled={activeVehicles.length >= 2}
                 className={componentStyles.professionalButton}
               >
-                Cadastrar Primeiro Veículo
+                Cadastrar Veículo
               </Button>
             </Tooltip>
           )}
@@ -359,13 +351,56 @@ export default function VehiclesPage() {
           danger: true,
           loading: formLoading
         }}
+        width="90%"
+        style={{ maxWidth: 500 }}
+        centered
       >
-        <p>
+        <p style={{ marginBottom: '16px' }}>
           Deseja marcar o veículo <strong>{vehicleToSell?.brand} {vehicleToSell?.model}</strong> como vendido?
         </p>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-          Esta ação não pode ser desfeita. O veículo será movido para a lista de veículos vendidos.
-        </p>
+        <div style={{
+          padding: '16px',
+          backgroundColor: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '20px',
+            height: '20px',
+            backgroundColor: '#f59e0b',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            flexShrink: 0,
+            marginTop: '2px'
+          }}>
+            !
+          </div>
+          <div>
+            <div style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#92400e',
+              marginBottom: '4px'
+            }}>
+              Ação Irreversível
+            </div>
+            <div style={{
+              fontSize: '13px',
+              color: '#92400e',
+              lineHeight: '1.4'
+            }}>
+              Esta ação não pode ser desfeita. O veículo será movido para a lista de veículos vendidos.
+            </div>
+          </div>
+        </div>
       </Modal>
 
     </DefaultFrame>
