@@ -16,31 +16,6 @@
   overflow: hidden;
 }
 
-.icons {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  position: relative;
-  z-index: 10;
-}
-
-.user {
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
-  position: relative;
-  z-index: 10;
-}
-
-.user:hover {
-  background: rgba(139, 92, 246, 0.12);
-  border-color: rgba(139, 92, 246, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
-}
-
 .divider {
   margin: 0 12px;
   border-color: rgba(139, 92, 246, 0.25);

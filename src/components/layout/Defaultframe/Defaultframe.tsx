@@ -21,22 +21,34 @@ export default function DefaultFrame({
   showHeader = true,
   loading = false
 }: DefaultFrameProps): React.JSX.Element {
-  // Sider inicia fechado, mas pode abrir em telas maiores
   const [siderCollapsed, setSiderCollapsed] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(72);
 
   const handleSiderCollapse = (collapsed: boolean) => {
-    // Permitir mudança apenas se a tela for grande o suficiente
-    // A verificação é feita no VehicleSider
     setSiderCollapsed(collapsed);
   };
 
-  // Efeito para gerenciar o estado de carregamento do conteúdo
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (window.innerWidth <= 576) {
+        setHeaderHeight(60);
+      } else if (window.innerWidth <= 768) {
+        setHeaderHeight(64);
+      } else {
+        setHeaderHeight(72);
+      }
+    };
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+    return () => window.removeEventListener('resize', updateHeaderHeight);
+  }, []);
+
   useEffect(() => {
     if (loading) {
       setContentLoading(true);
     } else {
-      // Delay pequeno para transição suave
       const timer = setTimeout(() => {
         setContentLoading(false);
       }, 100);
@@ -52,9 +64,9 @@ export default function DefaultFrame({
         <Layout 
           className={styles.contentLayout}
           style={{
-            marginTop: '0',
+            marginTop: showHeader ? `${headerHeight}px` : '0',
             marginLeft: showSider ? (siderCollapsed ? '80px' : '200px') : '0',
-            transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
           {breadcrumb && <div className={styles.breadcrumb}>{breadcrumb}</div>}

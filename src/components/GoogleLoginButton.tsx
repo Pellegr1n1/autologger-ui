@@ -16,14 +16,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    // Support both Vite (import.meta.env) and Jest (process.env) environments
-    let googleClientId: string | undefined;
-    if (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_CLIENT_ID) {
-      googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
-    } else {
-      // Vite environment - use optional chaining
-      googleClientId = import.meta?.env?.VITE_GOOGLE_CLIENT_ID;
-    }
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     
     if (!googleClientId) {
       onError(new Error('Google Client ID não configurado'));
@@ -87,13 +80,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     }
   };
 
-  let googleClientId: string | undefined;
-  if (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_CLIENT_ID) {
-    googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
-  } else {
-    // Vite environment - use optional chaining
-    googleClientId = import.meta?.env?.VITE_GOOGLE_CLIENT_ID;
-  }
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   
   if (!googleClientId) {
     return (

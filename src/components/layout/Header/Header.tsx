@@ -1,5 +1,4 @@
 import { Layout, Dropdown, MenuProps } from "antd";
-import { FaUserAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
 
@@ -28,8 +27,6 @@ interface HeaderPageProps {
 }
 
 const HeaderPage: React.FC<HeaderPageProps> = ({ siderCollapsed = false }) => {
-    const userMenu = useUserMenu();
-    
     return (
         <Header 
             className={styles.header}
@@ -38,18 +35,6 @@ const HeaderPage: React.FC<HeaderPageProps> = ({ siderCollapsed = false }) => {
                 transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
         >
-            <div className={styles.icons}>
-                <Dropdown
-                    menu={{
-                        items: userMenu,
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    className={styles.user}
-                >
-                    <FaUserAlt size={20} />
-                </Dropdown>
-            </div>
         </Header>
     );
 }
