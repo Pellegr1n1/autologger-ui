@@ -36,6 +36,7 @@ import {
 import { EVENT_TYPES } from "../utils/constants";
 import { VehicleServiceService, CreateVehicleServiceData } from "../services/vehicleServiceService";
 import { VehicleService } from "../services/vehicleService";
+import { formatCurrency, parseCurrency } from "../../../shared/utils/numberFormatters";
 
 const SERVICE_TYPE_CATEGORIES = {
   maintenance: [
@@ -865,8 +866,8 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     placeholder="0,00"
                     min={0}
                     precision={2}
-                    formatter={value => `R$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                    parser={(value: any) => Number(value.replace(/R\$\s?|\./g, ''))}
+                    formatter={formatCurrency}
+                    parser={parseCurrency}
                   />
                 </Form.Item>
               </Col>

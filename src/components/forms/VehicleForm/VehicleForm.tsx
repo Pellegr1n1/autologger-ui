@@ -28,14 +28,27 @@ import {
 } from '@ant-design/icons';
 import { Vehicle, FipeBrand, FipeModel, FipeYear } from '../../../features/vehicles';
 import { FipeService } from '../../../features/vehicles/services/fipeService';
+import { formatNumberWithDots, parseFormattedNumber } from '../../../shared/utils/numberFormatters';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
 
+interface VehicleFormValues {
+  plate?: string;
+  brand: string;
+  model: string;
+  year: number;
+  color: string;
+  mileage: number;
+  photo?: File | null;
+  [key: string]: unknown;
+}
+
 interface VehicleFormProps {
   visible: boolean;
   vehicle?: Vehicle | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (values: any) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -159,7 +172,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleBrandChange = (_: string, option: any) => {
+  const handleBrandChange = (_: string, option: { key: string; children: string } | { key: string; children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const brandCode = option.key;
     const brandName = option.children;
 
@@ -172,7 +187,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleModelChange = (_: string, option: any) => {
+  const handleModelChange = (_: string, option: { key: number; children: string } | { key: number; children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const modelCode = option.key;
     const modelName = option.children;
 
@@ -184,7 +201,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     }
   };
 
-  const handleYearChange = (_: string, option: any) => {
+  const handleYearChange = (_: string, option: { children: string } | { children: string }[] | undefined) => {
+    if (!option || Array.isArray(option)) return;
+    
     const yearName = option.children;
     const year = FipeService.extractYear(yearName);
     form.setFieldsValue({ year });
@@ -222,27 +241,23 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   };
 
   const handleSubmit = () => {
-    form.validateFields().then(values => {
-      let formattedValues = {
-        ...values,
-        year: parseInt(values.year),
-        mileage: values.mileage || 0,
-        brand: values.brand?.trim() || '',
-        model: values.model?.trim() || '',
-        color: values.color?.trim() || '',
-        photo: photoFile // Incluir arquivo de foto
+    form.validateFields().then((values: Record<string, string | number>) => {
+      const formattedValues: VehicleFormValues = {
+        year: parseInt(String(values.year)),
+        mileage: Number(values.mileage) || 0,
+        brand: String(values.brand || '').trim(),
+        model: String(values.model || '').trim(),
+        color: String(values.color || '').trim(),
+        photo: photoFile
       };
 
-      if (isEditing) {
-        const { plate: _plate, ...editableFields } = formattedValues;
-        formattedValues = editableFields;
-      } else {
-        formattedValues.plate = values.plate ? values.plate.toUpperCase().replace('-', '') : '';
+      if (!isEditing) {
+        formattedValues.plate = values.plate ? String(values.plate).toUpperCase().replace('-', '') : '';
       }
 
       onSubmit(formattedValues);
-    }).catch(errorInfo => {
-      console.log('Validation failed:', errorInfo);
+    }).catch(() => {
+      // Form validation failed - errors are already shown in the form
     });
   };
 
@@ -253,7 +268,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     onCancel();
   };
 
-  const validatePlate = (_: any, value: string) => {
+  const validatePlate = (_: unknown, value: string) => {
     if (value) {
       const cleanValue = value.toUpperCase().replace('-', '');
       const oldFormat = /^[A-Z]{3}[0-9]{4}$/;
@@ -461,9 +476,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       loading={loadingBrands}
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
-                      filterOption={(input, option) =>
-                        option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
+                      filterOption={(input, option) => {
+                        if (!option || !option.children) return false;
+                        return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                      }}
                       onChange={handleBrandChange}
                       notFoundContent={loadingBrands ? <Spin size="small" /> : "Nenhuma marca encontrada"}
                     >
@@ -509,9 +525,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       disabled={!selectedBrandCode || loadingModels}
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
-                      filterOption={(input, option) =>
-                        option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
+                      filterOption={(input, option) => {
+                        if (!option || !option.children) return false;
+                        return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                      }}
                       onChange={handleModelChange}
                       notFoundContent={
                         loadingModels ? <Spin size="small" /> :
@@ -653,8 +670,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       width: '100%',
                       borderRadius: 'var(--radius-md)'
                     }}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}
-                    parser={(value: any) => Number(value.replace(/\./g, ''))}
+                    formatter={value => formatNumberWithDots(value)}
+                    parser={parseFormattedNumber}
                     min={0}
                     max={999999}
                   />

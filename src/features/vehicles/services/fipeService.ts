@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { FipeBrand, FipeModel, FipeVehicle, FipeYear } from '../types/fipe.types';
+import { logger } from '../../../shared/utils/logger';
 
 export class FipeService {
     private static readonly BASE_URL = 'https://parallelum.com.br/fipe/api/v1';
@@ -16,7 +17,7 @@ export class FipeService {
                 return a.nome.localeCompare(b.nome);
             });
         } catch (error) {
-            console.error('Erro ao buscar marcas FIPE:', error);
+            logger.error('Erro ao buscar marcas FIPE', error);
             throw new Error('Não foi possível carregar as marcas de veículos');
         }
     }
@@ -32,7 +33,7 @@ export class FipeService {
 
             return response.data.modelos.sort((a, b) => a.nome.localeCompare(b.nome));
         } catch (error) {
-            console.error('Erro ao buscar modelos FIPE:', error);
+            logger.error('Erro ao buscar modelos FIPE', error);
             throw new Error('Não foi possível carregar os modelos');
         }
     }
@@ -48,7 +49,7 @@ export class FipeService {
 
             return response.data.sort((a, b) => parseInt(b.nome) - parseInt(a.nome));
         } catch (error) {
-            console.error('Erro ao buscar anos FIPE:', error);
+            logger.error('Erro ao buscar anos FIPE', error);
             throw new Error('Não foi possível carregar os anos');
         }
     }
@@ -68,7 +69,7 @@ export class FipeService {
 
             return response.data;
         } catch (error) {
-            console.error('Erro ao buscar info do veículo FIPE:', error);
+            logger.error('Erro ao buscar info do veículo FIPE', error);
             throw new Error('Não foi possível carregar as informações do veículo');
         }
     }
@@ -117,7 +118,7 @@ export class FipeService {
 
             return brands;
         } catch (error) {
-            console.warn('Erro no cache, buscando diretamente:', error);
+            logger.warn('Erro no cache, buscando diretamente', error);
             return await this.getBrands();
         }
     }
@@ -129,7 +130,7 @@ export class FipeService {
         try {
             localStorage.removeItem('fipe_brands');
         } catch (error) {
-            console.warn('Erro ao limpar cache:', error);
+            logger.warn('Erro ao limpar cache', error);
         }
     }
 
@@ -141,7 +142,7 @@ export class FipeService {
             await axios.get(`${this.BASE_URL}/carros/marcas`, { timeout: 5000 });
             return true;
         } catch (error) {
-            console.warn('API FIPE indisponível:', error);
+            logger.warn('API FIPE indisponível', error);
             return false;
         }
     }

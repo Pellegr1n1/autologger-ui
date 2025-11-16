@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios';
 import { apiBase } from '../../../shared/services/api';
 import { AuthResponse, LoginData, RegisterData, UpdateProfileData, User } from "../../../shared/types/user.types";
+import { logger } from '../../../shared/utils/logger';
 
 class AuthService {
     // Métodos de autenticação
@@ -28,7 +29,7 @@ class AuthService {
         try {
             await apiBase.api.post('/auth/logout');
         } catch (error) {
-            console.error('Erro ao fazer logout no servidor:', error);
+            logger.error('Erro ao fazer logout no servidor', error);
         } finally {
             apiBase.logout();
         }

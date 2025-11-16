@@ -8,6 +8,7 @@
  */
 
 import { apiBase } from '../../../shared/services/api';
+import { logger } from '../../../shared/utils/logger';
 
 export const emailVerificationService = {
   /**
@@ -17,7 +18,7 @@ export const emailVerificationService = {
     try {
       await apiBase.api.post(`/auth/send-verification-email`, { userId });
     } catch (error) {
-      console.error('Erro ao enviar email de verificação:', error);
+      logger.error('Erro ao enviar email de verificação', error);
       throw error;
     }
   },

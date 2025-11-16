@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService } from '../services/apiAuth';
-import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types"
+import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types";
+import { logger } from '../../../shared/utils/logger';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
-  const login = async (data: LoginData | User | any): Promise<void> => {
+  const login = async (data: LoginData | User): Promise<void> => {
     try {
       if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
         const user = data as User;
@@ -51,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         authService.getProfile()
           .then(fullUser => setUser(fullUser))
           .catch(err => {
-            console.warn('Não foi possível buscar perfil completo, usando dados do Google:', err);
+            logger.warn('Não foi possível buscar perfil completo, usando dados do Google', err);
           });
         
         return;

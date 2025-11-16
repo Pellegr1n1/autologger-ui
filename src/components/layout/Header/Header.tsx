@@ -1,28 +1,35 @@
 import { Layout, Dropdown, MenuProps } from "antd";
 import { FaUserAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
 
 const { Header } = Layout;
 
-const user: MenuProps['items'] = [
-    {
-        key: '1',
-        label: (
-            <div className={styles.userProfile}>
-                <span>Perfil</span>
-            </div>
-        ),
-        onClick: () => {
-            // TODO: Implementar navegação para perfil
+const useUserMenu = (): MenuProps['items'] => {
+    const navigate = useNavigate();
+    
+    return [
+        {
+            key: '1',
+            label: (
+                <div className={styles.userProfile}>
+                    <span>Perfil</span>
+                </div>
+            ),
+            onClick: () => {
+                navigate('/profile');
+            },
         },
-    },
-];
+    ];
+};
 
 interface HeaderPageProps {
     siderCollapsed?: boolean;
 }
 
 const HeaderPage: React.FC<HeaderPageProps> = ({ siderCollapsed = false }) => {
+    const userMenu = useUserMenu();
+    
     return (
         <Header 
             className={styles.header}
@@ -34,7 +41,7 @@ const HeaderPage: React.FC<HeaderPageProps> = ({ siderCollapsed = false }) => {
             <div className={styles.icons}>
                 <Dropdown
                     menu={{
-                        items: user,
+                        items: userMenu,
                     }}
                     trigger={['click']}
                     placement="bottomRight"

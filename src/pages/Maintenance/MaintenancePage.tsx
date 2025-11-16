@@ -30,6 +30,7 @@ import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './MaintenancePage.module.css';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
+import { logger } from '../../shared/utils/logger';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -312,7 +313,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           }
         }
       } catch (e) {
-        console.warn('Erro ao verificar status da blockchain:', e);
+        logger.warn('Erro ao verificar status da blockchain', e);
       } finally {
         if (attempts >= maxAttempts) {
           api.warning({
@@ -576,7 +577,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       });
     } catch (error) {
       message.error('Erro ao abrir no Google Sheets');
-      console.error(error);
+      logger.error('Erro ao abrir no Google Sheets', error);
     }
   }, [generateCSVContent, api]);
 

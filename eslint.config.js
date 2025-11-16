@@ -43,11 +43,16 @@ export default tseslint.config(
         varsIgnorePattern: '^_|^error$|^err$',
         caughtErrorsIgnorePattern: '^_|^error$|^err$'
       }],
-      '@typescript-eslint/no-explicit-any': 'off',
+      // Warn about 'any' types instead of allowing them
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unsafe-declaration-merging': 'off',
       'no-useless-catch': 'off',
       'no-empty': ['error', { 'allowEmptyCatch': true }],
       'react-hooks/exhaustive-deps': 'warn',
+      // Additional rules for better code quality
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'prefer-const': 'warn',
+      'no-var': 'error',
     },
   },
 )
