@@ -27,31 +27,24 @@ export default function CallbackPage() {
           throw new Error('Dados do usuário não recebidos');
         }
 
-        // Parse do usuário
         const userData = JSON.parse(decodeURIComponent(userParam));
 
-        // Token é gerenciado automaticamente via cookie httpOnly pelo backend
-        // Não precisamos mais armazenar no localStorage
-
-        // Fazer login do usuário
-        const tempUser = {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const loggedInUser = {
           ...userData,
+          authProvider: 'google',
           isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         };
 
-        await login(tempUser as any);
-
-        // Fechar popup e redirecionar
         if (window.opener) {
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_SUCCESS',
-            user: tempUser,
-            // Não enviamos mais o token por segurança
+            user: loggedInUser,
           }, window.location.origin);
           window.close();
         } else {
+          await login(loggedInUser);
           navigate('/vehicles');
         }
 

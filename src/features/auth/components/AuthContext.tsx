@@ -44,13 +44,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (data: LoginData | User | any) => {
     try {
-      // Se é um usuário do Google (já autenticado), apenas define o token e o usuário
-      if ('id' in data && 'authProvider' in data) {
-        setUser(data as User);
-        return;
+      if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
+        const user = data as User;
+        setUser(user);
+        
+        authService.getProfile()
+          .then(fullUser => setUser(fullUser))
+          .catch(err => {
+            console.warn('Não foi possível buscar perfil completo, usando dados do Google:', err);
+          });
+        
+        return user;
       }
 
-      // Login tradicional com email/senha
       const response = await authService.login(data as LoginData);
       const tempUser = convertAuthUserToUser(response.user);
       setUser(tempUser);
@@ -58,7 +64,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
+        return fullUser;
       } catch (profileError) {
+        return tempUser;
       }
     } catch (error) {
       throw error;
@@ -99,12 +107,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      // Tentar buscar o perfil do usuário
-      // Se o cookie httpOnly existir e for válido, o backend retornará o perfil
       const userData = await authService.getProfile();
       setUser(userData);
     } catch (error) {
-      // Se houver erro, limpar o usuário
       setUser(null);
       throw error;
     }

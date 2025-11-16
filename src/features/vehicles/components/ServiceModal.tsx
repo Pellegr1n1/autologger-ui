@@ -210,9 +210,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
   };
 
   const validateCost = (_: any, value: number) => {
-    if (!value && value !== 0) {
-      return Promise.reject(new Error('Informe o custo do serviço'));
-    }
     if (value < 0) {
       return Promise.reject(new Error('Custo não pode ser negativo'));
     }
@@ -650,7 +647,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                 </span>
               }
               rules={[
-                { required: true, message: 'Descreva o serviço' },
+                { required: true, message: '' },
                 { validator: validateDescription }
               ]}
             >
@@ -755,7 +752,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     </span>
                   }
                   rules={[
-                    { required: true, message: 'Selecione a data' },
+                    { required: true, message: '' },
                     { validator: validateDate }
                   ]}
                 >
@@ -855,7 +852,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     </span>
                   }
                   rules={[
-                    { required: true, message: 'Informe o custo' },
+                    { required: true, message: 'Informe o custo do serviço' },
                     { validator: validateCost }
                   ]}
                 >
@@ -881,6 +878,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                       Local
                     </span>
                   }
+                  required={true}
                   rules={[
                     { validator: validateLocation }
                   ]}
