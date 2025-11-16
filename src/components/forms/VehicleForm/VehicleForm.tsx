@@ -243,7 +243,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   const handleSubmit = () => {
     form.validateFields().then((values: Record<string, string | number>) => {
       const formattedValues: VehicleFormValues = {
-        year: parseInt(String(values.year)),
+        year: Number.parseInt(String(values.year)),
         mileage: Number(values.mileage) || 0,
         brand: String(values.brand || '').trim(),
         model: String(values.model || '').trim(),
@@ -477,8 +477,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
                       filterOption={(input, option) => {
-                        if (!option || !option.children) return false;
-                        return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                        if (!option?.children) return false;
+                        return option.children.toLowerCase().includes(input.toLowerCase());
                       }}
                       onChange={handleBrandChange}
                       notFoundContent={loadingBrands ? <Spin size="small" /> : "Nenhuma marca encontrada"}
@@ -526,8 +526,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
                       filterOption={(input, option) => {
-                        if (!option || !option.children) return false;
-                        return option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                        if (!option?.children) return false;
+                        return option.children.toLowerCase().includes(input.toLowerCase());
                       }}
                       onChange={handleModelChange}
                       notFoundContent={

@@ -104,9 +104,9 @@ export default function BlockchainPage() {
             // Estimar tempo de confirmação baseado no número de transações
             // Em um sistema real, isso seria calculado a partir de timestamps reais
             // Usando uma estimativa fixa baseada no volume de transações
-            const baseTime = 2.0;
+            const baseTime = 2;
             const volumeFactor = Math.min(1.5, confirmedServices.length * 0.01);
-            averageConfirmationTime = Math.max(1.0, Math.min(5.0, baseTime + volumeFactor));
+            averageConfirmationTime = Math.max(1, Math.min(5, baseTime + volumeFactor));
           }
 
           setBlockchainData({
@@ -285,25 +285,21 @@ export default function BlockchainPage() {
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
                   title="Status"
-                  value={
-                    totalTransactions === 0 
-                      ? 'Sem registros' 
-                      : reliabilityScore >= 90 
-                        ? 'Excelente' 
-                        : reliabilityScore >= 70 
-                          ? 'Bom' 
-                          : 'Atenção'
-                  }
+                  value={(() => {
+                    if (totalTransactions === 0) return 'Sem registros';
+                    if (reliabilityScore >= 90) return 'Excelente';
+                    if (reliabilityScore >= 70) return 'Bom';
+                    return 'Atenção';
+                  })()}
                   prefix={
                     <SafetyCertificateOutlined 
                       style={{ 
-                        color: totalTransactions === 0
-                          ? 'var(--text-secondary)' 
-                          : reliabilityScore >= 90 
-                            ? 'var(--success-color)' 
-                            : reliabilityScore >= 70 
-                              ? 'var(--warning-color)' 
-                              : 'var(--error-color)' 
+                        color: (() => {
+                          if (totalTransactions === 0) return 'var(--text-secondary)';
+                          if (reliabilityScore >= 90) return 'var(--success-color)';
+                          if (reliabilityScore >= 70) return 'var(--warning-color)';
+                          return 'var(--error-color)';
+                        })()
                       }} 
                     />
                   }

@@ -27,9 +27,9 @@ export const formatNumberWithDots = (value: number | string | undefined): string
       return digit + (index > 0 && index % 3 === 0 ? '.' : '') + acc;
     }, '');
 
-  return decimalPart !== undefined 
-    ? `${formattedInteger}.${decimalPart}` 
-    : formattedInteger;
+  return decimalPart === undefined 
+    ? formattedInteger
+    : `${formattedInteger}.${decimalPart}`;
 };
 
 /**
@@ -43,9 +43,9 @@ export const formatCurrency = (value: number | string | undefined): string => {
     return 'R$ 0,00';
   }
 
-  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
+  const numericValue = typeof value === 'string' ? Number.parseFloat(value) : value;
   
-  if (isNaN(numericValue)) {
+  if (Number.isNaN(numericValue)) {
     return 'R$ 0,00';
   }
 
@@ -76,10 +76,10 @@ export const parseFormattedNumber = (value: string | undefined): number => {
   }
 
   // Remove all dots (thousand separators) and 'R$' prefix if present
-  const cleaned = value.replace(/R\$\s?|\./g, '');
-  const parsed = parseFloat(cleaned);
+  const cleaned = value.replaceAll(/R\$\s?|\./g, '');
+  const parsed = Number.parseFloat(cleaned);
   
-  return isNaN(parsed) ? 0 : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 
 /**
@@ -94,9 +94,9 @@ export const parseCurrency = (value: string | undefined): number => {
   }
 
   // Remove 'R$' and spaces, replace comma with dot for decimal
-  const cleaned = value.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
-  const parsed = parseFloat(cleaned);
+  const cleaned = value.replaceAll(/R\$\s?/g, '').replaceAll(/\./g, '').replace(',', '.');
+  const parsed = Number.parseFloat(cleaned);
   
-  return isNaN(parsed) ? 0 : parsed;
+  return Number.isNaN(parsed) ? 0 : parsed;
 };
 

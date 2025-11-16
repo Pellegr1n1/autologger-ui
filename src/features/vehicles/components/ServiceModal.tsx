@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { logger } from '../../../shared/utils/logger';
 import {
   Button,
   DatePicker,
@@ -320,7 +321,9 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       if (uploadedFiles.length > 0) {
         try {
           attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
-        } catch (_uploadError) {
+        } catch (uploadError) {
+          // Continue sem anexos se o upload falhar
+          logger.warn('Falha ao fazer upload de anexos, continuando sem anexos', uploadError);
         }
       }
 
@@ -343,7 +346,9 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           await VehicleService.updateVehicle(serviceData.vehicleId, {
             mileage: serviceData.mileage
           });
-        } catch (_mileageError) {
+        } catch (mileageError) {
+          // Não crítico - serviço foi criado, apenas km não foi atualizado
+          logger.warn('Falha ao atualizar quilometragem do veículo', mileageError);
         }
       }
 
@@ -353,7 +358,8 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           undefined,
           'user'
         );
-      } catch (_blockchainError) {
+      } catch (blockchainError) {
+        logger.warn('Falha ao enviar para blockchain, pode tentar novamente', blockchainError);
         (notificationApi || notification).warning({
           message: 'Processando na blockchain',
           description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',

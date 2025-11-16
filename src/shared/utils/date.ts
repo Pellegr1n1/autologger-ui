@@ -33,7 +33,7 @@ export function parseDate(dateInput: string | Date | undefined | null): Date {
 
   // Fallback para Date constructor padrão
   const parsed = new Date(dateInput);
-  if (isNaN(parsed.getTime())) {
+  if (Number.isNaN(parsed.getTime())) {
     return new Date();
   }
 
@@ -46,6 +46,6 @@ export function parseDate(dateInput: string | Date | undefined | null): Date {
  * @returns true se a data é válida
  */
 export function isValidDate(date: Date): boolean {
-  return date instanceof Date && !isNaN(date.getTime());
+  return date instanceof Date && !Number.isNaN(date.getTime());
 }
 

@@ -9,8 +9,8 @@ export function isValidPlate(plate: string): boolean {
   if (!plate) return false;
   
   const cleanValue = plate.toUpperCase().replace('-', '');
-  const oldFormat = /^[A-Z]{3}[0-9]{4}$/;
-  const mercosulFormat = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/;
+  const oldFormat = /^[A-Z]{3}\d{4}$/;
+  const mercosulFormat = /^[A-Z]{3}\d[A-Z]\d{2}$/;
 
   return oldFormat.test(cleanValue) || mercosulFormat.test(cleanValue);
 }
@@ -36,7 +36,7 @@ export function isNonEmptyString(value: unknown): value is string {
  * Validates if value is a positive number
  */
 export function isPositiveNumber(value: unknown): value is number {
-  return typeof value === 'number' && value > 0 && !isNaN(value);
+  return typeof value === 'number' && value > 0 && !Number.isNaN(value);
 }
 
 /**
@@ -60,7 +60,7 @@ export function isInRange(value: number, min: number, max: number): boolean {
  * Sanitizes string by removing special characters
  */
 export function sanitizeString(value: string): string {
-  return value.replace(/[^\w\s-]/gi, '');
+  return value.replaceAll(/[^\w\s-]/gi, '');
 }
 
 /**
@@ -77,7 +77,7 @@ export function isNotFutureDate(date: Date | string): boolean {
 export function isValidCPFFormat(cpf: string): boolean {
   if (!cpf) return false;
   
-  const cleanCPF = cpf.replace(/\D/g, '');
+  const cleanCPF = cpf.replaceAll(/\D/g, '');
   return cleanCPF.length === 11;
 }
 

@@ -1,13 +1,13 @@
 /// <reference types="@testing-library/jest-dom" />
 import '@testing-library/jest-dom';
-import { TextEncoder, TextDecoder } from 'util';
+import { TextEncoder, TextDecoder } from 'node:util';
 
 // Polyfills para APIs do Node.js que não estão disponíveis no jsdom
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as any;
+globalThis.TextEncoder = TextEncoder;
+globalThis.TextDecoder = TextDecoder as any;
 
 // Mock para window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation(query => ({
     matches: false,
@@ -22,10 +22,16 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Polyfill para ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
+globalThis.ResizeObserver = class ResizeObserver {
+  observe(_target: Element) {
+    // Mock implementation - no action needed in tests
+  }
+  unobserve(_target: Element) {
+    // Mock implementation - no action needed in tests
+  }
+  disconnect() {
+    // Mock implementation - no action needed in tests
+  }
 };
 
 // Mock para import.meta.env (Vite) usando process.env
@@ -58,7 +64,8 @@ beforeAll(() => {
     const errorMessages = args.map(arg => {
       if (typeof arg === 'string') return arg;
       if (arg instanceof Error) {
-        return `${arg.name}: ${arg.message}${arg.stack ? `\n${arg.stack}` : ''}`;
+        const stackInfo = arg.stack ? `\n${arg.stack}` : '';
+        return `${arg.name}: ${arg.message}${stackInfo}`;
       }
       if (arg && typeof arg === 'object') {
         try {
@@ -120,7 +127,7 @@ beforeAll(() => {
   };
 
   console.warn = (...args: any[]) => {
-    const warnMessages = args.map(arg => String(arg)).join(' ');
+    const warnMessages = args.map(String).join(' ');
     
     // Suppress Ant Design warnings and React warnings
     if (

@@ -25,7 +25,6 @@
     padding-bottom: 100px; /* Espaço para o botão de logout */
     background: transparent;
     backdrop-filter: blur(5px);
-    position: relative;
     overflow: hidden;
 }
 

@@ -13,7 +13,7 @@ enum LogLevel {
 
 class Logger {
   private level: LogLevel = LogLevel.INFO;
-  private isDevelopment: boolean;
+  private readonly isDevelopment: boolean;
 
   constructor() {
     // Check environment - compatible with both Vite and Jest

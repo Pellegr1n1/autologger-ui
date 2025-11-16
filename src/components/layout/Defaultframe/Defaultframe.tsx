@@ -52,7 +52,7 @@ export default function DefaultFrame({
         <Layout 
           className={styles.contentLayout}
           style={{
-            marginTop: showHeader ? '0' : '0',
+            marginTop: '0',
             marginLeft: showSider ? (siderCollapsed ? '80px' : '200px') : '0',
             transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}

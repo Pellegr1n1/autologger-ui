@@ -46,8 +46,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (data: LoginData | User): Promise<void> => {
     try {
       if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
-        const user = data as User;
-        setUser(user);
+        setUser(data);
         
         authService.getProfile()
           .then(fullUser => setUser(fullUser))
@@ -65,8 +64,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
-      } catch (_profileError) {
-        // Mantém tempUser já setado
+      } catch (profileError) {
+        // Fallback: Mantém tempUser já setado se não conseguir buscar o perfil completo
+        logger.warn('Perfil completo não disponível após login, usando dados básicos', profileError);
       }
     } catch (error) {
       throw error;
@@ -83,7 +83,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
         return fullUser;
-      } catch (_profileError) {
+      } catch (profileError) {
+        // Fallback: Retorna tempUser se não conseguir buscar o perfil completo
+        logger.warn('Perfil completo não disponível após registro, usando dados básicos', profileError);
         return tempUser;
       }
     } catch (error) {

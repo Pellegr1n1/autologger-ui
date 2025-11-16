@@ -493,13 +493,13 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           if (char === '"') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
-            result.push(current.trim().replace(/^"|"$/g, ''));
+            result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
             current = '';
           } else {
             current += char;
           }
         }
-        result.push(current.trim().replace(/^"|"$/g, ''));
+        result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
         return result;
       };
 
@@ -525,7 +525,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           row.map(cell => {
             // Se contém vírgula, nova linha ou aspas, precisa de aspas
             if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
-              return `"${cell.replace(/"/g, '""')}"`;
+              return `"${cell.replaceAll(/"/g, '""')}"`;
             }
             return cell;
           }).join(',')
