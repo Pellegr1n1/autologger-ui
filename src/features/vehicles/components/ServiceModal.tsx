@@ -416,7 +416,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       style={{ top: 20 }}
       footer={null}
       closeIcon={null}
-      destroyOnClose
       styles={{
         content: {
           padding: 0,

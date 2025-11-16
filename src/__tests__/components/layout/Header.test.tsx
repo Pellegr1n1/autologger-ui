@@ -69,16 +69,6 @@ describe('Header', () => {
       const header = container.querySelector('.header');
       expect(header).toHaveStyle({ left: '200px' });
     });
-
-    it('should render logo image', () => {
-      const { container } = render(
-        <MemoryRouter>
-          <HeaderPage />
-        </MemoryRouter>
-      );
-      const logo = container.querySelector('img[alt="Logo"]');
-      expect(logo).toBeInTheDocument();
-    });
   });
 
   describe('Responsive styles', () => {

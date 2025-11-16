@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions, notification } from 'antd';
+import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions, notification, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   BarChartOutlined,
   EyeOutlined,
@@ -18,8 +19,6 @@ import {
   ClearOutlined,
   TableOutlined
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Dropdown } from 'antd';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
@@ -488,8 +487,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         let current = '';
         let inQuotes = false;
         
-        for (let i = 0; i < line.length; i++) {
-          const char = line[i];
+        for (const char of line) {
           if (char === '"') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
@@ -525,7 +523,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           row.map(cell => {
             // Se contém vírgula, nova linha ou aspas, precisa de aspas
             if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
-              return `"${cell.replaceAll(/"/g, '""')}"`;
+              return `"${cell.replaceAll('"', '""')}"`;
             }
             return cell;
           }).join(',')
@@ -832,7 +830,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               <Card
                 title={`Serviços (${filteredMaintenance.length})`}
                 className={componentStyles.professionalCard}
-                bodyStyle={{ padding: '16px 24px' }}
+                styles={{ body: { padding: '16px 24px' } }}
                 extra={
                   <Dropdown
                     menu={{
@@ -928,7 +926,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                               placeholder="Selecione o veículo"
                               showSearch
                               filterOption={(input, option) =>
-                                (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                                (String(option?.label ?? '')).toLowerCase().includes(input.toLowerCase())
                               }
                             >
                               <Option value="all">Todos os veículos</Option>

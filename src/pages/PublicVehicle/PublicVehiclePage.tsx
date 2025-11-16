@@ -581,9 +581,9 @@ const PublicVehiclePage: React.FC = () => {
                 <HistoryOutlined className="icon" />
                 <span>Histórico Completo de Serviços ({sortedHistory.length})</span>
               </div>
-            }
+              }
             className={styles.statisticCard}
-            bodyStyle={{ padding: '24px' }}
+            styles={{ body: { padding: '24px' } }}
           >
             {/* Filtros */}
             <div className={styles.filterSection}>

@@ -94,7 +94,7 @@ export const parseCurrency = (value: string | undefined): number => {
   }
 
   // Remove 'R$' and spaces, replace comma with dot for decimal
-  const cleaned = value.replaceAll(/R\$\s?/g, '').replaceAll(/\./g, '').replace(',', '.');
+  const cleaned = value.replaceAll(/R\$\s?/g, '').replaceAll('.', '').replace(',', '.');
   const parsed = Number.parseFloat(cleaned);
   
   return Number.isNaN(parsed) ? 0 : parsed;

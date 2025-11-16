@@ -127,7 +127,7 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
         </div>
             <Divider className={styles.divider} />
             <Menu
-                onClick={({ key }) => handleMenuClick(key as string)}
+                onClick={({ key }) => handleMenuClick(key)}
                 selectedKeys={getActiveKey()}
                 mode="inline"
                 items={items}

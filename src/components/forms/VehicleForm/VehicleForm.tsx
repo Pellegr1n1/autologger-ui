@@ -213,13 +213,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     const isImage = file.type.startsWith('image/');
     if (!isImage) {
       message.error('Apenas arquivos de imagem são permitidos!');
-      return false;
+      return Upload.LIST_IGNORE;
     }
 
     const isLt5M = file.size / 1024 / 1024 < 5;
     if (!isLt5M) {
       message.error('A imagem deve ser menor que 5MB!');
-      return false;
+      return Upload.LIST_IGNORE;
     }
 
     setPhotoFile(file);
@@ -231,7 +231,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     };
     reader.readAsDataURL(file);
 
-    return false; // Não fazer upload automático
+    // Retornar false para não fazer upload automático, mas aceitar o arquivo
+    return false;
   };
 
   const removePhoto = () => {

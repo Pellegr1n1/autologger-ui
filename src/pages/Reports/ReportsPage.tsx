@@ -445,7 +445,7 @@ export default function ReportsPage() {
     <DefaultFrame title="Relatórios e Análises" loading={loading}>
       <div className={styles.reportsContainer}>
         {/* Filtros */}
-        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }} bodyStyle={{ padding: '16px 24px' }}>
+        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }} styles={{ body: { padding: '16px 24px' } }}>
           <div className={styles.filtersContainer}>
             <Row gutter={[12, 12]} className={styles.filterRow}>
               <Col xs={24} sm={12} md={12} lg={4} xl={4}>
@@ -461,7 +461,7 @@ export default function ReportsPage() {
                     placeholder="Selecione o veículo"
                     showSearch
                     filterOption={(input, option) =>
-                      (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                      (String(option?.label ?? '')).toLowerCase().includes(input.toLowerCase())
                     }
                   >
                     <Option value="all">Todos os veículos</Option>
@@ -609,7 +609,7 @@ export default function ReportsPage() {
                     value={reportData.topSpendingVehicle.cost}
                     prefix={<CarOutlined style={{ color: '#722ed1' }} />}
                     valueStyle={{ color: '#722ed1', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value as number)}
+                    formatter={(value) => currencyBRL(value)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topSpendingVehicle!.name}
@@ -628,7 +628,7 @@ export default function ReportsPage() {
                     value={reportData.topCategory.cost}
                     prefix={<ToolOutlined style={{ color: '#eb2f96' }} />}
                     valueStyle={{ color: '#eb2f96', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value as number)}
+                    formatter={(value) => currencyBRL(value)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topCategory!.name}

@@ -15,16 +15,16 @@ export function createFormData<T extends Record<string, unknown>>(
 ): FormData {
   const formData = new FormData();
 
-  Object.keys(data).forEach((key) => {
+  for (const key of Object.keys(data)) {
     if (excludeKeys.includes(key)) {
-      return;
+      continue;
     }
 
     const value = data[key as keyof T];
     if (value !== undefined && value !== null) {
       formData.append(key, value.toString());
     }
-  });
+  }
 
   return formData;
 }

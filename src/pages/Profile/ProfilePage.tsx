@@ -296,7 +296,7 @@ export default function ProfilePage() {
     <DefaultFrame title="Meu Perfil">
       <div className={styles.profileContainer}>
         {/* Header do Perfil */}
-        <Card className={componentStyles.professionalCard} bordered={false} style={{ marginBottom: '24px' }}>
+        <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }}>
           <Row gutter={[24, 24]} align="middle">
             <Col xs={24} sm={8}>
               <div className={styles.profileAvatar}>
@@ -385,7 +385,6 @@ export default function ProfilePage() {
                 </Space>
               }
               className={componentStyles.professionalCard}
-              bordered={false}
               style={{ height: '100%' }}
               extra={
                 <Space>
@@ -496,7 +495,6 @@ export default function ProfilePage() {
                   </Space>
                 }
                 className={componentStyles.professionalCard}
-                bordered={false}
                 style={{ height: '100%' }}
               >
                 <Button 
@@ -523,7 +521,6 @@ export default function ProfilePage() {
                   </Space>
                 }
                 className={componentStyles.professionalCard}
-                bordered={false}
                 style={{ height: '100%' }}
               >
                 <div className={styles.authContent}>
@@ -565,7 +562,6 @@ export default function ProfilePage() {
                 </Space>
               }
               className={componentStyles.professionalCard}
-              bordered={false}
               style={{ height: '100%' }}
             >
               <Space direction="vertical" style={{ width: '100%' }}>
@@ -597,7 +593,6 @@ export default function ProfilePage() {
           <Col xs={24} sm={12} lg={6} style={{ display: 'flex', flexDirection: 'column' }}>
             <Card 
               className={styles.dangerCard}
-              bordered={false}
               style={{ height: '100%' }}
             >
               <div className={styles.dangerContent}>

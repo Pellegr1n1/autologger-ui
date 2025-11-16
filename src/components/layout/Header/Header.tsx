@@ -50,9 +50,6 @@ const HeaderPage: React.FC<HeaderPageProps> = ({ siderCollapsed = false }) => {
                     <FaUserAlt size={20} />
                 </Dropdown>
             </div>
-            <div style={{ position: 'relative', zIndex: 10 }}>
-                <img alt="Logo" width={60} />
-            </div>
         </Header>
     );
 }
