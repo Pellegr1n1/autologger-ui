@@ -4,16 +4,12 @@ import { ExclamationCircleOutlined } from "@ant-design/icons"
 import type { VehicleEvent, VehicleDocument } from "../types/vehicle.types"
 
 interface UseVehicleDetailsProps {
-  events: VehicleEvent[]
-  documents: VehicleDocument[]
   setEvents: React.Dispatch<React.SetStateAction<VehicleEvent[]>>
   setDocuments: React.Dispatch<React.SetStateAction<VehicleDocument[]>>
   vehicleId: string
 }
 
 export function useVehicleDetails({
-  events,
-  documents,
   setEvents,
   setDocuments,
   vehicleId

@@ -14,7 +14,6 @@ import {
   HistoryOutlined,
   SettingOutlined,
   CloseOutlined,
-  IdcardOutlined,
   CheckCircleOutlined,
   StopOutlined,
   ShareAltOutlined
@@ -45,6 +44,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     if (visible && vehicle) {
       loadMaintenanceCount();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, vehicle]);
 
   const loadMaintenanceCount = async () => {

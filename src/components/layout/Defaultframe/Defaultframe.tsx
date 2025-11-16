@@ -31,11 +31,6 @@ export default function DefaultFrame({
     setSiderCollapsed(collapsed);
   };
 
-  const handleMenuToggle = () => {
-    // Funcionalidade gerenciada pelo VehicleSider
-    // setSiderCollapsed(!siderCollapsed);
-  };
-
   // Efeito para gerenciar o estado de carregamento do conteúdo
   useEffect(() => {
     if (loading) {

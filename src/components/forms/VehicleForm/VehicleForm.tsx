@@ -9,7 +9,6 @@ import {
   Col,
   Typography,
   Space,
-  Alert,
   Spin,
   message,
   Button,
@@ -20,11 +19,9 @@ import {
 } from 'antd';
 import {
   CarOutlined,
-  ReloadOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
   CloseOutlined,
-  DatabaseOutlined,
   UploadOutlined,
   PictureOutlined,
   DeleteOutlined
@@ -237,7 +234,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       };
 
       if (isEditing) {
-        const { plate, ...editableFields } = formattedValues;
+        const { plate: _plate, ...editableFields } = formattedValues;
         formattedValues = editableFields;
       } else {
         formattedValues.plate = values.plate ? values.plate.toUpperCase().replace('-', '') : '';

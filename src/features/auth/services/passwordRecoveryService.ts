@@ -7,7 +7,6 @@
  */
 
 import { authService } from './apiAuth';
-import { apiBase } from '../../../shared/services/api';
 
 interface ForgotPasswordRequest {
   email: string;
@@ -42,7 +41,7 @@ export const passwordRecoveryService = {
   /**
    * Validar token de reset
    */
-  async validateResetToken(token: string): Promise<boolean> {
+  async validateResetToken(_token: string): Promise<boolean> {
     try {
       // A validação será feita quando o usuário tentar resetar
       // Por ora, retornamos true. O backend validará ao resetar

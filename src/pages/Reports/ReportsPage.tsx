@@ -85,12 +85,6 @@ export default function ReportsPage() {
   const [services, setServices] = useState<VehicleEvent[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
-  const [filterType, setFilterType] = useState<string>('all');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
-
-  useEffect(() => {
-    loadReportData();
-  }, [selectedVehicle, dateRange, filterType, filterCategory]);
 
   const loadReportData = useCallback(async () => {
     try {
@@ -110,7 +104,7 @@ export default function ReportsPage() {
       
       setServices(servicesData);
 
-      const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, filterType, filterCategory, activeVehicles);
+      const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, 'all', 'all', activeVehicles);
       
       const totalExpenses = filteredServices.reduce((sum, service) => {
         const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
@@ -219,7 +213,12 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedVehicle, dateRange, filterType, filterCategory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVehicle, dateRange]);
+
+  useEffect(() => {
+    loadReportData();
+  }, [loadReportData]);
 
   const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null, serviceType: string, category: string, vehiclesList?: Vehicle[]) => {
     let filtered = services;
@@ -264,7 +263,7 @@ export default function ReportsPage() {
 
   // Gráfico: Tendência mensal de gastos (adaptável ao filtro de período)
   const monthlyExpensesData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, filterType, filterCategory, vehicles);
+    const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const monthlyData: { [key: string]: { month: string; total: number } } = {};
     
     // Se há filtro de período, usar o período selecionado; senão, últimos 12 meses
@@ -357,13 +356,14 @@ export default function ReportsPage() {
     // Retornar dados ordenados cronologicamente
     const sortedKeys = Object.keys(monthlyData).sort();
     return sortedKeys.map(key => monthlyData[key]);
-  }, [services, selectedVehicle, dateRange, filterType, filterCategory, vehicles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Gráfico: Comparação de gastos por veículo (respeita filtro de veículo)
   const vehicleExpensesData = useMemo(() => {
     // Se há filtro de veículo específico, mostrar apenas ele; senão, todos
     const vehicleToShow = selectedVehicle !== 'all' ? selectedVehicle : 'all';
-    const filteredServices = filterServices(services, vehicleToShow, dateRange, filterType, filterCategory, vehicles);
+    const filteredServices = filterServices(services, vehicleToShow, dateRange, 'all', 'all', vehicles);
     const vehicleCosts: { [key: string]: number } = {};
 
     filteredServices.forEach(service => {
@@ -380,11 +380,12 @@ export default function ReportsPage() {
       }))
       .sort((a, b) => b.cost - a.cost)
       .slice(0, 10); // Top 10 veículos
-  }, [services, selectedVehicle, dateRange, filterType, filterCategory, vehicles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Gráfico: Distribuição por categoria
   const categoryDistributionData = useMemo(() => {
-    const filteredServices = filterServices(services, selectedVehicle, dateRange, filterType, filterCategory, vehicles);
+    const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const categoryCosts: { [key: string]: number } = {};
 
     filteredServices.forEach(service => {
@@ -402,7 +403,8 @@ export default function ReportsPage() {
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Top 8 categorias
-  }, [services, selectedVehicle, dateRange, filterType, filterCategory, vehicles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Verificar se há serviços para exibir
   const hasServices = services.length > 0;

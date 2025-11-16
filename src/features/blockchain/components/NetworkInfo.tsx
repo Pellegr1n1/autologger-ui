@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Space, Typography, Row, Col, Tag, Divider, Button } from 'antd';
 import { 
   GlobalOutlined,

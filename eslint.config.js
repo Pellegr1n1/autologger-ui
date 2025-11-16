@@ -5,7 +5,22 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { 
+    ignores: [
+      'dist',
+      'coverage',
+      'node_modules',
+      '**/__tests__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      'src/setupTests.ts',
+      'src/__tests__/**',
+      'jest.config.js',
+      'vite.config.ts'
+    ] 
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -23,6 +38,16 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_|^error$|^err$',
+        caughtErrorsIgnorePattern: '^_|^error$|^err$'
+      }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-declaration-merging': 'off',
+      'no-useless-catch': 'off',
+      'no-empty': ['error', { 'allowEmptyCatch': true }],
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 )

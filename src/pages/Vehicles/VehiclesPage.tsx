@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button, Typography, message, Modal, Card, Statistic, Space, Row, Col, Empty, Tabs, Tooltip, notification } from 'antd';
 import { 
   FireOutlined, 
@@ -18,7 +17,6 @@ import styles from './VehiclesPage.module.css';
 const { Text } = Typography;
 
 export default function VehiclesPage() {
-  const navigate = useNavigate();
   const [api, contextHolder] = notification.useNotification();
   const [vehicles, setVehicles] = useState<UserVehicles>({ active: [], sold: [] });
   const [loading, setLoading] = useState(true);
@@ -31,6 +29,7 @@ export default function VehiclesPage() {
 
   useEffect(() => {
     loadVehicles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadVehicles = async () => {

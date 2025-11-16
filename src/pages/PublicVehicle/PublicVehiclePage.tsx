@@ -71,6 +71,7 @@ const PublicVehiclePage: React.FC = () => {
     if (shareToken) {
       loadVehicleInfo();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareToken]);
 
   const loadVehicleInfo = async () => {

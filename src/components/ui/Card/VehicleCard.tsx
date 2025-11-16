@@ -41,7 +41,6 @@ export default function VehicleCard({
     if (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) {
       apiBaseUrl = process.env.VITE_API_BASE_URL;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       apiBaseUrl = (globalThis as any).import?.meta?.env?.VITE_API_BASE_URL as string | undefined || 'http://localhost:3001';
     }
     const fullUrl = `${apiBaseUrl}${url}`;

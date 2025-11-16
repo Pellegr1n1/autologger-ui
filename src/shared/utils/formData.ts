@@ -21,7 +21,7 @@ export function createFormData<T extends Record<string, unknown>>(
     }
 
     const value = data[key as keyof T];
-    if (value !== undefined) {
+    if (value !== undefined && value !== null) {
       formData.append(key, value.toString());
     }
   });

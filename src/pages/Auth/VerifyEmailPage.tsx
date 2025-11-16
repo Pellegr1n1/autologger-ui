@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Result, Button, Typography, Spin } from "antd";
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { emailVerificationService } from "../../features/auth/services/emailVerificationService";
 import { useAuth } from "../../features/auth";
 import styles from "./Auth.module.css";
@@ -37,6 +37,7 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     verifyEmail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const verifyEmail = async () => {

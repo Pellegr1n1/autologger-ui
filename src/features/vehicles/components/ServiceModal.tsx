@@ -319,7 +319,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       if (uploadedFiles.length > 0) {
         try {
           attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
-        } catch (uploadError) {
+        } catch (_uploadError) {
         }
       }
 
@@ -342,7 +342,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           await VehicleService.updateVehicle(serviceData.vehicleId, {
             mileage: serviceData.mileage
           });
-        } catch (mileageError) {
+        } catch (_mileageError) {
         }
       }
 
@@ -352,7 +352,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
           undefined,
           'user'
         );
-      } catch (blockchainError) {
+      } catch (_blockchainError) {
         (notificationApi || notification).warning({
           message: 'Processando na blockchain',
           description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',

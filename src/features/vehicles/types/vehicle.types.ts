@@ -75,7 +75,7 @@ export interface VehicleDocument {
   url?: string
 }
 
-export interface CreateVehicleData {
+export interface CreateVehicleData extends Record<string, unknown> {
   plate: string
   brand: string
   model: string
@@ -85,7 +85,7 @@ export interface CreateVehicleData {
   photo?: File
 }
 
-export interface UpdateVehicleData {
+export interface UpdateVehicleData extends Record<string, unknown> {
   brand?: string
   model?: string
   year?: number

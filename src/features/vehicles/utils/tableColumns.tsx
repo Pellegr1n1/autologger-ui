@@ -15,7 +15,7 @@ const { Text } = Typography
 
 export function createEventColumns(
   onEdit: (event: VehicleEvent) => void,
-  onDelete: (eventId: string) => void
+  _onDelete: (eventId: string) => void
 ): TableColumnsType<VehicleEvent> {
   return [
     {

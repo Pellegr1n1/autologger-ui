@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   };
 
-  const login = async (data: LoginData | User | any) => {
+  const login = async (data: LoginData | User | any): Promise<void> => {
     try {
       if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
         const user = data as User;
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.warn('Não foi possível buscar perfil completo, usando dados do Google:', err);
           });
         
-        return user;
+        return;
       }
 
       const response = await authService.login(data as LoginData);
@@ -64,9 +64,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
-        return fullUser;
-      } catch (profileError) {
-        return tempUser;
+      } catch (_profileError) {
+        // Mantém tempUser já setado
       }
     } catch (error) {
       throw error;
@@ -83,7 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
         return fullUser;
-      } catch (profileError) {
+      } catch (_profileError) {
         return tempUser;
       }
     } catch (error) {

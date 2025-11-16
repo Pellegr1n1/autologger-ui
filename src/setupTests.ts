@@ -1,9 +1,10 @@
+/// <reference types="@testing-library/jest-dom" />
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'util';
 
 // Polyfills para APIs do Node.js que não estão disponíveis no jsdom
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+global.TextDecoder = TextDecoder as any;
 
 // Mock para window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
