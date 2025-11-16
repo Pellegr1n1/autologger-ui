@@ -533,7 +533,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       // Copiar TSV para área de transferência (Google Sheets interpreta melhor)
       navigator.clipboard.writeText(tsvContent).then(() => {
         // Abrir Google Sheets em nova aba
-        window.open('https://sheets.google.com/create', '_blank');
+        window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
         
         // Mostrar notificação com instruções
         setTimeout(() => {
@@ -547,7 +547,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       }).catch(() => {
         // Fallback: tentar CSV melhorado
         navigator.clipboard.writeText(improvedCSV).then(() => {
-          window.open('https://sheets.google.com/create', '_blank');
+          window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
           api.info({
             message: 'Dados copiados (formato CSV)',
             description: 'Cole no Google Sheets. Se não formatar corretamente, use: Dados → Separar texto em colunas',
@@ -564,7 +564,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           link.click();
           URL.revokeObjectURL(url);
           
-          window.open('https://sheets.google.com/create', '_blank');
+          window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
           api.warning({
             message: 'Arquivo CSV baixado',
             description: 'Faça upload do arquivo CSV no Google Sheets: Arquivo → Importar → Upload',

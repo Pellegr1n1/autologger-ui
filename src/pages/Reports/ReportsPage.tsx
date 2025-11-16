@@ -609,7 +609,7 @@ export default function ReportsPage() {
                     value={reportData.topSpendingVehicle.cost}
                     prefix={<CarOutlined style={{ color: '#722ed1' }} />}
                     valueStyle={{ color: '#722ed1', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value)}
+                    formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topSpendingVehicle!.name}
@@ -628,7 +628,7 @@ export default function ReportsPage() {
                     value={reportData.topCategory.cost}
                     prefix={<ToolOutlined style={{ color: '#eb2f96' }} />}
                     valueStyle={{ color: '#eb2f96', fontWeight: 600 }}
-                    formatter={(value) => currencyBRL(value)}
+                    formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
                       <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
                         {reportData.topCategory!.name}

@@ -19,10 +19,29 @@ export function isValidPlate(plate: string): boolean {
  * Validates email format
  */
 export function isValidEmail(email: string): boolean {
-  if (!email) return false;
+  if (!email || typeof email !== 'string') return false;
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  const trimmed = email.trim();
+  
+  if (trimmed.length < 3 || trimmed.length > 254) return false;
+  
+  if (/\s/.test(trimmed)) return false;
+  
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) return false;
+  
+  const [localPart, domainPart] = parts;
+  
+  if (!localPart || localPart.length === 0 || localPart.length > 64) return false;
+  
+  if (!domainPart || domainPart.length === 0 || domainPart.length > 253) return false;
+  
+  if (!domainPart.includes('.')) return false;
+  
+  if (domainPart.includes('..') || domainPart.startsWith('.') || domainPart.endsWith('.')) return false;
+  
+  const safeEmailPattern = /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return safeEmailPattern.test(trimmed);
 }
 
 /**
