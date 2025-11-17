@@ -67,6 +67,15 @@ class AuthService {
         return response.data;
     }
 
+    async validateResetToken(token: string): Promise<boolean> {
+        try {
+            const response = await apiBase.api.get(`/auth/validate-reset-token/${token}`);
+            return response.data.valid;
+        } catch (error) {
+            return false;
+        }
+    }
+
     async resetPassword(data: { token: string; newPassword: string; confirmPassword: string }): Promise<{ message: string }> {
         const response = await apiBase.api.post('/auth/reset-password', data);
         return response.data;

@@ -3,6 +3,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 jest.mock('../../../../features/auth/services/apiAuth', () => ({
   authService: {
     forgotPassword: jest.fn(),
+    validateResetToken: jest.fn(),
     resetPassword: jest.fn(),
   },
 }));
@@ -36,9 +37,24 @@ describe('passwordRecoveryService', () => {
   });
 
   describe('validateResetToken', () => {
-    it('should return true', async () => {
+    it('should call authService.validateResetToken and return result', async () => {
+      const mockValidateResetToken = authService.validateResetToken as jest.Mock;
+      mockValidateResetToken.mockResolvedValue(true);
+
       const result = await passwordRecoveryService.validateResetToken('test-token');
+      
+      expect(mockValidateResetToken).toHaveBeenCalledWith('test-token');
       expect(result).toBe(true);
+    });
+
+    it('should return false when token is invalid', async () => {
+      const mockValidateResetToken = authService.validateResetToken as jest.Mock;
+      mockValidateResetToken.mockResolvedValue(false);
+
+      const result = await passwordRecoveryService.validateResetToken('invalid-token');
+      
+      expect(mockValidateResetToken).toHaveBeenCalledWith('invalid-token');
+      expect(result).toBe(false);
     });
   });
 
