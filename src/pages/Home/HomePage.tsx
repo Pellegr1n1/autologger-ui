@@ -10,8 +10,68 @@ import {
   BlockOutlined
 } from '@ant-design/icons';
 import { Footer } from '../../components/layout';
+import type { ReactNode } from 'react';
 
 const { Title, Text, Paragraph } = Typography;
+
+const ICON_STYLES = {
+  small: { fontSize: 28, color: '#8B5CF6' },
+  large: { fontSize: 32, color: '#8B5CF6', marginRight: 16 }
+};
+
+const TEXT_STYLES = {
+  white: { color: 'white' },
+  whiteTitle: { marginTop: 16, color: 'white' },
+  whiteTitleNoMargin: { margin: 0, color: 'white' },
+  checkIcon: { color: '#52C41A' }
+};
+
+interface SimpleFeatureCardProps {
+  icon: ReactNode;
+  title: string;
+  description: string;
+}
+
+function SimpleFeatureCard({ icon, title, description }: SimpleFeatureCardProps) {
+  return (
+    <Card className={styles.featureCard}>
+      {icon}
+      <Title level={4} style={TEXT_STYLES.whiteTitle}>{title}</Title>
+      <Text style={TEXT_STYLES.white}>{description}</Text>
+    </Card>
+  );
+}
+
+interface FeatureCardProps {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  items: string[];
+}
+
+function FeatureCard({ icon, title, description, items }: FeatureCardProps) {
+  return (
+    <Card className={styles.featureCard}>
+      <div className={styles.featureCardHeader}>
+        {icon}
+        <Title level={3} style={TEXT_STYLES.whiteTitleNoMargin}>{title}</Title>
+      </div>
+      <Paragraph style={TEXT_STYLES.white}>{description}</Paragraph>
+      <List
+        itemLayout="horizontal"
+        dataSource={items}
+        renderItem={item => (
+          <List.Item>
+            <List.Item.Meta
+              avatar={<CheckCircleOutlined style={TEXT_STYLES.checkIcon} />}
+              description={item}
+            />
+          </List.Item>
+        )}
+      />
+    </Card>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -44,25 +104,25 @@ export default function HomePage() {
 
             <Row gutter={[24, 24]}>
               <Col xs={24} sm={8}>
-                <Card className={styles.featureCard}>
-                  <BlockOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Blockchain Real</Title>
-                  <Text style={{ color: 'white' }}>Hyperledger Besu - Imutabilidade garantida</Text>
-                </Card>
+                <SimpleFeatureCard
+                  icon={<BlockOutlined style={ICON_STYLES.small} />}
+                  title="Blockchain Real"
+                  description="Hyperledger Besu - Imutabilidade garantida"
+                />
               </Col>
               <Col xs={24} sm={8}>
-                <Card className={styles.featureCard}>
-                  <EyeOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Verificação Pública</Title>
-                  <Text style={{ color: 'white' }}>Qualquer pessoa pode verificar autenticidade</Text>
-                </Card>
+                <SimpleFeatureCard
+                  icon={<EyeOutlined style={ICON_STYLES.small} />}
+                  title="Verificação Pública"
+                  description="Qualquer pessoa pode verificar autenticidade"
+                />
               </Col>
               <Col xs={24} sm={8}>
-                <Card className={styles.featureCard}>
-                  <BarChartOutlined style={{ fontSize: 28, color: '#8B5CF6' }} />
-                  <Title level={4} style={{ marginTop: 16, color: 'white' }}>Análises Inteligentes</Title>
-                  <Text style={{ color: 'white' }}>Relatórios e insights automáticos</Text>
-                </Card>
+                <SimpleFeatureCard
+                  icon={<BarChartOutlined style={ICON_STYLES.small} />}
+                  title="Análises Inteligentes"
+                  description="Relatórios e insights automáticos"
+                />
               </Col>
             </Row>
           </Col>
@@ -82,115 +142,55 @@ export default function HomePage() {
           </Title>
           <Row gutter={[48, 48]}>
             <Col xs={24} md={12}>
-              <Card className={styles.featureCard}>
-                <div className={styles.featureCardHeader}>
-                  <BlockOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Blockchain Privada Besu</Title>
-                </div>
-                <Paragraph style={{ color: 'white' }}>
-                  Cada evento de manutenção gera um hash SHA-256 registrado imutavelmente na blockchain Hyperledger Besu, garantindo integridade permanente e impossibilidade de alteração.
-                </Paragraph>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={[
-                    'Hash único e imutável por serviço',
-                    'Verificação contínua na blockchain',
-                    'Registros permanentes e transparentes'
-                  ]}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
-                        description={item}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
+              <FeatureCard
+                icon={<BlockOutlined style={ICON_STYLES.large} />}
+                title="Blockchain Privada Besu"
+                description="Cada evento de manutenção gera um hash SHA-256 registrado imutavelmente na blockchain Hyperledger Besu, garantindo integridade permanente e impossibilidade de alteração."
+                items={[
+                  'Hash único e imutável por serviço',
+                  'Verificação contínua na blockchain',
+                  'Registros permanentes e transparentes'
+                ]}
+              />
             </Col>
 
             <Col xs={24} md={12}>
-              <Card className={styles.featureCard}>
-                <div className={styles.featureCardHeader}>
-                  <BarChartOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Relatórios e Análises</Title>
-                </div>
-                <Paragraph style={{ color: 'white' }}>
-                  Dashboard completo com gráficos interativos, comparações mensais e identificação de padrões de gastos para tomada de decisão inteligente.
-                </Paragraph>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={[
-                    'Tendências de gastos e comparações',
-                    'Top veículos e categorias que mais gastam',
-                    'Gráficos interativos e exportação de dados'
-                  ]}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
-                        description={item}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
+              <FeatureCard
+                icon={<BarChartOutlined style={ICON_STYLES.large} />}
+                title="Relatórios e Análises"
+                description="Dashboard completo com gráficos interativos, comparações mensais e identificação de padrões de gastos para tomada de decisão inteligente."
+                items={[
+                  'Tendências de gastos e comparações',
+                  'Top veículos e categorias que mais gastam',
+                  'Gráficos interativos e exportação de dados'
+                ]}
+              />
             </Col>
 
             <Col xs={24} md={12}>
-              <Card className={styles.featureCard}>
-                <div className={styles.featureCardHeader}>
-                  <ShareAltOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Compartilhamento Público</Title>
-                </div>
-                <Paragraph style={{ color: 'white' }}>
-                  Gere links seguros e expiráveis para compartilhar histórico veicular. Compradores verificam autenticidade via blockchain sem necessidade de login.
-                </Paragraph>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={[
-                    'Links únicos com expiração configurável',
-                    'Página pública profissional e verificável',
-                    'Bloqueio automático quando veículo é vendido'
-                  ]}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
-                        description={item}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
+              <FeatureCard
+                icon={<ShareAltOutlined style={ICON_STYLES.large} />}
+                title="Compartilhamento Público"
+                description="Gere links seguros e expiráveis para compartilhar histórico veicular. Compradores verificam autenticidade via blockchain sem necessidade de login."
+                items={[
+                  'Links únicos com expiração configurável',
+                  'Página pública profissional e verificável',
+                  'Bloqueio automático quando veículo é vendido'
+                ]}
+              />
             </Col>
 
             <Col xs={24} md={12}>
-              <Card className={styles.featureCard}>
-                <div className={styles.featureCardHeader}>
-                  <ToolOutlined style={{ fontSize: 32, color: '#8B5CF6', marginRight: 16 }} />
-                  <Title level={3} style={{ margin: 0, color: 'white' }}>Gestão Completa de Histórico</Title>
-                </div>
-                <Paragraph style={{ color: 'white' }}>
-                  Registre manutenções, despesas, abastecimentos e reparos com upload de comprovantes. Categorização automática e controle completo de custos.
-                </Paragraph>
-                <List
-                  itemLayout="horizontal"
-                  dataSource={[
-                    'Manutenções, despesas e abastecimentos',
-                    'Upload de PDFs e imagens de comprovantes',
-                    'Categorização automática e controle de quilometragem'
-                  ]}
-                  renderItem={item => (
-                    <List.Item>
-                      <List.Item.Meta
-                        avatar={<CheckCircleOutlined style={{ color: '#52C41A' }} />}
-                        description={item}
-                      />
-                    </List.Item>
-                  )}
-                />
-              </Card>
+              <FeatureCard
+                icon={<ToolOutlined style={ICON_STYLES.large} />}
+                title="Gestão Completa de Histórico"
+                description="Registre manutenções, despesas, abastecimentos e reparos com upload de comprovantes. Categorização automática e controle completo de custos."
+                items={[
+                  'Manutenções, despesas e abastecimentos',
+                  'Upload de PDFs e imagens de comprovantes',
+                  'Categorização automática e controle de quilometragem'
+                ]}
+              />
             </Col>
           </Row>
         </div>

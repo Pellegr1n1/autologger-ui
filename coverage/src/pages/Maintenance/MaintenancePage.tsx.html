@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">37.87% </span>
+                <span class="strong">38.05% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>153/404</span>
+                <span class='fraction'>153/402</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.95% </span>
+                <span class="strong">39.05% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>141/362</span>
+                <span class='fraction'>141/361</span>
             </div>
         
             
@@ -1274,33 +1274,32 @@
 <a name='L1209'></a><a href='#L1209'>1209</a>
 <a name='L1210'></a><a href='#L1210'>1210</a>
 <a name='L1211'></a><a href='#L1211'>1211</a>
-<a name='L1212'></a><a href='#L1212'>1212</a>
-<a name='L1213'></a><a href='#L1213'>1213</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L1212'></a><a href='#L1212'>1212</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -1764,7 +1763,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2490,7 +2488,8 @@
 <span class="cline-any cline-yes">1x</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
-import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions, notification } from 'antd';
+import { Button, Typography, message, Card, Statistic, Space, Tooltip, Table, Tag, Row, Col, Select, DatePicker, Input, Empty, Modal, Descriptions, notification, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   BarChartOutlined,
   EyeOutlined,
@@ -2507,8 +2506,6 @@ import {
   ClearOutlined,
   TableOutlined
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Dropdown } from 'antd';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
@@ -2519,6 +2516,7 @@ import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './MaintenancePage.module.css';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
+import { logger } from '../../shared/utils/logger';
 &nbsp;
 const { Text } = Typography;
 const { Option } = Select;
@@ -2801,7 +2799,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           }
         }
       } catch (e) {
-<span class="cstat-no" title="statement not covered" >        console.warn('Erro ao verificar status da blockchain:', e);</span>
+<span class="cstat-no" title="statement not covered" >        logger.warn('Erro ao verificar status da blockchain', e);</span>
       } finally {
 <span class="cstat-no" title="statement not covered" >        if (attempts &gt;= maxAttempts) {</span>
 <span class="cstat-no" title="statement not covered" >          api.warning({</span>
@@ -2976,18 +2974,17 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         let current = <span class="cstat-no" title="statement not covered" >'';</span>
         let inQuotes = <span class="cstat-no" title="statement not covered" >false;</span>
         
-<span class="cstat-no" title="statement not covered" >        for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; line.length; i++) {</span>
-          const char = <span class="cstat-no" title="statement not covered" >line[i];</span>
+<span class="cstat-no" title="statement not covered" >        for (const char of line) {</span>
 <span class="cstat-no" title="statement not covered" >          if (char === '"') {</span>
 <span class="cstat-no" title="statement not covered" >            inQuotes = !inQuotes;</span>
           } else <span class="cstat-no" title="statement not covered" >if (char === ',' &amp;&amp; !inQuotes) {</span>
-<span class="cstat-no" title="statement not covered" >            result.push(current.trim().replace(/^"|"$/g, ''));</span>
+<span class="cstat-no" title="statement not covered" >            result.push(current.trim().replaceAll(/(^"|"$)/g, ''));</span>
 <span class="cstat-no" title="statement not covered" >            current = '';</span>
           } else {
 <span class="cstat-no" title="statement not covered" >            current += char;</span>
           }
         }
-<span class="cstat-no" title="statement not covered" >        result.push(current.trim().replace(/^"|"$/g, ''));</span>
+<span class="cstat-no" title="statement not covered" >        result.push(current.trim().replaceAll(/(^"|"$)/g, ''));</span>
 <span class="cstat-no" title="statement not covered" >        return result;</span>
       };
 &nbsp;
@@ -3013,7 +3010,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
 <span class="cstat-no" title="statement not covered" >          row.map(<span class="fstat-no" title="function not covered" >cell </span>=&gt; {</span>
             // Se contém vírgula, nova linha ou aspas, precisa de aspas
 <span class="cstat-no" title="statement not covered" >            if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {</span>
-<span class="cstat-no" title="statement not covered" >              return `"${cell.replace(/"/g, '""')}"`;</span>
+<span class="cstat-no" title="statement not covered" >              return `"${cell.replaceAll('"', '""')}"`;</span>
             }
 <span class="cstat-no" title="statement not covered" >            return cell;</span>
           }).join(',')
@@ -3023,7 +3020,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       // Copiar TSV para área de transferência (Google Sheets interpreta melhor)
 <span class="cstat-no" title="statement not covered" >      navigator.clipboard.writeText(tsvContent).then(<span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
         // Abrir Google Sheets em nova aba
-<span class="cstat-no" title="statement not covered" >        window.open('https://sheets.google.com/create', '_blank');</span>
+<span class="cstat-no" title="statement not covered" >        window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');</span>
         
         // Mostrar notificação com instruções
 <span class="cstat-no" title="statement not covered" >        setTimeout(<span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
@@ -3037,7 +3034,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       }).catch(<span class="fstat-no" title="function not covered" >() =</span>&gt; {
         // Fallback: tentar CSV melhorado
 <span class="cstat-no" title="statement not covered" >        navigator.clipboard.writeText(improvedCSV).then(<span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
-<span class="cstat-no" title="statement not covered" >          window.open('https://sheets.google.com/create', '_blank');</span>
+<span class="cstat-no" title="statement not covered" >          window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');</span>
 <span class="cstat-no" title="statement not covered" >          api.info({</span>
             message: 'Dados copiados (formato CSV)',
             description: 'Cole no Google Sheets. Se não formatar corretamente, use: Dados → Separar texto em colunas',
@@ -3054,7 +3051,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
 <span class="cstat-no" title="statement not covered" >          link.click();</span>
 <span class="cstat-no" title="statement not covered" >          URL.revokeObjectURL(url);</span>
           
-<span class="cstat-no" title="statement not covered" >          window.open('https://sheets.google.com/create', '_blank');</span>
+<span class="cstat-no" title="statement not covered" >          window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');</span>
 <span class="cstat-no" title="statement not covered" >          api.warning({</span>
             message: 'Arquivo CSV baixado',
             description: 'Faça upload do arquivo CSV no Google Sheets: Arquivo → Importar → Upload',
@@ -3065,7 +3062,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       });
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      message.error('Erro ao abrir no Google Sheets');</span>
-<span class="cstat-no" title="statement not covered" >      console.error(error);</span>
+<span class="cstat-no" title="statement not covered" >      logger.error('Erro ao abrir no Google Sheets', error);</span>
     }
   }, [generateCSVContent, api]);
 &nbsp;
@@ -3320,7 +3317,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               &lt;Card
                 title={`Serviços (${filteredMaintenance.length})`}
                 className={componentStyles.professionalCard}
-                bodyStyle={{ padding: '16px 24px' }}
+                styles={{ body: { padding: '16px 24px' } }}
                 extra={
                   &lt;Dropdown
                     menu={{
@@ -3416,7 +3413,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                               placeholder="Selecione o veículo"
                               showSearch
                               filterOption={<span class="fstat-no" title="function not covered" >(i</span>nput, option) =&gt;
-<span class="cstat-no" title="statement not covered" >                                (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())</span>
+<span class="cstat-no" title="statement not covered" >                                (String(option?.label ?? '')).toLowerCase().includes(input.toLowerCase())</span>
                               }
                             &gt;
                               &lt;Option value="all"&gt;Todos os veículos&lt;/Option&gt;
@@ -3706,7 +3703,7 @@ export default MaintenancePage;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-11T21:08:28.254Z
+                at 2025-11-17T23:20:33.738Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

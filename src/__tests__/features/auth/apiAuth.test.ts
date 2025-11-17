@@ -261,6 +261,39 @@ describe('AuthService', () => {
     });
   });
 
+  describe('validateResetToken', () => {
+    it('deve validar token de reset com sucesso', async () => {
+      (apiBase.api.get as jest.Mock).mockResolvedValue({
+        data: { valid: true }
+      });
+      
+      const result = await authService.validateResetToken('test-token');
+
+      expect(apiBase.api.get).toHaveBeenCalledWith('/auth/validate-reset-token/test-token');
+      expect(result).toBe(true);
+    });
+
+    it('deve retornar false quando token é inválido', async () => {
+      (apiBase.api.get as jest.Mock).mockResolvedValue({
+        data: { valid: false }
+      });
+      
+      const result = await authService.validateResetToken('invalid-token');
+
+      expect(apiBase.api.get).toHaveBeenCalledWith('/auth/validate-reset-token/invalid-token');
+      expect(result).toBe(false);
+    });
+
+    it('deve retornar false quando ocorre erro na requisição', async () => {
+      (apiBase.api.get as jest.Mock).mockRejectedValue(new Error('Token validation failed'));
+      
+      const result = await authService.validateResetToken('test-token');
+
+      expect(apiBase.api.get).toHaveBeenCalledWith('/auth/validate-reset-token/test-token');
+      expect(result).toBe(false);
+    });
+  });
+
   describe('resetPassword', () => {
     it('deve redefinir senha com sucesso', async () => {
       (apiBase.api.post as jest.Mock).mockResolvedValue({

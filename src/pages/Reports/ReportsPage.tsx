@@ -51,13 +51,46 @@ const { Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
+const MAX_TOP_SERVICES = 5;
+const MAX_TOP_VEHICLES = 10;
+const MAX_TOP_CATEGORIES = 8;
+const MONTHS_TO_DISPLAY = 12;
+const WEEKS_THRESHOLD = 3;
+const DAYS_IN_WEEK = 7;
+const CHART_HEIGHT = 350;
+const MIN_CHART_HEIGHT = 300;
+
+const CHART_COLORS = ['#8B5CF6', '#4facfe', '#f093fb', '#ff9a9e', '#a8edea', '#fadb14', '#52c41a', '#fa8c16'];
+
+const getServiceCost = (service: VehicleEvent): number => {
+  if (typeof service.cost === 'number') {
+    return service.cost;
+  }
+  const parsed = parseFloat(String(service.cost));
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
+const calculatePercentageChange = (current: number, previous: number): number => {
+  if (previous <= 0) {
+    return 0;
+  }
+  return ((current - previous) / previous) * 100;
+};
+
+const getVehicleName = (vehicle: Vehicle | undefined): string => {
+  if (!vehicle) {
+    return 'N/A';
+  }
+  return `${vehicle.brand} ${vehicle.model}`;
+};
+
 interface ReportData {
   totalVehicles: number;
   totalExpenses: number;
   totalServices: number;
   monthlyExpenses: number;
   previousMonthExpenses: number;
-  monthlyExpensesChange: number; // % de variação
+  monthlyExpensesChange: number;
   averageServiceCost: number;
   averageCostPerVehicle: number;
   topSpendingVehicle: { name: string; cost: number } | null;
@@ -86,6 +119,66 @@ export default function ReportsPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
 
+  const calculateVehicleCosts = useCallback((services: VehicleEvent[]): { [key: string]: number } => {
+    const costs: { [key: string]: number } = {};
+    services.forEach(service => {
+      const cost = getServiceCost(service);
+      costs[service.vehicleId] = (costs[service.vehicleId] || 0) + cost;
+    });
+    return costs;
+  }, []);
+
+  const calculateCategoryCosts = useCallback((services: VehicleEvent[]): { [key: string]: number } => {
+    const costs: { [key: string]: number } = {};
+    services.forEach(service => {
+      const cost = getServiceCost(service);
+      costs[service.category] = (costs[service.category] || 0) + cost;
+    });
+    return costs;
+  }, []);
+
+  const getTopVehicle = useCallback((vehicleCosts: { [key: string]: number }, vehicles: Vehicle[]) => {
+    const topEntry = Object.entries(vehicleCosts).reduce((max, [vehicleId, cost]) => {
+      if (cost > max.cost) {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        return { cost, name: getVehicleName(vehicle) };
+      }
+      return max;
+    }, { cost: 0, name: 'N/A' });
+    return topEntry.cost > 0 ? topEntry : null;
+  }, []);
+
+  const getTopCategory = useCallback((categoryCosts: { [key: string]: number }) => {
+    const topEntry = Object.entries(categoryCosts).reduce((max, [category, cost]) => {
+      return cost > max.cost ? { cost, name: category } : max;
+    }, { cost: 0, name: 'N/A' });
+    return topEntry.cost > 0 ? topEntry : null;
+  }, []);
+
+  const getMonthlyExpenses = useCallback((services: VehicleEvent[], month: number, year: number): number => {
+    const monthlyServices = services.filter(service => {
+      const serviceDate = new Date(service.date);
+      return serviceDate.getMonth() === month && serviceDate.getFullYear() === year;
+    });
+    return monthlyServices.reduce((sum, service) => sum + getServiceCost(service), 0);
+  }, []);
+
+  const getTopExpensiveServices = useCallback((services: VehicleEvent[], vehicles: Vehicle[]) => {
+    return services
+      .map(service => {
+        const vehicle = vehicles.find(v => v.id === service.vehicleId);
+        return {
+          id: service.id,
+          description: service.description,
+          cost: getServiceCost(service),
+          vehicleName: getVehicleName(vehicle),
+          date: service.date
+        };
+      })
+      .sort((a, b) => b.cost - a.cost)
+      .slice(0, MAX_TOP_SERVICES);
+  }, []);
+
   const loadReportData = useCallback(async () => {
     try {
       setLoading(true);
@@ -94,121 +187,60 @@ export default function ReportsPage() {
       const activeVehicles = vehiclesData.active || [];
       setVehicles(activeVehicles);
 
-      // Buscar sempre do banco (serviço local)
       let servicesData: VehicleEvent[] = [];
-        try {
-          servicesData = await VehicleServiceService.getAllServices();
+      try {
+        servicesData = await VehicleServiceService.getAllServices();
       } catch (error) {
-          servicesData = [];
+        console.error('Error loading services:', error);
+        servicesData = [];
       }       
       
       setServices(servicesData);
 
       const filteredServices = filterServices(servicesData, selectedVehicle, dateRange, 'all', 'all', activeVehicles);
       
-      const totalExpenses = filteredServices.reduce((sum, service) => {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        return sum + cost;
-      }, 0);
+      const totalExpenses = filteredServices.reduce((sum, service) => sum + getServiceCost(service), 0);
       
-      const averageCost = filteredServices.length > 0 ? totalExpenses / filteredServices.length : 0;
-      const averageCostPerVehicle = activeVehicles.length > 0 ? totalExpenses / activeVehicles.length : 0;
+      const serviceCount = filteredServices.length;
+      const vehicleCount = activeVehicles.length;
+      const averageCost = serviceCount > 0 ? totalExpenses / serviceCount : 0;
+      const averageCostPerVehicle = vehicleCount > 0 ? totalExpenses / vehicleCount : 0;
 
-      // Calcular gastos por veículo
-      const vehicleCosts: { [key: string]: number } = {};
-      filteredServices.forEach(service => {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        vehicleCosts[service.vehicleId] = (vehicleCosts[service.vehicleId] || 0) + cost;
-      });
+      const vehicleCosts = calculateVehicleCosts(filteredServices);
+      const categoryCosts = calculateCategoryCosts(filteredServices);
+      const topSpendingVehicle = getTopVehicle(vehicleCosts, activeVehicles);
+      const topCategory = getTopCategory(categoryCosts);
 
-      const topVehicleEntry = Object.entries(vehicleCosts).reduce((max, [vehicleId, cost]) => {
-        if (cost > max.cost) {
-          const vehicle = activeVehicles.find(v => v.id === vehicleId);
-          return { cost, name: vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A' };
-        }
-        return max;
-      }, { cost: 0, name: 'N/A' });
-
-      // Calcular categoria que mais gasta
-      const categoryCosts: { [key: string]: number } = {};
-      filteredServices.forEach(service => {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        categoryCosts[service.category] = (categoryCosts[service.category] || 0) + cost;
-      });
-
-      const topCategoryEntry = Object.entries(categoryCosts).reduce((max, [category, cost]) => {
-        return cost > max.cost ? { cost, name: category } : max;
-      }, { cost: 0, name: 'N/A' });
-
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
       
-      // Gastos do mês atual
-      const monthlyServices = filteredServices.filter(service => {
-        const serviceDate = new Date(service.date);
-        const serviceMonth = serviceDate.getMonth();
-        const serviceYear = serviceDate.getFullYear();
-        return serviceMonth === currentMonth && serviceYear === currentYear;
-      });
-      
-      const monthlyExpenses = monthlyServices.reduce((sum, service) => {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        return sum + cost;
-      }, 0);
+      const monthlyExpenses = getMonthlyExpenses(filteredServices, currentMonth, currentYear);
 
-      // Gastos do mês anterior
-      const previousMonthDate = new Date();
-      previousMonthDate.setMonth(currentMonth - 1);
+      const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
       const previousMonth = previousMonthDate.getMonth();
       const previousYear = previousMonthDate.getFullYear();
+      const previousMonthExpenses = getMonthlyExpenses(filteredServices, previousMonth, previousYear);
 
-      const previousMonthlyServices = filteredServices.filter(service => {
-        const serviceDate = new Date(service.date);
-        const serviceMonth = serviceDate.getMonth();
-        const serviceYear = serviceDate.getFullYear();
-        return serviceMonth === previousMonth && serviceYear === previousYear;
-      });
-      
-      const previousMonthExpenses = previousMonthlyServices.reduce((sum, service) => {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        return sum + cost;
-      }, 0);
-
-      // Calcular variação percentual
-      const monthlyExpensesChange = previousMonthExpenses > 0 
-        ? ((monthlyExpenses - previousMonthExpenses) / previousMonthExpenses) * 100 
-        : 0;
-
-      // Top 5 serviços mais caros
-      const topExpensiveServices = filteredServices
-        .map(service => {
-          const vehicle = activeVehicles.find(v => v.id === service.vehicleId);
-          return {
-            id: service.id,
-            description: service.description,
-            cost: typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0,
-            vehicleName: vehicle ? `${vehicle.brand} ${vehicle.model}` : 'N/A',
-            date: service.date
-          };
-        })
-        .sort((a, b) => b.cost - a.cost)
-        .slice(0, 5);
+      const monthlyExpensesChange = calculatePercentageChange(monthlyExpenses, previousMonthExpenses);
+      const topExpensiveServices = getTopExpensiveServices(filteredServices, activeVehicles);
 
       setReportData({
-        totalVehicles: activeVehicles.length,
+        totalVehicles: vehicleCount,
         totalExpenses,
-        totalServices: filteredServices.length,
+        totalServices: serviceCount,
         monthlyExpenses,
         previousMonthExpenses,
         monthlyExpensesChange,
         averageServiceCost: averageCost,
         averageCostPerVehicle,
-        topSpendingVehicle: topVehicleEntry.cost > 0 ? topVehicleEntry : null,
-        topCategory: topCategoryEntry.cost > 0 ? topCategoryEntry : null,
+        topSpendingVehicle,
+        topCategory,
         topExpensiveServices
       });
 
     } catch (error) {
+      console.error('Error loading report data:', error);
       message.error('Erro ao carregar dados do relatório');
     } finally {
       setLoading(false);
@@ -261,115 +293,109 @@ export default function ReportsPage() {
     return filtered;
   };
 
+  const processDayData = useCallback((services: VehicleEvent[], start: dayjs.Dayjs, monthlyData: { [key: string]: { month: string; total: number } }) => {
+    const dayKey = start.format('YYYY-MM-DD');
+    const dayLabel = start.format('DD/MM');
+    monthlyData[dayKey] = { month: dayLabel, total: 0 };
+
+    services.forEach(service => {
+      const serviceDate = dayjs(service.date);
+      const serviceDayKey = serviceDate.format('YYYY-MM-DD');
+      if (monthlyData[serviceDayKey]) {
+        monthlyData[serviceDayKey].total += getServiceCost(service);
+      }
+    });
+  }, []);
+
+  const processWeekData = useCallback((services: VehicleEvent[], start: dayjs.Dayjs, end: dayjs.Dayjs, monthlyData: { [key: string]: { month: string; total: number } }) => {
+    let current = start.startOf('week');
+    while (current.isBefore(end) || current.isSame(end, 'day')) {
+      const startOfYear = current.startOf('year');
+      const weekNumber = Math.floor(current.diff(startOfYear, 'day') / DAYS_IN_WEEK) + 1;
+      const weekKey = `${current.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
+      const weekLabel = `${current.format('DD/MM')}`;
+      monthlyData[weekKey] = { month: weekLabel, total: 0 };
+      current = current.add(1, 'week');
+    }
+
+    services.forEach(service => {
+      const serviceDate = dayjs(service.date);
+      const startOfYear = serviceDate.startOf('year');
+      const weekNumber = Math.floor(serviceDate.diff(startOfYear, 'day') / DAYS_IN_WEEK) + 1;
+      const weekKey = `${serviceDate.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
+      if (monthlyData[weekKey]) {
+        monthlyData[weekKey].total += getServiceCost(service);
+      }
+    });
+  }, []);
+
+  const processMonthData = useCallback((services: VehicleEvent[], start: dayjs.Dayjs, end: dayjs.Dayjs, monthlyData: { [key: string]: { month: string; total: number } }) => {
+    let current = start.startOf('month');
+    while (current.isBefore(end) || current.isSame(end, 'month')) {
+      const monthKey = current.format('YYYY-MM');
+      const monthName = current.format('MMM/YY');
+      monthlyData[monthKey] = { month: monthName, total: 0 };
+      current = current.add(1, 'month');
+    }
+
+    services.forEach(service => {
+      const serviceDate = dayjs(service.date);
+      const monthKey = serviceDate.format('YYYY-MM');
+      if (monthlyData[monthKey]) {
+        monthlyData[monthKey].total += getServiceCost(service);
+      }
+    });
+  }, []);
+
+  const processLastMonthsData = useCallback((services: VehicleEvent[], monthlyData: { [key: string]: { month: string; total: number } }) => {
+    for (let i = MONTHS_TO_DISPLAY - 1; i >= 0; i--) {
+      const date = dayjs().subtract(i, 'month');
+      const monthKey = date.format('YYYY-MM');
+      const monthName = date.format('MMM/YY');
+      monthlyData[monthKey] = { month: monthName, total: 0 };
+    }
+
+    services.forEach(service => {
+      const serviceDate = dayjs(service.date);
+      const monthKey = serviceDate.format('YYYY-MM');
+      if (monthlyData[monthKey]) {
+        monthlyData[monthKey].total += getServiceCost(service);
+      }
+    });
+  }, []);
+
   // Gráfico: Tendência mensal de gastos (adaptável ao filtro de período)
   const monthlyExpensesData = useMemo(() => {
     const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const monthlyData: { [key: string]: { month: string; total: number } } = {};
     
-    // Se há filtro de período, usar o período selecionado; senão, últimos 12 meses
     if (dateRange) {
       const start = dayjs(dateRange[0]);
       const end = dayjs(dateRange[1]);
       const daysDiff = end.diff(start, 'day') + 1;
       const monthsDiff = end.diff(start, 'month') + 1;
       
-      // Se for um único dia, mostrar por dia
       if (daysDiff === 1) {
-        const dayKey = start.format('YYYY-MM-DD');
-        const dayLabel = start.format('DD/MM');
-        monthlyData[dayKey] = { month: dayLabel, total: 0 };
-
-    filteredServices.forEach(service => {
-          const serviceDate = dayjs(service.date);
-          const serviceDayKey = serviceDate.format('YYYY-MM-DD');
-      
-          if (monthlyData[serviceDayKey]) {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-            monthlyData[serviceDayKey].total += cost;
-          }
-        });
-      }
-      // Se o período for menor que 3 meses e maior que 1 dia, agrupar por semana
-      else if (monthsDiff <= 3) {
-        let current = start.startOf('week');
-        while (current.isBefore(end) || current.isSame(end, 'day')) {
-          // Calcular número da semana: dias desde o início do ano / 7
-          const startOfYear = current.startOf('year');
-          const weekNumber = Math.floor(current.diff(startOfYear, 'day') / 7) + 1;
-          const weekKey = `${current.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
-          const weekLabel = `${current.format('DD/MM')}`;
-          monthlyData[weekKey] = { month: weekLabel, total: 0 };
-          current = current.add(1, 'week');
-        }
-
-    filteredServices.forEach(service => {
-          const serviceDate = dayjs(service.date);
-          const startOfYear = serviceDate.startOf('year');
-          const weekNumber = Math.floor(serviceDate.diff(startOfYear, 'day') / 7) + 1;
-          const weekKey = `${serviceDate.format('YYYY')}-W${weekNumber.toString().padStart(2, '0')}`;
-          
-          if (monthlyData[weekKey]) {
-            const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-            monthlyData[weekKey].total += cost;
-          }
-        });
+        processDayData(filteredServices, start, monthlyData);
+      } else if (monthsDiff <= WEEKS_THRESHOLD) {
+        processWeekData(filteredServices, start, end, monthlyData);
       } else {
-        // Agrupar por mês
-        let current = start.startOf('month');
-        while (current.isBefore(end) || current.isSame(end, 'month')) {
-          const monthKey = current.format('YYYY-MM');
-          const monthName = current.format('MMM/YY');
-          monthlyData[monthKey] = { month: monthName, total: 0 };
-          current = current.add(1, 'month');
-    }
-
-    filteredServices.forEach(service => {
-          const serviceDate = dayjs(service.date);
-          const monthKey = serviceDate.format('YYYY-MM');
-      
-      if (monthlyData[monthKey]) {
-        const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        monthlyData[monthKey].total += cost;
-          }
-        });
+        processMonthData(filteredServices, start, end, monthlyData);
       }
     } else {
-      // Sem filtro: mostrar últimos 12 meses
-      for (let i = 11; i >= 0; i--) {
-        const date = dayjs().subtract(i, 'month');
-        const monthKey = date.format('YYYY-MM');
-        const monthName = date.format('MMM/YY');
-        monthlyData[monthKey] = { month: monthName, total: 0 };
+      processLastMonthsData(filteredServices, monthlyData);
     }
 
-    filteredServices.forEach(service => {
-        const serviceDate = dayjs(service.date);
-        const monthKey = serviceDate.format('YYYY-MM');
-        
-        if (monthlyData[monthKey]) {
-          const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-        monthlyData[monthKey].total += cost;
-      }
-    });
-    }
-
-    // Retornar dados ordenados cronologicamente
-    const sortedKeys = Object.keys(monthlyData).sort();
+    const sortedKeys = Object.keys(monthlyData).sort((a, b) => a.localeCompare(b));
     return sortedKeys.map(key => monthlyData[key]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
   // Gráfico: Comparação de gastos por veículo (respeita filtro de veículo)
   const vehicleExpensesData = useMemo(() => {
-    // Se há filtro de veículo específico, mostrar apenas ele; senão, todos
     const vehicleToShow = selectedVehicle !== 'all' ? selectedVehicle : 'all';
     const filteredServices = filterServices(services, vehicleToShow, dateRange, 'all', 'all', vehicles);
-    const vehicleCosts: { [key: string]: number } = {};
-
-    filteredServices.forEach(service => {
-          const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-      vehicleCosts[service.vehicleId] = (vehicleCosts[service.vehicleId] || 0) + cost;
-    });
+    const vehicleCosts = calculateVehicleCosts(filteredServices);
 
     return vehicles
       .filter(v => vehicleCosts[v.id] && vehicleCosts[v.id] > 0)
@@ -379,30 +405,22 @@ export default function ReportsPage() {
         cost: vehicleCosts[vehicle.id] || 0
       }))
       .sort((a, b) => b.cost - a.cost)
-      .slice(0, 10); // Top 10 veículos
+      .slice(0, MAX_TOP_VEHICLES);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
-  // Gráfico: Distribuição por categoria
   const categoryDistributionData = useMemo(() => {
     const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
-    const categoryCosts: { [key: string]: number } = {};
-
-    filteredServices.forEach(service => {
-          const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
-      categoryCosts[service.category] = (categoryCosts[service.category] || 0) + cost;
-    });
-
-    const colors = ['#8B5CF6', '#4facfe', '#f093fb', '#ff9a9e', '#a8edea', '#fadb14', '#52c41a', '#fa8c16'];
+    const categoryCosts = calculateCategoryCosts(filteredServices);
     
     return Object.entries(categoryCosts)
       .map(([name, value], index) => ({
         name,
         value,
-        color: colors[index % colors.length]
+        color: CHART_COLORS[index % CHART_COLORS.length]
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 8); // Top 8 categorias
+      .slice(0, MAX_TOP_CATEGORIES);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
@@ -504,11 +522,14 @@ export default function ReportsPage() {
               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(139, 92, 246, 0.2)' }}>
                 <Space size="middle" wrap>
                   <Text type="secondary" style={{ fontSize: '12px' }}>Filtros ativos:</Text>
-                  {selectedVehicle !== 'all' && (
-                    <Tag color="purple" closable onClose={() => setSelectedVehicle('all')}>
-                      Veículo: {vehicles.find(v => v.id === selectedVehicle)?.brand} {vehicles.find(v => v.id === selectedVehicle)?.model}
-                    </Tag>
-                  )}
+                  {selectedVehicle !== 'all' && (() => {
+                    const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle);
+                    return selectedVehicleData ? (
+                      <Tag color="purple" closable onClose={() => setSelectedVehicle('all')}>
+                        Veículo: {selectedVehicleData.brand} {selectedVehicleData.model}
+                      </Tag>
+                    ) : null;
+                  })()}
                   {dateRange && (
                     <Tag 
                       color="purple" 
@@ -611,9 +632,11 @@ export default function ReportsPage() {
                     valueStyle={{ color: '#722ed1', fontWeight: 600 }}
                     formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
-                      <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
-                        {reportData.topSpendingVehicle!.name}
-                      </Text>
+                      reportData.topSpendingVehicle && (
+                        <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
+                          {reportData.topSpendingVehicle.name}
+                        </Text>
+                      )
                     }
                   />
                 </Card>
@@ -630,9 +653,11 @@ export default function ReportsPage() {
                     valueStyle={{ color: '#eb2f96', fontWeight: 600 }}
                     formatter={(value) => currencyBRL(typeof value === 'number' ? value : Number(value) || 0)}
                     suffix={
-                      <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
-                        {reportData.topCategory!.name}
-                      </Text>
+                      reportData.topCategory && (
+                        <Text type="secondary" style={{ fontSize: '14px', display: 'block', marginTop: '4px', wordBreak: 'break-word' }}>
+                          {reportData.topCategory.name}
+                        </Text>
+                      )
                     }
                   />
                 </Card>
@@ -712,7 +737,7 @@ export default function ReportsPage() {
               }
               className={componentStyles.professionalCard}
             >
-                <div className={styles.barChartContainer} style={{ height: '350px', minHeight: '300px' }}>
+                <div className={styles.barChartContainer} style={{ height: `${CHART_HEIGHT}px`, minHeight: `${MIN_CHART_HEIGHT}px` }}>
                   {vehicleExpensesData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                       <BarChart 
@@ -743,9 +768,9 @@ export default function ReportsPage() {
                             borderRadius: '8px',
                             color: '#ffffff'
                           }}
-                          formatter={(value: number, payload: any) => [
+                          formatter={(value: number, name: string, props: { payload?: { fullName?: string } }) => [
                             currencyBRL(value),
-                            payload[0]?.payload?.fullName || ''
+                            props?.payload?.fullName || ''
                           ]}
                           labelStyle={{ color: '#ffffff', fontWeight: 600 }}
                           itemStyle={{ color: '#ffffff' }}
@@ -787,7 +812,7 @@ export default function ReportsPage() {
               }
               className={componentStyles.professionalCard}
             >
-              <div style={{ height: '350px', overflowY: 'auto', paddingRight: '12px' }}>
+              <div style={{ height: `${CHART_HEIGHT}px`, overflowY: 'auto', paddingRight: '12px' }}>
                 {reportData.topExpensiveServices.length > 0 ? (
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     {reportData.topExpensiveServices.map((service, index) => (
@@ -853,7 +878,7 @@ export default function ReportsPage() {
           }
           className={componentStyles.professionalCard}
             >
-              <div className={styles.pieChartContainer} style={{ height: '350px', minHeight: '300px' }}>
+              <div className={styles.pieChartContainer} style={{ height: `${CHART_HEIGHT}px`, minHeight: `${MIN_CHART_HEIGHT}px` }}>
                 {categoryDistributionData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -862,7 +887,11 @@ export default function ReportsPage() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                        label={({ name, percent }: any) => `${name} ${((percent as number) * 100).toFixed(0)}%`}
+                        label={(props: { name?: string; percent?: number }) => {
+                          const name = props.name || '';
+                          const percent = props.percent || 0;
+                          return `${name} ${(percent * 100).toFixed(0)}%`;
+                        }}
                       outerRadius={100}
                       innerRadius={30}
                       fill="#8884d8"
