@@ -126,6 +126,35 @@
 
 .threeDContainer {
   overflow: hidden;
+  min-height: 860px;
+  max-height: 600px;
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 992px) {
+  .threeDContainer {
+    min-height: 350px;
+    max-height: 500px;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 768px) {
+  .threeDContainer {
+    min-height: 300px;
+    max-height: 400px;
+    margin-top: 24px;
+    aspect-ratio: 16 / 10;
+  }
+}
+
+@media (max-width: 480px) {
+  .threeDContainer {
+    min-height: 250px;
+    max-height: 300px;
+    aspect-ratio: 4 / 3;
+  }
 }
 
 .transformSection {
@@ -195,5 +224,14 @@
 
   .featureCard {
     margin-bottom: 24px;
+  }
+
+  .hero .ant-row {
+    flex-direction: column;
+  }
+
+  .hero .ant-col {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

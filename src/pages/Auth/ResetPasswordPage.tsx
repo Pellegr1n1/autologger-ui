@@ -4,9 +4,135 @@ import { LockOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from "@a
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { passwordRecoveryService } from "../../features/auth/services/passwordRecoveryService";
 import styles from "./Auth.module.css";
+import type { ReactNode } from "react";
 
 const { Title, Text } = Typography;
 const { Password } = Input;
+
+const ICON_STYLES = {
+  error: { fontSize: 64, color: "#ff4d4f", marginBottom: 24 },
+  success: { fontSize: 64, color: "#52c41a", marginBottom: 24 }
+};
+
+const CONTAINER_STYLES = {
+  centerPadding: { textAlign: "center" as const, padding: "40px 0" },
+  centerPaddingSmall: { textAlign: "center" as const, padding: "20px 0" },
+  centerPaddingSmallWithMargin: { textAlign: "center" as const, padding: "20px 0", marginBottom: 24 }
+};
+
+const PASSWORD_STRENGTH_COLORS = {
+  strong: "#52c41a",
+  medium: "#faad14",
+  weak: "#ff4d4f",
+  default: "#888"
+};
+
+const PASSWORD_STRENGTH_LABELS = {
+  strong: "Muito forte",
+  medium: "Médio",
+  weak: "Fraco"
+};
+
+const NOTIFICATION_CONFIG = {
+  placement: 'bottomRight' as const,
+  duration: 5
+};
+
+const PASSWORD_VALIDATION_RULES = [
+  { required: true, message: "Por favor, insira sua senha!" },
+  { min: 8, message: "" },
+  { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: "" }
+];
+
+const CONFIRM_PASSWORD_VALIDATION_RULES = [
+  { required: true, message: "Por favor, confirme sua senha!" },
+  { min: 8, message: "" },
+  { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: "" },
+  ({ getFieldValue }: any) => ({
+    validator(_: any, value: string) {
+      if (!value || getFieldValue("password") === value) {
+        return Promise.resolve();
+      }
+      return Promise.reject(new Error("As senhas não coincidem!"));
+    },
+  })
+];
+
+interface AuthLayoutProps {
+  children: ReactNode;
+}
+
+function AuthLayout({ children }: AuthLayoutProps) {
+  return (
+    <div className={styles.authContainer}>
+      <div className={styles.authContent}>
+        <Card className={styles.authCard}>
+          {children}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+interface PasswordStrengthIndicatorProps {
+  passwordStrength: {
+    score: number;
+    checks: {
+      length: boolean;
+      lowercase: boolean;
+      uppercase: boolean;
+      number: boolean;
+      special: boolean;
+    };
+  };
+  getPasswordStrengthColor: () => string;
+  getPasswordStrengthLabel: () => string;
+}
+
+function PasswordStrengthIndicator({ 
+  passwordStrength, 
+  getPasswordStrengthColor, 
+  getPasswordStrengthLabel 
+}: PasswordStrengthIndicatorProps) {
+  const strengthColor = getPasswordStrengthColor();
+  
+  return (
+    <div style={{ marginBottom: 20, height: '140px', minWidth: '350px' }}>
+      <Space direction="vertical" size="small" style={{ width: "100%" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>Força da senha:</Text>
+          <Text strong style={{ color: strengthColor, fontSize: 12 }}>
+            {getPasswordStrengthLabel()}
+          </Text>
+        </div>
+        <Progress
+          percent={(passwordStrength.score / 5) * 100}
+          strokeColor={passwordStrength.score > 0 ? strengthColor : PASSWORD_STRENGTH_COLORS.default}
+          trailColor="#444"
+          showInfo={false}
+          size="small"
+        />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: 11 }}>
+          <Text type={passwordStrength.checks.length ? "success" : "secondary"}>
+            ✓ Mínimo 8 caracteres
+          </Text>
+          <Text type={passwordStrength.checks.lowercase ? "success" : "secondary"}>
+            ✓ Letra minúscula
+          </Text>
+          <Text type={passwordStrength.checks.uppercase ? "success" : "secondary"}>
+            ✓ Letra maiúscula
+          </Text>
+          <Text type={passwordStrength.checks.number ? "success" : "secondary"}>
+            ✓ Número
+          </Text>
+          <Text type={passwordStrength.checks.special ? "success" : "secondary"} style={{ gridColumn: "1 / -1" }}>
+            ✓ Caractere especial
+          </Text>
+        </div>
+      </Space>
+    </div>
+  );
+}
 
 export default function ResetPasswordPage() {
   const [api, contextHolder] = notification.useNotification();
@@ -46,8 +172,7 @@ export default function ResetPasswordPage() {
       api.error({
         message: 'Token inválido',
         description: 'Token inválido ou expirado. Solicite um novo link de recuperação.',
-        placement: 'bottomRight',
-        duration: 5,
+        ...NOTIFICATION_CONFIG,
       });
       setTokenValid(false);
     } finally {
@@ -73,15 +198,15 @@ export default function ResetPasswordPage() {
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength.score === 5) return "#52c41a";
-    if (passwordStrength.score >= 3) return "#faad14";
-    return "#ff4d4f";
+    if (passwordStrength.score === 5) return PASSWORD_STRENGTH_COLORS.strong;
+    if (passwordStrength.score >= 3) return PASSWORD_STRENGTH_COLORS.medium;
+    return PASSWORD_STRENGTH_COLORS.weak;
   };
 
   const getPasswordStrengthLabel = () => {
-    if (passwordStrength.score === 5) return "Muito forte";
-    if (passwordStrength.score >= 3) return "Médio";
-    return "Fraco";
+    if (passwordStrength.score === 5) return PASSWORD_STRENGTH_LABELS.strong;
+    if (passwordStrength.score >= 3) return PASSWORD_STRENGTH_LABELS.medium;
+    return PASSWORD_STRENGTH_LABELS.weak;
   };
 
   const onFinish = async (values: any) => {
@@ -100,7 +225,6 @@ export default function ResetPasswordPage() {
 
       setSuccess(true);
       
-      // Redirecionar para login após 3 segundos
       setTimeout(() => {
         navigate("/login");
       }, 3000);
@@ -115,12 +239,10 @@ export default function ResetPasswordPage() {
         errorMessage = err.response.data.message;
       }
 
-      // Exibir notificação no canto inferior direito
       api.error({
         message: 'Erro ao resetar senha',
         description: errorMessage,
-        placement: 'bottomRight',
-        duration: 5,
+        ...NOTIFICATION_CONFIG,
       });
     } finally {
       setLoading(false);
@@ -131,15 +253,11 @@ export default function ResetPasswordPage() {
     return (
       <>
         {contextHolder}
-        <div className={styles.authContainer}>
-        <div className={styles.authContent}>
-          <Card className={styles.authCard}>
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <Text>Verificando token...</Text>
-            </div>
-          </Card>
-        </div>
-      </div>
+        <AuthLayout>
+          <div style={CONTAINER_STYLES.centerPadding}>
+            <Text>Verificando token...</Text>
+          </div>
+        </AuthLayout>
       </>
     );
   }
@@ -148,35 +266,31 @@ export default function ResetPasswordPage() {
     return (
       <>
         {contextHolder}
-        <div className={styles.authContainer}>
-        <div className={styles.authContent}>
-          <Card className={styles.authCard}>
-            <div className={styles.authHeader}>
-              <ExclamationCircleOutlined style={{ fontSize: 64, color: "#ff4d4f", marginBottom: 24 }} />
-              <Title level={2} className={styles.authTitle}>
-                Token inválido ou expirado
-              </Title>
-              <Text className={styles.authSubtitle}>
-                Este link de recuperação de senha não é válido ou expirou
-              </Text>
-            </div>
+        <AuthLayout>
+          <div className={styles.authHeader}>
+            <ExclamationCircleOutlined style={ICON_STYLES.error} />
+            <Title level={2} className={styles.authTitle}>
+              Token inválido ou expirado
+            </Title>
+            <Text className={styles.authSubtitle}>
+              Este link de recuperação de senha não é válido ou expirou
+            </Text>
+          </div>
 
-            <div style={{ textAlign: "center", padding: "20px 0", marginBottom: 24 }}>
-              <Text type="danger">Link inválido - Solicite um novo link de recuperação de senha</Text>
-            </div>
+          <div style={CONTAINER_STYLES.centerPaddingSmallWithMargin}>
+            <Text type="danger">Link inválido - Solicite um novo link de recuperação de senha</Text>
+          </div>
 
-            <Button type="primary" onClick={() => navigate("/forgot-password")} block size="large" className={styles.authButton}>
-              Solicitar novo link
-            </Button>
+          <Button type="primary" onClick={() => navigate("/forgot-password")} block size="large" className={styles.authButton}>
+            Solicitar novo link
+          </Button>
 
-            <div className={styles.authFooter}>
-              <Link to="/login" className={styles.authLink}>
-                Voltar ao login
-              </Link>
-            </div>
-          </Card>
-        </div>
-      </div>
+          <div className={styles.authFooter}>
+            <Link to="/login" className={styles.authLink}>
+              Voltar ao login
+            </Link>
+          </div>
+        </AuthLayout>
       </>
     );
   }
@@ -185,25 +299,21 @@ export default function ResetPasswordPage() {
     return (
       <>
         {contextHolder}
-        <div className={styles.authContainer}>
-        <div className={styles.authContent}>
-          <Card className={styles.authCard}>
-            <div className={styles.authHeader}>
-              <CheckCircleOutlined style={{ fontSize: 64, color: "#52c41a", marginBottom: 24 }} />
-              <Title level={2} className={styles.authTitle}>
-                Senha alterada com sucesso!
-              </Title>
-              <Text className={styles.authSubtitle}>
-                Redirecionando para o login...
-              </Text>
-            </div>
+        <AuthLayout>
+          <div className={styles.authHeader}>
+            <CheckCircleOutlined style={ICON_STYLES.success} />
+            <Title level={2} className={styles.authTitle}>
+              Senha alterada com sucesso!
+            </Title>
+            <Text className={styles.authSubtitle}>
+              Redirecionando para o login...
+            </Text>
+          </div>
 
-            <div style={{ textAlign: "center", padding: "20px 0" }}>
-              <Text type="success">Redirecionando para o login...</Text>
-            </div>
-          </Card>
-        </div>
-      </div>
+          <div style={CONTAINER_STYLES.centerPaddingSmall}>
+            <Text type="success">Redirecionando para o login...</Text>
+          </div>
+        </AuthLayout>
       </>
     );
   }
@@ -211,108 +321,59 @@ export default function ResetPasswordPage() {
   return (
     <>
       {contextHolder}
-      <div className={styles.authContainer}>
-      <div className={styles.authContent}>
-        <Card className={styles.authCard}>
-          <div className={styles.authHeader}>
-            <Title level={2} className={styles.authTitle}>
-              Criar nova senha
-            </Title>
-            <Text className={styles.authSubtitle}>
-              Defina uma senha forte e segura
-            </Text>
-          </div>
+      <AuthLayout>
+        <div className={styles.authHeader}>
+          <Title level={2} className={styles.authTitle}>
+            Criar nova senha
+          </Title>
+          <Text className={styles.authSubtitle}>
+            Defina uma senha forte e segura
+          </Text>
+        </div>
 
-          <Form name="reset-password" onFinish={onFinish} layout="vertical" size="large">
-            <Form.Item
-              name="password"
-              label="Nova Senha"
-              rules={[
-                { required: true, message: "Por favor, insira sua senha!" },
-                { min: 8, message: "" },
-                { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: "" },
-              ]}
-              hasFeedback
-            >
-              <Password
-                prefix={<LockOutlined />}
-                placeholder="Sua nova senha"
-                onChange={(e) => checkPasswordStrength(e.target.value)}
-              />
-            </Form.Item>
+        <Form name="reset-password" onFinish={onFinish} layout="vertical" size="large">
+          <Form.Item
+            name="password"
+            label="Nova Senha"
+            rules={PASSWORD_VALIDATION_RULES}
+            hasFeedback
+          >
+            <Password
+              prefix={<LockOutlined />}
+              placeholder="Sua nova senha"
+              onChange={(e) => checkPasswordStrength(e.target.value)}
+            />
+          </Form.Item>
 
-            <div style={{ marginBottom: 20, height: '140px', minWidth: '350px' }}>
-              <Space direction="vertical" size="small" style={{ width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Força da senha:</Text>
-                  <Text strong style={{ color: getPasswordStrengthColor(), fontSize: 12 }}>
-                    {getPasswordStrengthLabel()}
-                  </Text>
-                </div>
-                <Progress
-                  percent={(passwordStrength.score / 5) * 100}
-                  strokeColor={passwordStrength.score > 0 ? getPasswordStrengthColor() : '#888'}
-                  trailColor="#444"
-                  showInfo={false}
-                  size="small"
-                />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: 11 }}>
-                  <Text type={passwordStrength.checks.length ? "success" : "secondary"}>
-                    ✓ Mínimo 8 caracteres
-                  </Text>
-                  <Text type={passwordStrength.checks.lowercase ? "success" : "secondary"}>
-                    ✓ Letra minúscula
-                  </Text>
-                  <Text type={passwordStrength.checks.uppercase ? "success" : "secondary"}>
-                    ✓ Letra maiúscula
-                  </Text>
-                  <Text type={passwordStrength.checks.number ? "success" : "secondary"}>
-                    ✓ Número
-                  </Text>
-                  <Text type={passwordStrength.checks.special ? "success" : "secondary"} style={{ gridColumn: "1 / -1" }}>
-                    ✓ Caractere especial
-                  </Text>
-                </div>
-              </Space>
-            </div>
+          <PasswordStrengthIndicator
+            passwordStrength={passwordStrength}
+            getPasswordStrengthColor={getPasswordStrengthColor}
+            getPasswordStrengthLabel={getPasswordStrengthLabel}
+          />
 
-            <Form.Item
-              name="confirmPassword"
-              label="Confirmar Nova Senha"
-              dependencies={["password"]}
-              rules={[
-                { required: true, message: "Por favor, confirme sua senha!" },
-                { min: 8, message: "" },
-                { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: "" },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("password") === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error("As senhas não coincidem!"));
-                  },
-                }),
-              ]}
-              hasFeedback
-            >
-              <Password prefix={<LockOutlined />} placeholder="Confirme sua nova senha" />
-            </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Confirmar Nova Senha"
+            dependencies={["password"]}
+            rules={CONFIRM_PASSWORD_VALIDATION_RULES}
+            hasFeedback
+          >
+            <Password prefix={<LockOutlined />} placeholder="Confirme sua nova senha" />
+          </Form.Item>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block className={styles.authButton}>
-                Alterar senha
-              </Button>
-            </Form.Item>
-          </Form>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading} block className={styles.authButton}>
+              Alterar senha
+            </Button>
+          </Form.Item>
+        </Form>
 
-          <div className={styles.authFooter}>
-            <Link to="/login" className={styles.authLink}>
-              Voltar ao login
-            </Link>
-          </div>
-        </Card>
-      </div>
-    </div>
+        <div className={styles.authFooter}>
+          <Link to="/login" className={styles.authLink}>
+            Voltar ao login
+          </Link>
+        </div>
+      </AuthLayout>
     </>
   );
 }

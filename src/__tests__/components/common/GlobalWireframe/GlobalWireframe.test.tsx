@@ -27,10 +27,21 @@ jest.mock('three', () => {
     },
   };
   
+  const mockBufferGeometry = jest.fn().mockImplementation(() => ({
+    setAttribute: jest.fn(),
+  }));
+  
+  const mockLineBasicMaterial = jest.fn().mockImplementation(() => ({}));
+  
+  const mockLine = jest.fn().mockImplementation(() => ({}));
+  
   return {
     IcosahedronGeometry: jest.fn(() => mockGeometry),
     Group: jest.fn(),
+    BufferGeometry: mockBufferGeometry,
     BufferAttribute: jest.fn(),
+    LineBasicMaterial: mockLineBasicMaterial,
+    Line: mockLine,
     Float32Array: Float32Array,
     MOUSE: {
       ROTATE: 0,

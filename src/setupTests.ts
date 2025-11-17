@@ -2,11 +2,9 @@
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'node:util';
 
-// Polyfills para APIs do Node.js que não estão disponíveis no jsdom
 globalThis.TextEncoder = TextEncoder;
 globalThis.TextDecoder = TextDecoder as any;
 
-// Mock para window.matchMedia
 Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: jest.fn().mockImplementation(query => ({
@@ -21,27 +19,21 @@ Object.defineProperty(globalThis, 'matchMedia', {
   })),
 });
 
-// Polyfill para ResizeObserver
 globalThis.ResizeObserver = class ResizeObserver {
   observe(_target: Element) {
-    // Mock implementation - no action needed in tests
   }
   unobserve(_target: Element) {
-    // Mock implementation - no action needed in tests
   }
   disconnect() {
-    // Mock implementation - no action needed in tests
   }
 };
 
-// Mock para import.meta.env (Vite) usando process.env
 process.env.VITE_GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.VITE_API_BASE_URL = 'http://localhost:3001';
 process.env.MODE = 'test';
 process.env.PROD = 'false';
 process.env.DEV = 'true';
 
-// Mock globalThis.import.meta for Jest
 (globalThis as any).import = {
   meta: {
     env: {
@@ -54,13 +46,11 @@ process.env.DEV = 'true';
   },
 };
 
-// Suppress console errors and warnings in tests
 const originalError = console.error;
 const originalWarn = console.warn;
 
 beforeAll(() => {
   console.error = (...args: any[]) => {
-    // Convert all args to string for checking
     const errorMessages = args.map(arg => {
       if (typeof arg === 'string') return arg;
       if (arg instanceof Error) {
@@ -77,7 +67,6 @@ beforeAll(() => {
       return String(arg);
     }).join(' ');
     
-    // Suppress React 18 act warnings and Ant Design warnings
     if (
       errorMessages.includes('act(') ||
       errorMessages.includes('Warning: [antd:') ||
@@ -97,7 +86,6 @@ beforeAll(() => {
       return;
     }
     
-    // Suppress network errors during tests
     if (
       errorMessages.includes('Network error') ||
       errorMessages.includes('Network Error') ||
@@ -128,8 +116,7 @@ beforeAll(() => {
 
   console.warn = (...args: any[]) => {
     const warnMessages = args.map(String).join(' ');
-    
-    // Suppress Ant Design warnings and React warnings
+
     if (
       args[0]?.includes?.('Warning: [antd:') ||
       warnMessages.includes('Warning: `value` in Select options') ||
