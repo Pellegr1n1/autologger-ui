@@ -47,7 +47,7 @@ export class FipeService {
                 `${this.BASE_URL}/carros/marcas/${brandCode}/modelos/${modelCode}/anos`
             );
 
-            return response.data.sort((a, b) => parseInt(b.nome) - parseInt(a.nome));
+            return response.data.sort((a, b) => Number.parseInt(b.nome) - Number.parseInt(a.nome));
         } catch (error) {
             logger.error('Erro ao buscar anos FIPE', error);
             throw new Error('Não foi possível carregar os anos');
@@ -79,7 +79,7 @@ export class FipeService {
      */
     static extractYear(fipeYearName: string): number {
         const yearMatch = fipeYearName.match(/^(\d{4})/);
-        return yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+        return yearMatch ? Number.parseInt(yearMatch[1]) : new Date().getFullYear();
     }
 
     /**

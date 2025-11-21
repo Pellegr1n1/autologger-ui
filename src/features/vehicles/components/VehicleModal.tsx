@@ -22,6 +22,7 @@ import { Vehicle, VehicleStatus } from '../types/vehicle.types';
 import { VehicleServiceService } from '../services/vehicleServiceService';
 import { BlockchainService } from '../../blockchain/services/blockchainService';
 import VehicleShareModal from './VehicleShareModal';
+import { getColorHex } from '../../../shared/utils/colorUtils';
 
 const { Title, Text } = Typography;
 
@@ -47,32 +48,55 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, vehicle]);
 
+  const tryGetCountFromService = async (vehicleId: string): Promise<number | null> => {
+    try {
+      return await VehicleServiceService.getServicesCountByVehicle(vehicleId);
+    } catch (error) {
+      console.error('Erro ao carregar contagem de serviços:', error);
+      return null;
+    }
+  };
+
+  const tryGetCountFromBlockchain = async (vehicleId: string): Promise<number | null> => {
+    try {
+      const blockchainServices = await BlockchainService.getServicesByVehicle(vehicleId);
+      return blockchainServices.length;
+    } catch (blockchainError) {
+      console.error('Erro ao buscar serviços da blockchain:', blockchainError);
+      return null;
+    }
+  };
+
+  const tryGetCountFromServices = async (vehicleId: string): Promise<number | null> => {
+    try {
+      const services = await VehicleServiceService.getServicesByVehicle(vehicleId);
+      return services.length;
+    } catch (fallbackError) {
+      console.error('Erro no fallback final:', fallbackError);
+      return null;
+    }
+  };
+
   const loadMaintenanceCount = async () => {
     if (!vehicle) return;
     
     setLoadingCount(true);
     
     try {
-      // Primeiro, tenta usar o método específico que retorna apenas a contagem
-      const count = await VehicleServiceService.getServicesCountByVehicle(vehicle.id);
-      setMaintenanceCount(count);
-    } catch (error) {
-      console.error('Erro ao carregar contagem de serviços:', error);
-      try {
-        // Fallback: tenta buscar serviços por veículo da blockchain
-        const blockchainServices = await BlockchainService.getServicesByVehicle(vehicle.id);
-        setMaintenanceCount(blockchainServices.length);
-      } catch (blockchainError) {
-        console.error('Erro ao buscar serviços da blockchain:', blockchainError);
-        try {
-          // Fallback final: busca serviços por veículo do serviço normal
-          const services = await VehicleServiceService.getServicesByVehicle(vehicle.id);
-          setMaintenanceCount(services.length);
-        } catch (fallbackError) {
-          console.error('Erro no fallback final:', fallbackError);
-          setMaintenanceCount(0);
-        }
+      let count = await tryGetCountFromService(vehicle.id);
+      if (count !== null) {
+        setMaintenanceCount(count);
+        return;
       }
+
+      count = await tryGetCountFromBlockchain(vehicle.id);
+      if (count !== null) {
+        setMaintenanceCount(count);
+        return;
+      }
+
+      count = await tryGetCountFromServices(vehicle.id);
+      setMaintenanceCount(count ?? 0);
     } finally {
       setLoadingCount(false);
     }
@@ -93,7 +117,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
       const today = new Date();
       const targetDate = typeof date === 'string' ? new Date(date) : date;
 
-      if (isNaN(targetDate.getTime())) {
+      if (Number.isNaN(targetDate.getTime())) {
         return 0;
       }
 
@@ -108,7 +132,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     try {
       const targetDate = typeof date === 'string' ? new Date(date) : date;
 
-      if (isNaN(targetDate.getTime())) {
+      if (Number.isNaN(targetDate.getTime())) {
         return 'Data inválida';
       }
 
@@ -457,22 +481,7 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
                     width: '20px',
                     height: '20px',
                     borderRadius: '50%',
-                    backgroundColor:
-                      vehicle.color.toLowerCase() === 'branco' ? '#f0f0f0' :
-                        vehicle.color.toLowerCase() === 'preto' ? '#000000' :
-                          vehicle.color.toLowerCase() === 'prata' ? '#c0c0c0' :
-                            vehicle.color.toLowerCase() === 'cinza' ? '#808080' :
-                              vehicle.color.toLowerCase() === 'azul' ? '#1890ff' :
-                                vehicle.color.toLowerCase() === 'vermelho' ? '#f5222d' :
-                                  vehicle.color.toLowerCase() === 'verde' ? '#52c41a' :
-                                    vehicle.color.toLowerCase() === 'amarelo' ? '#fadb14' :
-                                      vehicle.color.toLowerCase() === 'marrom' ? '#8b4513' :
-                                        vehicle.color.toLowerCase() === 'bege' ? '#f5f5dc' :
-                                          vehicle.color.toLowerCase() === 'roxo' ? '#722ed1' :
-                                            vehicle.color.toLowerCase() === 'laranja' ? '#fa8c16' :
-                                              vehicle.color.toLowerCase() === 'rosa' ? '#eb2f96' :
-                                                vehicle.color.toLowerCase() === 'dourado' ? '#d4af37' :
-                                                  'var(--gray-4)',
+                    backgroundColor: getColorHex(vehicle.color),
                     border: '2px solid var(--gray-2)',
                     boxShadow: 'var(--shadow-sm)'
                   }}

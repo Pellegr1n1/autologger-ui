@@ -15,7 +15,7 @@ interface TooltipData {
   name: string;
   value: number;
   color?: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
 }
 
 interface CustomTooltipProps {
@@ -105,14 +105,12 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
     return { text: 'Na média', color: '#faad14', icon: '→' };
   };
 
-  // Para gráficos de tendência, usar apenas o valor do "Total" para evitar duplicação
   const totalValue = payload.find(item => item.name === 'Total')?.value || 
                     payload.filter(item => item.value > 0).reduce((sum, item) => sum + item.value, 0);
   const trendInfo = additionalInfo?.average ? getTrendIndicator(totalValue, additionalInfo.average) : null;
 
   return (
     <div className={styles.tooltipContainer}>
-      {/* Header */}
       <div className={styles.tooltipHeader}>
         <Space align="center" size="small">
           {customIcon || <CalendarOutlined style={{ color: '#8B5CF6', fontSize: '16px' }} />}
@@ -129,18 +127,18 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
 
       <Divider className={styles.tooltipDivider} />
 
-      {/* Data Items */}
       <Space direction="vertical" size="small" style={{ width: '100%' }}>
         {payload
-          .filter(item => item.value > 0) // Filtrar apenas itens com valor maior que zero
-          .map((item, index) => {
+          .filter(item => item.value > 0)
+          .map((item) => {
             const categoryName = getCategoryName(item.name);
             const percentage = showPercentage && additionalInfo?.total 
               ? calculatePercentage(item.value, additionalInfo.total) 
               : 0;
+            const uniqueKey = `${item.name || 'item'}-${item.value}-${item.color || ''}`;
             
             return (
-              <div key={index} className={styles.tooltipDataItem}>
+              <div key={uniqueKey} className={styles.tooltipDataItem}>
                 <div className={styles.tooltipDataLabel}>
                   {getIconForType(categoryName)}
                   <Text className={styles.tooltipDataText}>
@@ -160,7 +158,6 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
           })}
       </Space>
 
-      {/* Total Section */}
       {payload.filter(item => item.value > 0).length > 1 || totalValue === 0 ? (
         <>
           <Divider className={styles.tooltipDivider} style={{ margin: '12px 0 8px 0' }} />
@@ -176,10 +173,8 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
         </>
       ) : null}
 
-      {/* Additional Information */}
       {additionalInfo && (
         <>
-          {/* Só adiciona divider se não há seção de total */}
           {!(payload.filter(item => item.value > 0).length > 1 || totalValue === 0) && (
             <Divider className={styles.tooltipDivider} style={{ margin: '12px 0 8px 0' }} />
           )}
@@ -200,11 +195,20 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                 </Text>
               </div>
             )}
-            {trendInfo && (
+            {trendInfo && (() => {
+              let backgroundColor: string;
+              if (trendInfo.color === '#ff4d4f') {
+                backgroundColor = 'rgba(255, 77, 79, 0.1)';
+              } else if (trendInfo.color === '#52c41a') {
+                backgroundColor = 'rgba(82, 196, 26, 0.1)';
+              } else {
+                backgroundColor = 'rgba(250, 173, 20, 0.1)';
+              }
+              return (
               <div 
                 className={styles.tooltipTrendIndicator}
                 style={{ 
-                  background: `rgba(${trendInfo.color === '#ff4d4f' ? '255, 77, 79' : trendInfo.color === '#52c41a' ? '82, 196, 26' : '250, 173, 20'}, 0.1)`,
+                  background: backgroundColor,
                   border: `1px solid ${trendInfo.color}40`
                 }}
               >
@@ -216,7 +220,8 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                   </Text>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         </>
       )}

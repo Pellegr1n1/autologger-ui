@@ -69,7 +69,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   const [maintenanceEvents, setMaintenanceEvents] = useState<VehicleEvent[]>([]);
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   
-  // Estados dos filtros (padrão da página pública)
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
@@ -83,7 +82,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       return;
     }
     setPageState(prev => ({ ...prev, serviceModalOpen: true }));
-  }, [vehicles]);
+  }, [vehicles, api]);
 
   const getFileIcon = (fileUrl: string) => {
     const extension = fileUrl.split('.').pop()?.toLowerCase() || '';
@@ -109,8 +108,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   };
 
   const loadData = useCallback(async () => {
-    if (pageState.isLoadingData) return;
-    setPageState(prev => ({ ...prev, isLoadingData: true, loading: true }));
+    setPageState(prev => {
+      if (prev.isLoadingData) return prev;
+      return { ...prev, isLoadingData: true, loading: true };
+    });
 
     try {
       const [vehiclesResponse, maintenanceResponse] = await Promise.allSettled([
@@ -142,7 +143,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     } finally {
       setPageState(prev => ({ ...prev, loading: false, isLoadingData: false }));
     }
-  }, [pageState.isLoadingData]);
+  }, [api]);
 
   useEffect(() => {
     loadData();
@@ -150,6 +151,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       pollersRef.current.forEach(id => clearInterval(id));
       pollersRef.current = [];
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const memoizedVehicles = useMemo(() => {
@@ -160,58 +162,62 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     return maintenanceEvents;
   }, [maintenanceEvents]);
 
+  const matchesVehicleFilter = useCallback((event: VehicleEvent, selectedVehicle: string) => {
+    return selectedVehicle === 'all' || event.vehicleId === selectedVehicle;
+  }, []);
+
+  const matchesTypeFilter = useCallback((event: VehicleEvent, filterType: string) => {
+    return filterType === 'all' || event.type?.toLowerCase() === filterType.toLowerCase();
+  }, []);
+
+  const matchesCategoryFilter = useCallback((event: VehicleEvent, filterCategory: string) => {
+    return filterCategory === 'all' || event.category.toLowerCase() === filterCategory.toLowerCase();
+  }, []);
+
+  const matchesSearchTerm = useCallback((event: VehicleEvent, searchTerm: string) => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const eventWithExtras = event as VehicleEvent & { location?: string; technician?: string; notes?: string };
+    const matchesDescription = event.description?.toLowerCase().includes(searchLower);
+    const matchesLocation = eventWithExtras.location?.toLowerCase().includes(searchLower);
+    const matchesTechnician = eventWithExtras.technician?.toLowerCase().includes(searchLower);
+    const matchesNotes = eventWithExtras.notes?.toLowerCase().includes(searchLower);
+    const matchesCategory = event.category?.toLowerCase().includes(searchLower);
+    
+    return matchesDescription || matchesLocation || matchesTechnician || matchesNotes || matchesCategory;
+  }, []);
+
+  const matchesDateRange = useCallback((event: VehicleEvent, dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
+    if (!dateRange || !dateRange[0] || !dateRange[1]) return true;
+    
+    const eventWithExtras = event as VehicleEvent & { serviceDate?: string; date?: string; createdAt?: string };
+    const eventDateSource = eventWithExtras.serviceDate || eventWithExtras.date || eventWithExtras.createdAt;
+    if (!eventDateSource) return false;
+    
+    const eventDate = dayjs(eventDateSource);
+    return eventDate.isAfter(dateRange[0].subtract(1, 'day')) && eventDate.isBefore(dateRange[1].add(1, 'day'));
+  }, []);
+
   const filteredMaintenance = useMemo(() => {
     return memoizedMaintenanceEvents.filter(event => {
       if (!event?.vehicleId || !event?.description || !event?.category) {
         return false;
       }
       const vehicle = memoizedVehicles.find(v => v.id === event.vehicleId);
-      if (!vehicle || vehicle.status !== 'active') {
+      if (!vehicle || vehicle?.status !== 'active') {
         return false;
       }
       
-      // Filtro por veículo
-      if (pageState.selectedVehicle !== 'all' && event.vehicleId !== pageState.selectedVehicle) {
-        return false;
-      }
-      
-      // Filtro por tipo
-      if (filterType !== 'all' && event.type && event.type.toLowerCase() !== filterType.toLowerCase()) {
-        return false;
-      }
-
-      // Filtro por categoria
-      if (filterCategory !== 'all' && event.category.toLowerCase() !== filterCategory.toLowerCase()) {
-        return false;
-      }
-      
-      // Filtro por texto (busca em descrição, local, técnico, notas, categoria)
-      if (pageState.searchTerm) {
-        const searchLower = pageState.searchTerm.toLowerCase();
-        const matchesDescription = event.description?.toLowerCase().includes(searchLower);
-        const matchesLocation = (event as any).location?.toLowerCase().includes(searchLower);
-        const matchesTechnician = (event as any).technician?.toLowerCase().includes(searchLower);
-        const matchesNotes = (event as any).notes?.toLowerCase().includes(searchLower);
-        const matchesCategory = event.category?.toLowerCase().includes(searchLower);
-        
-        if (!matchesDescription && !matchesLocation && !matchesTechnician && !matchesNotes && !matchesCategory) {
-          return false;
-        }
-      }
-
-      // Filtro por período de datas
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        const eventDateSource = (event as any).serviceDate || (event as any).date || (event as any).createdAt;
-        if (!eventDateSource) return false;
-        const eventDate = dayjs(eventDateSource);
-        // incluir bordas (>= start && <= end)
-        const isInside = eventDate.isAfter(dateRange[0].subtract(1, 'day')) && eventDate.isBefore(dateRange[1].add(1, 'day'));
-        if (!isInside) return false;
-      }
+      if (!matchesVehicleFilter(event, pageState.selectedVehicle)) return false;
+      if (!matchesTypeFilter(event, filterType)) return false;
+      if (!matchesCategoryFilter(event, filterCategory)) return false;
+      if (!matchesSearchTerm(event, pageState.searchTerm)) return false;
+      if (!matchesDateRange(event, dateRange)) return false;
 
       return true;
     });
-  }, [memoizedMaintenanceEvents, memoizedVehicles, pageState.selectedVehicle, pageState.searchTerm, dateRange, filterType, filterCategory]);
+  }, [memoizedMaintenanceEvents, memoizedVehicles, pageState.selectedVehicle, pageState.searchTerm, dateRange, filterType, filterCategory, matchesVehicleFilter, matchesTypeFilter, matchesCategoryFilter, matchesSearchTerm, matchesDateRange]);
 
   const getVehicleName = useCallback((vehicleId: string) => {
     const vehicle = memoizedVehicles.find(v => v.id === vehicleId);
@@ -247,11 +253,45 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     setPageState(prev => ({ ...prev, serviceModalOpen: false }));
   }, []);
 
+  const checkBlockchainStatus = useCallback(async (serviceId: string, notifKey: string) => {
+    try {
+      // Buscar apenas o serviço específico em vez de todos os serviços
+      const updated = await VehicleServiceService.getServiceById(serviceId);
+      if (!updated) return { shouldContinue: true, consecutiveConfirmed: 0 };
+
+      setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? updated : ev));
+
+      const status = updated.blockchainStatus?.status;
+      const updatedWithExtras = updated as VehicleEvent & { confirmedAt?: string; hash?: string };
+      const hasDefinitiveProof = !!updatedWithExtras.confirmedAt || !!updatedWithExtras.hash;
+
+      if (status === 'CONFIRMED' && hasDefinitiveProof) {
+        return { shouldContinue: false, consecutiveConfirmed: 1, status: 'CONFIRMED' };
+      }
+
+      if (status === 'FAILED') {
+        api.error({
+          key: notifKey,
+          message: 'Falha na blockchain',
+          description: 'Não foi possível registrar. Você pode tentar reenviar.',
+          placement: 'bottomRight',
+          duration: 6
+        });
+        return { shouldContinue: false, consecutiveConfirmed: 0, status: 'FAILED' };
+      }
+
+      return { shouldContinue: true, consecutiveConfirmed: 0 };
+    } catch (e) {
+      logger.warn('Erro ao verificar status da blockchain', e);
+      return { shouldContinue: true, consecutiveConfirmed: 0 };
+    }
+  }, [api]);
+
   const handleServiceAdd = useCallback((newService: VehicleEvent) => {
     const pendingInjected = {
       ...newService,
       blockchainStatus: {
-        ...(newService as any).blockchainStatus,
+        ...(newService.blockchainStatus || {}),
         status: 'PENDING' as const
       }
     } as VehicleEvent;
@@ -265,70 +305,47 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       placement: 'bottomRight',
       duration: 0
     });
+    
     let attempts = 0;
     const maxAttempts = 12;
     let consecutiveConfirmed = 0;
+    
     const intervalId = setInterval(async () => {
       attempts += 1;
-      try {
-        const updatedList = await VehicleServiceService.getAllServices();
-        const updated = updatedList.find(s => s.id === newService.id);
-        if (updated) {
-          setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? updated : ev));
-
-          const status = updated.blockchainStatus?.status;
-          const hasDefinitiveProof = !!(updated as any).confirmedAt || !!(updated as any).hash;
-
-          if (status === 'CONFIRMED' && hasDefinitiveProof) {
-            consecutiveConfirmed += 1;
-            
-            // Mostrar notificação assim que confirmar 2 vezes consecutivas (máximo ~6 segundos)
-            if (consecutiveConfirmed >= 2) {
-              api.success({
-                key: notifKey,
-                message: 'Confirmado na blockchain',
-                description: 'O serviço foi registrado com sucesso.',
-                placement: 'bottomRight',
-                duration: 4
-              });
-              clearInterval(intervalId);
-              pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
-              return;
-            }
-          } else {
-            consecutiveConfirmed = 0;
-          }
-
-          if (status === 'FAILED') {
-            api.error({
+      const result = await checkBlockchainStatus(newService.id, notifKey);
+      
+      if (!result.shouldContinue) {
+        if (result.status === 'CONFIRMED') {
+          consecutiveConfirmed += 1;
+          if (consecutiveConfirmed >= 2) {
+            api.success({
               key: notifKey,
-              message: 'Falha na blockchain',
-              description: 'Não foi possível registrar. Você pode tentar reenviar.',
+              message: 'Confirmado na blockchain',
+              description: 'O serviço foi registrado com sucesso.',
               placement: 'bottomRight',
-              duration: 6
+              duration: 4
             });
-            clearInterval(intervalId);
-            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
           }
         }
-      } catch (e) {
-        logger.warn('Erro ao verificar status da blockchain', e);
-      } finally {
-        if (attempts >= maxAttempts) {
-          api.warning({
-            key: notifKey,
-            message: 'Ainda aguardando confirmação',
-            description: 'A confirmação pode demorar. Verifique mais tarde ou tente reenviar.',
-            placement: 'bottomRight',
-            duration: 6
-          });
-          clearInterval(intervalId);
-          pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
-        }
+        clearInterval(intervalId);
+        pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        api.warning({
+          key: notifKey,
+          message: 'Ainda aguardando confirmação',
+          description: 'A confirmação pode demorar. Verifique mais tarde ou tente reenviar.',
+          placement: 'bottomRight',
+          duration: 6
+        });
+        clearInterval(intervalId);
+        pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
       }
     }, 3000);
     pollersRef.current.push(intervalId as unknown as number);
-  }, [loadData]);
+  }, [checkBlockchainStatus, api]);
 
   const handleViewDetails = useCallback((record: MaintenanceEvent) => {
     setPageState(prev => ({
@@ -357,31 +374,28 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           duration: 6
         });
         await loadData();
-      } else {
-        
+      } else if (result.error?.includes('Timeout')) {
         // Mensagem simples e direta
-        if (result.error?.includes('Timeout')) {
-          api.warning({
-            message: 'Rede lenta',
-            description: 'A transação não confirmou em 20s. Tente novamente.',
-            placement: 'bottomRight',
-            duration: 10
-          });
-        } else if (result.error?.includes('já está')) {
-          api.info({
-            message: 'Já na blockchain',
-            description: 'Este registro já foi confirmado anteriormente.',
-            placement: 'bottomRight',
-            duration: 5
-          });
-        } else {
-          api.error({
-            message: 'Falha no reenvio',
-            description: result.error,
-            placement: 'bottomRight',
-            duration: 8
-          });
-        }
+        api.warning({
+          message: 'Rede lenta',
+          description: 'A transação não confirmou em 20s. Tente novamente.',
+          placement: 'bottomRight',
+          duration: 10
+        });
+      } else if (result.error?.includes('já está')) {
+        api.info({
+          message: 'Já na blockchain',
+          description: 'Este registro já foi confirmado anteriormente.',
+          placement: 'bottomRight',
+          duration: 5
+        });
+      } else {
+        api.error({
+          message: 'Falha no reenvio',
+          description: result.error,
+          placement: 'bottomRight',
+          duration: 8
+        });
       }
     } catch (error) {
       message.destroy();
@@ -389,21 +403,21 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       
       if (errorMessage.includes('timeout')) {
-        message.warning('⏱️ Tempo esgotado (30s). Verifique sua conexão.', 6);
+        message.warning('Tempo esgotado (30s). Verifique sua conexão.', 6);
       } else {
-        message.error(`❌ Erro: ${errorMessage}`, 6);
+        message.error(`Erro: ${errorMessage}`, 6);
       }
     } finally {
       setPageState(prev => ({ ...prev, loading: false }));
     }
-  }, [loadData]);
+  }, [loadData, api]);
 
   const generateCSVContent = useCallback(() => {
     const exportData = filteredMaintenance.map(service => {
       const vehicle = memoizedVehicles.find(v => v.id === service.vehicleId);
       const maintenanceEvent = service as MaintenanceEvent;
       const status = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
-      let statusText = 'Pendente';
+      let statusText: string;
       
       switch (status) {
         case 'CONFIRMED':
@@ -414,6 +428,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           break;
         case 'FAILED':
           statusText = 'Falhou';
+          break;
+        default:
+          statusText = 'Pendente';
           break;
       }
 
@@ -436,10 +453,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     }
 
     const headers = Object.keys(exportData[0] || {});
-    const csvContent = [
+      const csvContent = [
       headers.join(','),
       ...exportData.map(row => 
-        headers.map(header => `"${(row as any)[header] || ''}"`).join(',')
+        headers.map(header => `"${String((row as Record<string, unknown>)[header] || '')}"`).join(',')
       )
     ].join('\n');
 
@@ -463,7 +480,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
       URL.revokeObjectURL(url);
 
       message.success('Dados exportados com sucesso!');
@@ -481,7 +498,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         return;
       }
 
-      // Parse do CSV para converter em formato TSV (tab-separated) que Google Sheets interpreta melhor
       const parseCSVLine = (line: string): string[] => {
         const result: string[] = [];
         let current = '';
@@ -510,18 +526,15 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       const headers = parseCSVLine(lines[0]);
       const rows = lines.slice(1).map(line => parseCSVLine(line));
 
-      // Converter para TSV (Tab-Separated Values) que o Google Sheets interpreta melhor ao colar
       const tsvContent = [
         headers.join('\t'),
         ...rows.map(row => row.join('\t'))
       ].join('\n');
 
-      // Também criar uma versão CSV melhor formatada (sem aspas desnecessárias para valores simples)
       const improvedCSV = [
         headers.join(','),
         ...rows.map(row => 
           row.map(cell => {
-            // Se contém vírgula, nova linha ou aspas, precisa de aspas
             if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
               return `"${cell.replaceAll('"', '""')}"`;
             }
@@ -530,12 +543,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         )
       ].join('\n');
 
-      // Copiar TSV para área de transferência (Google Sheets interpreta melhor)
       navigator.clipboard.writeText(tsvContent).then(() => {
-        // Abrir Google Sheets em nova aba
         window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
         
-        // Mostrar notificação com instruções
         setTimeout(() => {
           api.success({
             message: 'Dados copiados com sucesso!',
@@ -545,7 +555,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           });
         }, 1500);
       }).catch(() => {
-        // Fallback: tentar CSV melhorado
         navigator.clipboard.writeText(improvedCSV).then(() => {
           window.open('https://sheets.google.com/create', '_blank', 'noopener,noreferrer');
           api.info({
@@ -555,7 +564,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             duration: 10
           });
         }).catch(() => {
-          // Último fallback: mostrar download
           const blob = new Blob([improvedCSV], { type: 'text/csv;charset=utf-8;' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -664,9 +672,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       render: (record: MaintenanceEvent) => {
         const status = record.blockchainStatus?.status || record.status || 'PENDING';
         
-        let color = 'orange';
-        let icon = <ReloadOutlined />;
-        let text = 'Pendente';
+        let color: string;
+        let icon: React.ReactNode;
+        let text: string;
 
         switch (status) {
           case 'CONFIRMED':
@@ -1121,9 +1129,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             <Descriptions.Item label="Status">
               {(() => {
                 const status = pageState.selectedMaintenance.blockchainStatus?.status || pageState.selectedMaintenance.status || 'PENDING';
-                let color = 'orange';
-                let icon = <ReloadOutlined />;
-                let text = 'Pendente';
+                let color: string;
+                let icon: React.ReactNode;
+                let text: string;
 
                 switch (status) {
                   case 'CONFIRMED':
@@ -1165,9 +1173,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             {pageState.selectedMaintenance.attachments && pageState.selectedMaintenance.attachments.length > 0 && (
               <Descriptions.Item label="Anexos">
                 <Space direction="vertical" style={{ width: '100%' }} size="small">
-                  {pageState.selectedMaintenance.attachments.map((fileUrl, index) => (
+                  {pageState.selectedMaintenance.attachments.map((fileUrl) => (
                     <a
-                      key={index}
+                      key={fileUrl}
                       href={getAbsoluteUrl(fileUrl)}
                       target="_blank"
                       rel="noopener noreferrer"

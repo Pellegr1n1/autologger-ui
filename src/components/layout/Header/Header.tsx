@@ -1,26 +1,7 @@
-import { Layout, Dropdown, MenuProps } from "antd";
-import { useNavigate } from "react-router-dom";
+import { Layout } from "antd";
 import styles from "./Header.module.css";
 
 const { Header } = Layout;
-
-const useUserMenu = (): MenuProps['items'] => {
-    const navigate = useNavigate();
-    
-    return [
-        {
-            key: '1',
-            label: (
-                <div className={styles.userProfile}>
-                    <span>Perfil</span>
-                </div>
-            ),
-            onClick: () => {
-                navigate('/profile');
-            },
-        },
-    ];
-};
 
 interface HeaderPageProps {
     siderCollapsed?: boolean;

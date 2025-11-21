@@ -635,6 +635,8 @@
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 350px !important;
 }
 
 .cardsRow .ant-card-head {
@@ -660,14 +662,6 @@
   margin-bottom: 20px;
 }
 
-/* Garantir que o corpo do card expanda */
-.cardsRow .ant-card-body {
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  min-height: 0 !important;
-}
-
 /* Content wrappers */
 .cardsRow .ant-card-body > .ant-btn:only-child,
 .cardsRow .ant-card-body > div:first-child {
@@ -677,12 +671,24 @@
   justify-content: center;
 }
 
-.cardsRow .dangerContent,
+.cardsRow .dangerContent {
+  flex-grow: 1;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 100% !important;
+  padding: 12px 0 !important;
+}
+
 .cardsRow .authContent {
   flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 100% !important;
+  padding: 12px 0 !important;
 }
 
 .cardsRow .ant-space {
@@ -692,26 +698,8 @@
   min-height: 100% !important;
 }
 
-/* Garantir altura uniforme EXATA para todos os cards */
-.cardsRow {
-  display: flex !important;
-  align-items: stretch !important;
-}
-
 .cardsRow > div {
   height: auto !important;
-}
-
-.cardsRow .ant-col {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.cardsRow .ant-card {
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 !important;
-  min-height: 350px !important;
 }
 
 /* Override padrão para colunas individuais */
@@ -724,23 +712,6 @@
   flex-shrink: 0 !important;
 }
 
-/* Conteúdo do card de exclusão - expandir para preencher altura */
-.cardsRow .dangerContent {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  min-height: 100% !important;
-}
-
-/* Conteúdo do auth - expandir para preencher altura */
-.cardsRow .authContent {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  min-height: 100% !important;
-}
 
 /* Botão de alterar senha - expandir */
 .cardsRow .ant-card-body > .ant-btn {
@@ -757,14 +728,6 @@
   flex-grow: 0;
 }
 
-/* Adicionar espaçamento mínimo no conteúdo dos cards */
-.cardsRow .dangerContent {
-  padding: 12px 0 !important;
-}
-
-.cardsRow .authContent {
-  padding: 12px 0 !important;
-}
 
 /* Alerta de alterações não salvas */
 .alertWrapper {

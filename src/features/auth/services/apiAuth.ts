@@ -1,12 +1,12 @@
 import { AxiosResponse } from 'axios';
 import { apiBase } from '../../../shared/services/api';
-import { AuthResponse, LoginData, RegisterData, UpdateProfileData, User } from "../../../shared/types/user.types";
+import { AuthResponse, AuthUser, LoginData, RegisterData, UpdateProfileData, User } from "../../../shared/types/user.types";
 import { logger } from '../../../shared/utils/logger';
 
 class AuthService {
     // Métodos de autenticação
     async register(data: RegisterData): Promise<AuthResponse> {
-        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/register', data);
+        const response: AxiosResponse<{ user: AuthUser }> = await apiBase.api.post('/auth/register', data);
         // Token é gerenciado automaticamente via cookie httpOnly
         // Retornamos apenas os dados do usuário
         return {
@@ -16,7 +16,7 @@ class AuthService {
     }
 
     async login(data: LoginData): Promise<AuthResponse> {
-        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/login', data);
+        const response: AxiosResponse<{ user: AuthUser }> = await apiBase.api.post('/auth/login', data);
         // Token é gerenciado automaticamente via cookie httpOnly
         // Retornamos apenas os dados do usuário
         return {
@@ -98,7 +98,7 @@ class AuthService {
     }
 
     async refreshToken(): Promise<AuthResponse> {
-        const response: AxiosResponse<{ user: any }> = await apiBase.api.post('/auth/refresh');
+        const response: AxiosResponse<{ user: AuthUser }> = await apiBase.api.post('/auth/refresh');
         // Token é gerenciado automaticamente via cookie httpOnly
         return {
             user: response.data.user,

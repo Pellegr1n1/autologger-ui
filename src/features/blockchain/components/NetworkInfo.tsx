@@ -143,10 +143,18 @@ export default function NetworkInfo() {
                 {networkInfo.name}
               </Text>
               <Tag 
-                color={networkInfo.networkType === 'private' ? 'purple' : networkInfo.networkType === 'testnet' ? 'blue' : 'green'}
+                color={(() => {
+                  if (networkInfo.networkType === 'private') return 'purple';
+                  if (networkInfo.networkType === 'testnet') return 'blue';
+                  return 'green';
+                })()}
                 style={{ marginLeft: '8px' }}
               >
-                {networkInfo.networkType === 'private' ? 'Private' : networkInfo.networkType === 'testnet' ? 'Testnet' : 'Mainnet'}
+                {(() => {
+                  if (networkInfo.networkType === 'private') return 'Private';
+                  if (networkInfo.networkType === 'testnet') return 'Testnet';
+                  return 'Mainnet';
+                })()}
               </Tag>
             </div>
             <Tag 

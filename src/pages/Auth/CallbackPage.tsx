@@ -48,13 +48,14 @@ export default function CallbackPage() {
           navigate('/vehicles');
         }
 
-      } catch (err: any) {
-        setError(err.message || 'Erro ao processar autenticação');
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Erro ao processar autenticação';
+        setError(errorMessage);
         
         if (window.opener) {
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_ERROR',
-            error: err.message || 'Erro ao processar autenticação'
+            error: errorMessage
           }, window.location.origin);
           window.close();
         } else {

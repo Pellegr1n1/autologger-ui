@@ -65,7 +65,10 @@ export default function DefaultFrame({
           className={styles.contentLayout}
           style={{
             marginTop: showHeader ? `${headerHeight}px` : '0',
-            marginLeft: showSider ? (siderCollapsed ? '80px' : '200px') : '0',
+            marginLeft: (() => {
+              if (!showSider) return '0';
+              return siderCollapsed ? '80px' : '200px';
+            })(),
             transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >

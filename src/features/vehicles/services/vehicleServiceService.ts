@@ -2,6 +2,34 @@ import { apiBase } from '../../../shared/services/api';
 import { VehicleEvent } from '../types/vehicle.types';
 import { mapServicesToFrontend } from '../utils/serviceMapper';
 
+// Tipo para a resposta da API de serviços
+interface BackendServiceResponse {
+  id: string;
+  vehicleId: string;
+  type: string;
+  category: string;
+  description: string;
+  serviceDate: string | Date;
+  mileage: number;
+  cost: number;
+  location: string;
+  attachments?: string[];
+  technician?: string;
+  warranty?: boolean;
+  nextServiceDate?: string | Date;
+  notes?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  status: string;
+  blockchainHash?: string;
+  previousHash?: string;
+  merkleRoot?: string;
+  isImmutable?: boolean;
+  canEdit?: boolean;
+  confirmedBy?: string;
+  blockchainConfirmedAt?: string | Date;
+}
+
 export interface CreateVehicleServiceData {
   vehicleId: string;
   type: string;
@@ -48,7 +76,7 @@ export class VehicleServiceService {
    * Buscar todos os serviços
    */
   static async getAllServices(): Promise<VehicleEvent[]> {
-    const response = await apiBase.api.get<any[]>(this.BASE_PATH);
+    const response = await apiBase.api.get<BackendServiceResponse[]>(this.BASE_PATH);
     return mapServicesToFrontend(response.data);
   }
 
@@ -56,7 +84,7 @@ export class VehicleServiceService {
    * Buscar serviços por veículo
    */
   static async getServicesByVehicle(vehicleId: string): Promise<VehicleEvent[]> {
-    const response = await apiBase.api.get<any[]>(`${this.BASE_PATH}/vehicle/${vehicleId}`);
+    const response = await apiBase.api.get<BackendServiceResponse[]>(`${this.BASE_PATH}/vehicle/${vehicleId}`);
     return mapServicesToFrontend(response.data);
   }
 

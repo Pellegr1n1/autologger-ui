@@ -21,10 +21,13 @@ Object.defineProperty(globalThis, 'matchMedia', {
 
 globalThis.ResizeObserver = class ResizeObserver {
   observe(_target: Element) {
+    // Mock implementation for testing - no-op
   }
   unobserve(_target: Element) {
+    // Mock implementation for testing - no-op
   }
   disconnect() {
+    // Mock implementation for testing - no-op
   }
 };
 

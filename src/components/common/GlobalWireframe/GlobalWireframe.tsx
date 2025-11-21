@@ -2,7 +2,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { useRef, useMemo } from 'react'
 import * as Three from 'three'
-import { BufferGeometry, BufferAttribute, Line, LineBasicMaterial } from 'three'
+import { BufferGeometry, BufferAttribute } from 'three'
 
 const CANVAS_STYLE = { height: '100%', width: '100%', background: 'transparent' as const }
 const LIGHT_CONFIG = {
@@ -44,19 +44,12 @@ const baseConnections = Array.from({ length: baseVertexCount }, (_, i) => ({
   end: (i + 2) % baseVertexCount
 }))
 
-// Criar material de linha uma única vez
-const lineMaterial = new LineBasicMaterial({ 
-  color: COLORS.primary, 
-  transparent: true, 
-  opacity: MATERIAL_CONFIG.line.opacity 
-})
-
 export default function GlobalWireframe() {
   return (
     <div style={CANVAS_STYLE}>
       <Canvas>
         <ambientLight intensity={LIGHT_CONFIG.ambient.intensity} />
-        <pointLight position={LIGHT_CONFIG.point.position} intensity={LIGHT_CONFIG.point.intensity} />
+        <pointLight position={LIGHT_CONFIG.point.position as [number, number, number]} intensity={LIGHT_CONFIG.point.intensity} />
         <RotatingBlockchainNetwork />
         <OrbitControls 
           enableZoom={false}
@@ -121,7 +114,7 @@ const RotatingBlockchainNetwork = () => {
       </mesh>
 
       {vertexPositions.map((position, i) => (
-        <mesh key={i} position={position}>
+        <mesh key={`vertex-${i}-${position[0]}-${position[1]}-${position[2]}`} position={position}>
           <sphereGeometry 
             args={[
               SPHERE_CONFIG.radius, 
@@ -137,13 +130,17 @@ const RotatingBlockchainNetwork = () => {
         </mesh>
       ))}
 
-      {lineGeometries.map((geometry, idx) => (
-        <primitive key={`conn-${idx}`} object={new Three.Line(geometry, new Three.LineBasicMaterial({ 
+      {lineGeometries.map((geometry, idx) => {
+        const lineObject = new Three.Line(geometry, new Three.LineBasicMaterial({ 
           color: COLORS.primary, 
           transparent: true, 
           opacity: MATERIAL_CONFIG.line.opacity 
-        }))} />
-      ))}
+        }))
+        const geometryKey = geometry.uuid || `line-${idx}`;
+        return (
+          <primitive key={`conn-${geometryKey}`} object={lineObject} />
+        )
+      })}
     </group>
   )
 }

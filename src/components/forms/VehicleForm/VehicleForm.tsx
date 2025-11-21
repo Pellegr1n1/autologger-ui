@@ -29,10 +29,35 @@ import {
 import { Vehicle, FipeBrand, FipeModel, FipeYear } from '../../../features/vehicles';
 import { FipeService } from '../../../features/vehicles/services/fipeService';
 import { formatNumberWithDots, parseFormattedNumber } from '../../../shared/utils/numberFormatters';
+import { getColorHex } from '../../../shared/utils/colorUtils';
+import { logger } from '../../../shared/utils/logger';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { Dragger } = Upload;
+
+interface FormSectionProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}
+
+const FormSection: React.FC<FormSectionProps> = ({ title, icon, children }) => (
+  <div style={{ marginBottom: 'var(--space-xxl)' }}>
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 'var(--space-sm)', 
+      marginBottom: 'var(--space-lg)' 
+    }}>
+      {icon}
+      <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
+        {title}
+      </Title>
+    </div>
+    {children}
+  </div>
+);
 
 interface VehicleFormValues {
   plate?: string;
@@ -133,8 +158,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         const brands = await FipeService.getBrandsWithCache();
         setFipeBrands(brands);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setFipeApiAvailable(false);
+      logger.warn('Dados FIPE indisponíveis', error);
       message.warning('Dados FIPE indisponíveis. Use entrada manual.');
     } finally {
       setLoadingBrands(false);
@@ -150,7 +176,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     try {
       const models = await FipeService.getModelsByBrand(brandCode);
       setFipeModels(models);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error('Erro ao carregar modelos', error);
       message.error('Erro ao carregar modelos. Tente novamente.');
     } finally {
       setLoadingModels(false);
@@ -165,7 +192,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     try {
       const years = await FipeService.getYearsByBrandAndModel(brandCode, modelCode);
       setFipeYears(years);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      logger.error('Erro ao carregar anos', error);
       message.error('Erro ao carregar anos. Tente novamente.');
     } finally {
       setLoadingYears(false);
@@ -287,26 +315,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     'Marrom', 'Bege', 'Roxo', 'Laranja', 'Rosa', 'Dourado'
   ];
 
+
   const fallbackYears = Array.from(
     { length: new Date().getFullYear() - 1980 + 1 },
     (_, i) => new Date().getFullYear() - i
-  );
-
-  const FormSection: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-    <div style={{ marginBottom: 'var(--space-xxl)' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 'var(--space-sm)', 
-        marginBottom: 'var(--space-lg)' 
-      }}>
-        {icon}
-        <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-          {title}
-        </Title>
-      </div>
-      {children}
-    </div>
   );
 
   return (
@@ -531,11 +543,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                         return option.children.toLowerCase().includes(input.toLowerCase());
                       }}
                       onChange={handleModelChange}
-                      notFoundContent={
-                        loadingModels ? <Spin size="small" /> :
-                          !selectedBrandCode ? "Selecione uma marca primeiro" :
-                            "Nenhum modelo encontrado"
-                      }
+                      notFoundContent={(() => {
+                        if (loadingModels) {
+                          return <Spin size="small" />;
+                        }
+                        if (!selectedBrandCode) {
+                          return "Selecione uma marca primeiro";
+                        }
+                        return "Nenhum modelo encontrado";
+                      })()}
                     >
                       {fipeModels.map(model => (
                         <Option key={model.codigo} value={model.nome}>
@@ -578,11 +594,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
                       onChange={handleYearChange}
-                      notFoundContent={
-                        loadingYears ? <Spin size="small" /> :
-                          !selectedModelCode ? "Selecione um modelo primeiro" :
-                            "Nenhum ano encontrado"
-                      }
+                      notFoundContent={(() => {
+                        if (loadingYears) {
+                          return <Spin size="small" />;
+                        }
+                        if (!selectedModelCode) {
+                          return "Selecione um modelo primeiro";
+                        }
+                        return "Nenhum ano encontrado";
+                      })()}
                     >
                       {fipeYears.map(year => (
                         <Option key={year.codigo} value={year.nome}>
@@ -628,21 +648,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                               width: 16,
                               height: 16,
                               borderRadius: '50%',
-                              backgroundColor:
-                                color === 'Branco' ? '#f0f0f0' :
-                                  color === 'Preto' ? '#000000' :
-                                    color === 'Prata' ? '#c0c0c0' :
-                                      color === 'Cinza' ? '#808080' :
-                                        color === 'Azul' ? '#1890ff' :
-                                          color === 'Vermelho' ? '#f5222d' :
-                                            color === 'Verde' ? '#52c41a' :
-                                              color === 'Amarelo' ? '#fadb14' :
-                                                color === 'Marrom' ? '#8b4513' :
-                                                  color === 'Bege' ? '#f5f5dc' :
-                                                    color === 'Roxo' ? '#722ed1' :
-                                                      color === 'Laranja' ? '#fa8c16' :
-                                                        color === 'Rosa' ? '#eb2f96' :
-                                                          color === 'Dourado' ? '#d4af37' : '#8c8c8c',
+                              backgroundColor: getColorHex(color),
                               border: '2px solid var(--gray-2)',
                               boxShadow: 'var(--shadow-sm)'
                             }}

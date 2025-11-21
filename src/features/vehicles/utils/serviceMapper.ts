@@ -3,7 +3,7 @@
  * Reduz duplicação de código ao mapear serviços do backend para frontend
  */
 
-import { VehicleEvent } from '../types/vehicle.types';
+import { VehicleEvent, VehicleEventType } from '../types/vehicle.types';
 import { parseDate } from '../../../shared/utils/date';
 
 /**
@@ -87,10 +87,15 @@ export function mapServiceToFrontend(service: {
     ? parseDate(service.blockchainConfirmedAt)
     : parseDate(service.updatedAt || service.createdAt);
 
+  // Mapear o tipo string para VehicleEventType
+  const eventType = Object.values(VehicleEventType).includes(service.type as VehicleEventType)
+    ? (service.type as VehicleEventType)
+    : VehicleEventType.OTHER;
+
   return {
     id: service.id,
     vehicleId: service.vehicleId,
-    type: service.type as any,
+    type: eventType,
     category: service.category,
     description: service.description,
     date: parseDate(service.serviceDate),
