@@ -47,8 +47,9 @@ export default function VehiclesPage() {
           const allVehicles = data as Vehicle[];
           normalizedData.active = allVehicles.filter(v => !v.soldAt);
           normalizedData.sold = allVehicles.filter(v => v.soldAt);
-        } else if ((data as any).vehicles && Array.isArray((data as any).vehicles)) {
-          const allVehicles = (data as any).vehicles as Vehicle[];
+        } else if (data && typeof data === 'object' && 'vehicles' in data && Array.isArray((data as { vehicles: unknown }).vehicles)) {
+          const vehiclesData = data as { vehicles: Vehicle[] };
+          const allVehicles = vehiclesData.vehicles;
           normalizedData.active = allVehicles.filter(v => !v.soldAt);
           normalizedData.sold = allVehicles.filter(v => v.soldAt);
         }
@@ -96,10 +97,11 @@ export default function VehiclesPage() {
       setSellModalVisible(false);
       setVehicleToSell(null);
       loadVehicles();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
       api.error({
         message: 'Falha ao marcar veículo como vendido',
-        description: error?.response?.data?.message || error?.message || 'Ocorreu um erro ao tentar marcar o veículo como vendido.',
+        description: apiError.response?.data?.message || apiError.message || 'Ocorreu um erro ao tentar marcar o veículo como vendido.',
         placement: 'bottomRight',
         duration: 4.5
       });
@@ -141,11 +143,17 @@ export default function VehiclesPage() {
       setFormVisible(false);
       setSelectedVehicle(null);
       loadVehicles();
-    } catch (error: any) {
-      const backendMessage = error?.response?.data?.message;
-      const description = Array.isArray(backendMessage)
-        ? backendMessage.join(', ')
-        : backendMessage || (selectedVehicle ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo');
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string | string[] } } };
+      const backendMessage = apiError.response?.data?.message;
+      let description: string;
+      if (Array.isArray(backendMessage)) {
+        description = backendMessage.join(', ');
+      } else if (backendMessage) {
+        description = backendMessage;
+      } else {
+        description = selectedVehicle ? 'Erro ao atualizar veículo' : 'Erro ao cadastrar veículo';
+      }
 
       api.error({
         message: selectedVehicle ? 'Falha ao atualizar veículo' : 'Falha ao cadastrar veículo',

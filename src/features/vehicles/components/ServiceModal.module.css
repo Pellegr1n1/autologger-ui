@@ -382,10 +382,6 @@
     padding: 0 16px 16px;
   }
   
-  .actionButtons {
-    margin: 16px -16px -16px;
-    padding: 16px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -492,6 +488,7 @@
 .formSection .ant-form-item-explain-error {
   display: flex;
   align-items: center;
+  color: #EF4444;
   gap: 4px;
 }
 

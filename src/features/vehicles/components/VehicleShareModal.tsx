@@ -60,6 +60,29 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
     }
   }, [visible, vehicle, onClose]);
 
+  const generateQRCode = async (shareUrl: string) => {
+    return await QRCode.toDataURL(shareUrl, {
+      width: 256,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF',
+      },
+    });
+  };
+
+  const handleShareLinkError = (error: unknown) => {
+    console.error('Erro ao gerar link de compartilhamento:', error);
+    const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+    const errorMessage = apiError.response?.data?.message || apiError.message || 'Erro ao gerar link de compartilhamento';
+    
+    if (errorMessage.includes('vendido') || errorMessage.includes('vendidos')) {
+      message.error('Não é possível gerar link de compartilhamento para veículos vendidos');
+    } else {
+      message.error(errorMessage);
+    }
+  };
+
   const generateShareLink = async () => {
     if (!vehicle) return;
 
@@ -68,25 +91,10 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
       const response = await VehicleShareService.generateShareLink(vehicle.id, 30, includeAttachments);
       setShareData(response);
       
-      const qrCodeUrl = await QRCode.toDataURL(response.shareUrl, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF',
-        },
-      });
+      const qrCodeUrl = await generateQRCode(response.shareUrl);
       setQrCodeDataUrl(qrCodeUrl);
-    } catch (error: any) {
-      console.error('Erro ao gerar link de compartilhamento:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao gerar link de compartilhamento';
-      
-      // Mensagem específica para veículo vendido
-      if (errorMessage.includes('vendido') || errorMessage.includes('vendidos')) {
-        message.error('Não é possível gerar link de compartilhamento para veículos vendidos');
-      } else {
-        message.error(errorMessage);
-      }
+    } catch (error: unknown) {
+      handleShareLinkError(error);
     } finally {
       setLoading(false);
     }
@@ -112,7 +120,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
     link.href = qrCodeDataUrl;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
   };
 
   const formatExpirationDate = (dateString: string) => {
@@ -228,14 +236,20 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
       </div>
 
       <div style={{ padding: 'var(--space-xxl)' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-xxl)' }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 'var(--space-lg)' }}>
-              <Text>Gerando link de compartilhamento...</Text>
-            </div>
-          </div>
-        ) : !shareData ? (
+        {(() => {
+          if (loading) {
+            return (
+              <div style={{ textAlign: 'center', padding: 'var(--space-xxl)' }}>
+                <Spin size="large" />
+                <div style={{ marginTop: 'var(--space-lg)' }}>
+                  <Text>Gerando link de compartilhamento...</Text>
+                </div>
+              </div>
+            );
+          }
+          
+          if (!shareData) {
+            return (
           <div>
             <Card
               style={{
@@ -284,8 +298,12 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
               </Space>
             </Card>
           </div>
-        ) : shareData ? (
-          <div>
+            );
+          }
+          
+          if (shareData) {
+            return (
+              <div>
             <Card
               style={{
                 marginBottom: 'var(--space-lg)',
@@ -368,7 +386,11 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
               )}
             </Card>
           </div>
-        ) : null}
+            );
+          }
+          
+          return null;
+        })()}
       </div>
     </Modal>
   );

@@ -61,7 +61,9 @@ export class VehicleShareService {
       params.append('includeAttachments', includeAttachments.toString());
     }
     const queryString = params.toString();
-    const url = `${this.BASE_PATH}/${vehicleId}/generate-share-link${queryString ? `?${queryString}` : ''}`;
+    const queryParam = queryString ? `?${queryString}` : '';
+    const shareLinkPath = '/generate-share-link';
+    const url = `${this.BASE_PATH}/${vehicleId}${shareLinkPath}${queryParam}`;
     const response = await apiBase.api.post<VehicleShareResponse>(url);
     return response.data;
   }

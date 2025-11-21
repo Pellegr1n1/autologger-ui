@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Button } from 'antd';
 import { GoogleOutlined } from '@ant-design/icons';
+import { logger } from '../shared/utils/logger';
 
 interface GoogleLoginButtonProps {
-  onSuccess?: (response: any) => void;
-  onError: (error: any) => void;
+  onSuccess?: (response: unknown) => void;
+  onError: (error: Error) => void;
   disabled?: boolean;
 }
 
@@ -43,7 +44,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       authUrl.searchParams.set('prompt', prompt);
       authUrl.searchParams.set('state', 'google_oauth2');
       
-      console.log('Opening OAuth2 popup with URL:', authUrl.toString());
+      logger.debug('Opening OAuth2 popup with URL:', authUrl.toString());
       
       // Abrir popup para OAuth2
       const popup = window.open(
@@ -74,8 +75,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       }, 300000);
       
     } catch (error) {
-      console.error('Error opening OAuth2 popup:', error);
-      onError(error);
+      logger.error('Error opening OAuth2 popup:', error);
+      onError(error instanceof Error ? error : new Error('Erro desconhecido ao abrir popup OAuth2'));
       setIsLoading(false);
     }
   };

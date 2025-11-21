@@ -38,8 +38,9 @@ export const useVehicles = (): UseVehiclesReturn => {
       setError(null);
       const data = await VehicleService.getUserVehicles();
       setVehicles(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao carregar veículos');
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao carregar veículos';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ export const useVehicles = (): UseVehiclesReturn => {
     try {
       const data = await VehicleService.getActiveVehiclesStats();
       setStats(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao carregar estatísticas:', err);
     }
   }, []);
@@ -67,8 +68,8 @@ export const useVehicles = (): UseVehiclesReturn => {
       await fetchStats();
       
       return newVehicle;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao criar veículo';
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao criar veículo';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -89,8 +90,8 @@ export const useVehicles = (): UseVehiclesReturn => {
       }));
       
       return updatedVehicle;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao atualizar veículo';
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao atualizar veículo';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -109,8 +110,8 @@ export const useVehicles = (): UseVehiclesReturn => {
       await fetchStats();
       
       return soldVehicle;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao marcar veículo como vendido';
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao marcar veículo como vendido';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -127,8 +128,8 @@ export const useVehicles = (): UseVehiclesReturn => {
       }));
       
       await fetchStats();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Erro ao deletar veículo';
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao deletar veículo';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -187,8 +188,9 @@ export const useVehicle = (vehicleId: string): UseVehicleReturn => {
       setError(null);
       const data = await VehicleService.getVehicleById(vehicleId);
       setVehicle(data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao carregar veículo');
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao carregar veículo';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

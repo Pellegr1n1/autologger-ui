@@ -37,7 +37,16 @@ import {
 import { EVENT_TYPES } from "../utils/constants";
 import { VehicleServiceService, CreateVehicleServiceData } from "../services/vehicleServiceService";
 import { VehicleService } from "../services/vehicleService";
-import { formatCurrency, parseCurrency } from "../../../shared/utils/numberFormatters";
+import type { UploadFile as AntdUploadFile } from 'antd/es/upload/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface CustomRequestOptions extends Record<string, any> {
+  file: File | Blob | string;
+  onSuccess?: (response?: unknown) => void;
+  onError?: (error: Error) => void;
+  onProgress?: (event: { percent: number }) => void;
+}
 
 const SERVICE_TYPE_CATEGORIES = {
   maintenance: [
@@ -91,7 +100,7 @@ interface ServiceModalProps {
   vehicles?: Vehicle[];
   loading?: boolean;
   currentMileage?: number;
-  notificationApi?: any;
+  notificationApi?: NotificationInstance;
 }
 
 const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
@@ -105,17 +114,18 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
-  const [fileList, setFileList] = useState<any[]>([]);
+  const [fileList, setFileList] = useState<AntdUploadFile[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [serviceData, setServiceData] = useState<CreateVehicleServiceData | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [updateVehicleMileage, setUpdateVehicleMileage] = useState(true);
-  const [availableCategories, setAvailableCategories] = useState<any[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<Array<{ value: string; label: string }>>([]);
 
   useEffect(() => {
     if (open) {
       form.resetFields();
+      form.setFieldsValue({ cost: undefined });
       setFileList([]);
       setUploadedFiles([]);
       setShowConfirmModal(false);
@@ -159,7 +169,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     }]);
   };
 
-  const validateDate = (_: any, value: any) => {
+  const validateDate = (_: unknown, value: { toDate: () => Date } | null | undefined) => {
     if (!value) {
       return Promise.reject(new Error('Selecione a data do serviço'));
     }
@@ -176,7 +186,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const validateMileage = (_: any, value: number) => {
+  const validateMileage = (_: unknown, value: number) => {
     if (!value && value !== 0) {
       return Promise.reject(new Error('Informe a quilometragem'));
     }
@@ -211,7 +221,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const validateCost = (_: any, value: number) => {
+  const validateCost = (_: unknown, value: number) => {
     if (value < 0) {
       return Promise.reject(new Error('Custo não pode ser negativo'));
     }
@@ -224,7 +234,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const validateDescription = (_: any, value: string) => {
+  const validateDescription = (_: unknown, value: string) => {
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Descreva o serviço realizado'));
     }
@@ -237,7 +247,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const validateLocation = (_: any, value: string) => {
+  const validateLocation = (_: unknown, value: string) => {
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Informe o local'));
     }
@@ -250,7 +260,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const validateCategory = (_: any, value: string) => {
+  const validateCategory = (_: unknown, value: string) => {
     if (!value || value.trim().length === 0) {
       return Promise.reject(new Error('Selecione uma categoria'));
     }
@@ -266,12 +276,13 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return Promise.resolve();
   };
 
-  const handleCustomRequest = async ({ file, onSuccess, onError }: any) => {
+  const handleCustomRequest = async (options: CustomRequestOptions) => {
     try {
-      setUploadedFiles(prev => [...prev, file as File]);
-      onSuccess("ok");
+      const file = options.file as File;
+      setUploadedFiles(prev => [...prev, file]);
+      options.onSuccess?.("ok");
     } catch (error) {
-      onError(error);
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };
 
@@ -310,6 +321,82 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
     return typeOption ? typeOption.label : typeValue;
   };
 
+  const handleUploadAttachments = async (): Promise<string[]> => {
+    if (uploadedFiles.length === 0) return [];
+    
+    try {
+      return await VehicleServiceService.uploadAttachments(uploadedFiles);
+    } catch (uploadError) {
+      logger.warn('Falha ao fazer upload de anexos, continuando sem anexos', uploadError);
+      return [];
+    }
+  };
+
+  const handleUpdateVehicleMileage = async (vehicleId: string, mileage: number) => {
+    if (!updateVehicleMileage) return;
+    
+    try {
+      await VehicleService.updateVehicle(vehicleId, { mileage });
+    } catch (mileageError) {
+      logger.warn('Falha ao atualizar quilometragem do veículo', mileageError);
+    }
+  };
+
+  const handleUpdateBlockchainStatus = async (serviceId: string) => {
+    try {
+      await VehicleServiceService.updateBlockchainStatus(serviceId, undefined, 'user');
+    } catch (blockchainError) {
+      logger.warn('Falha ao enviar para blockchain, pode tentar novamente', blockchainError);
+      (notificationApi || notification).warning({
+        message: 'Processando na blockchain',
+        description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',
+        placement: 'bottomRight',
+        duration: 5
+      });
+    }
+  };
+
+  const handleErrorNotification = (error: unknown) => {
+    const notify = notificationApi || notification;
+    
+    const apiError = error as { code?: string; response?: { status?: number; data?: { message?: string } }; message?: string };
+    if (apiError.code === 'ECONNABORTED') {
+      notify.error({
+        message: 'Erro ao salvar serviço',
+        description: 'Timeout na requisição. Verifique a lista de serviços.',
+        placement: 'bottomRight'
+      });
+      return;
+    }
+    
+    const status = apiError.response?.status;
+    if (status === 400) {
+      notify.error({
+        message: 'Erro ao salvar serviço',
+        description: apiError.response?.data?.message || 'Dados inválidos.',
+        placement: 'bottomRight'
+      });
+    } else if (status === 401) {
+      notify.error({
+        message: 'Erro ao salvar serviço',
+        description: 'Sessão expirada. Faça login novamente.',
+        placement: 'bottomRight'
+      });
+    } else if (status && status >= 500) {
+      notify.error({
+        message: 'Erro ao salvar serviço',
+        description: 'Erro do servidor. Tente novamente.',
+        placement: 'bottomRight'
+      });
+    } else {
+      notify.error({
+        message: 'Erro ao salvar serviço',
+        description: apiError.message || 'Tente novamente.',
+        placement: 'bottomRight'
+      });
+    }
+  };
+
   const handleConfirmBlockchain = async () => {
     if (!serviceData) return;
 
@@ -317,16 +404,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
       setSubmitting(true);
       setShowConfirmModal(false);
 
-      let attachmentUrls: string[] = [];
-      if (uploadedFiles.length > 0) {
-        try {
-          attachmentUrls = await VehicleServiceService.uploadAttachments(uploadedFiles);
-        } catch (uploadError) {
-          // Continue sem anexos se o upload falhar
-          logger.warn('Falha ao fazer upload de anexos, continuando sem anexos', uploadError);
-        }
-      }
-
+      const attachmentUrls = await handleUploadAttachments();
       const serviceDataWithAttachments = {
         ...serviceData,
         ...(attachmentUrls.length > 0 && { attachments: attachmentUrls }),
@@ -341,68 +419,16 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
         duration: 4
       });
 
-      if (updateVehicleMileage && serviceData.vehicleId) {
-        try {
-          await VehicleService.updateVehicle(serviceData.vehicleId, {
-            mileage: serviceData.mileage
-          });
-        } catch (mileageError) {
-          // Não crítico - serviço foi criado, apenas km não foi atualizado
-          logger.warn('Falha ao atualizar quilometragem do veículo', mileageError);
-        }
+      if (serviceData.vehicleId) {
+        await handleUpdateVehicleMileage(serviceData.vehicleId, serviceData.mileage);
       }
 
-      try {
-        await VehicleServiceService.updateBlockchainStatus(
-          savedService.id,
-          undefined,
-          'user'
-        );
-      } catch (blockchainError) {
-        logger.warn('Falha ao enviar para blockchain, pode tentar novamente', blockchainError);
-        (notificationApi || notification).warning({
-          message: 'Processando na blockchain',
-          description: 'A confirmação pode levar alguns segundos. Se falhar, você poderá reenviar.',
-          placement: 'bottomRight',
-          duration: 5
-        });
-      }
+      await handleUpdateBlockchainStatus(savedService.id);
 
       onAdd(savedService);
       onClose();
-
-    } catch (error: any) {
-      if (error.code === 'ECONNABORTED') {
-        (notificationApi || notification).error({
-          message: 'Erro ao salvar serviço',
-          description: 'Timeout na requisição. Verifique a lista de serviços.',
-          placement: 'bottomRight'
-        });
-      } else if (error.response?.status === 400) {
-        (notificationApi || notification).error({
-          message: 'Erro ao salvar serviço',
-          description: error.response?.data?.message || 'Dados inválidos.',
-          placement: 'bottomRight'
-        });
-      } else if (error.response?.status === 401) {
-        (notificationApi || notification).error({
-          message: 'Erro ao salvar serviço',
-          description: 'Sessão expirada. Faça login novamente.',
-          placement: 'bottomRight'
-        });
-      } else if (error.response?.status >= 500) {
-        (notificationApi || notification).error({
-          message: 'Erro ao salvar serviço',
-          description: 'Erro do servidor. Tente novamente.',
-          placement: 'bottomRight'
-        });
-      } else {
-        (notificationApi || notification).error({
-          message: 'Erro ao salvar serviço',
-          description: error.message || 'Tente novamente.',
-          placement: 'bottomRight'
-        });
-      }
+    } catch (error: unknown) {
+      handleErrorNotification(error);
     } finally {
       setSubmitting(false);
     }
@@ -598,7 +624,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     placeholder="Selecione o tipo"
                     size="large"
                     style={{ borderRadius: 'var(--radius-md)' }}
-                    options={EVENT_TYPES as any}
+                    options={[...EVENT_TYPES]}
                     onChange={handleServiceTypeChange}
                   />
                 </Form.Item>
@@ -624,23 +650,29 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     }
                   ]}
                 >
-                  <Tooltip 
-                    title="Selecione primeiro o tipo de serviço" 
-                    placement="top"
-                    open={!form.getFieldValue('type') ? undefined : false}
-                  >
-                    <Select
-                      placeholder="Selecione a categoria"
-                      size="large"
-                      style={{ borderRadius: 'var(--radius-md)' }}
-                      options={availableCategories as any}
-                      disabled={!form.getFieldValue('type')}
-                      value={form.getFieldValue('category')}
-                      onChange={(value) => {
-                        form.setFieldsValue({ category: value });
-                      }}
-                    />
-                  </Tooltip>
+                  <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}>
+                    {({ getFieldValue }) => {
+                      const serviceType = getFieldValue('type');
+                      return (
+                        <Tooltip 
+                          title="Selecione primeiro o tipo de serviço" 
+                          placement="top"
+                          open={!serviceType ? undefined : false}
+                        >
+                          <Select
+                            placeholder="Selecione a categoria"
+                            size="large"
+                            style={{ borderRadius: 'var(--radius-md)' }}
+                            options={availableCategories}
+                            disabled={!serviceType}
+                            onChange={(value) => {
+                              form.setFieldsValue({ category: value });
+                            }}
+                          />
+                        </Tooltip>
+                      );
+                    }}
+                  </Form.Item>
                 </Form.Item>
               </Col>
             </Row>
@@ -862,7 +894,7 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     { validator: validateCost }
                   ]}
                 >
-                  <InputNumber
+                  <InputNumber<number>
                     style={{ 
                       width: '100%',
                       borderRadius: 'var(--radius-md)'
@@ -870,9 +902,22 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     size="large"
                     placeholder="0,00"
                     min={0}
+                    max={50000}
                     precision={2}
-                    formatter={formatCurrency}
-                    parser={parseCurrency}
+                    formatter={(value) => {
+                      if (!value && value !== 0) return '';
+                      const num = Number(value);
+                      if (isNaN(num)) return '';
+                      return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }}
+                    parser={(value) => {
+                      if (!value) return 0;
+                      const cleaned = String(value).replace(/\./g, '').replace(',', '.');
+                      const parsed = parseFloat(cleaned);
+                      return isNaN(parsed) ? 0 : parsed;
+                    }}
+                    controls={false}
+                    addonBefore="R$"
                   />
                 </Form.Item>
               </Col>
@@ -1057,22 +1102,6 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
             alignItems: 'flex-start',
             gap: '12px'
           }}>
-            <div style={{
-              width: '20px',
-              height: '20px',
-              backgroundColor: '#f59e0b',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '12px',
-              fontWeight: 'bold',
-              flexShrink: 0,
-              marginTop: '2px'
-            }}>
-              !
-            </div>
             <div>
               <div style={{
                 fontSize: '14px',

@@ -66,7 +66,7 @@ const getServiceCost = (service: VehicleEvent): number => {
   if (typeof service.cost === 'number') {
     return service.cost;
   }
-  const parsed = parseFloat(String(service.cost));
+  const parsed = Number.parseFloat(String(service.cost));
   return Number.isNaN(parsed) ? 0 : parsed;
 };
 
@@ -255,10 +255,9 @@ export default function ReportsPage() {
   const filterServices = (services: VehicleEvent[], vehicleId: string, dateRange: [string, string] | null, serviceType: string, category: string, vehiclesList?: Vehicle[]) => {
     let filtered = services;
 
-    // Sempre filtrar apenas pelos veículos do usuário logado
     const vehiclesToUse = vehiclesList || vehicles;
-    const userVehicleIds = vehiclesToUse.map(v => v.id);
-    filtered = filtered.filter(service => userVehicleIds.includes(service.vehicleId));
+    const userVehicleIds = new Set(vehiclesToUse.map(v => v.id));
+    filtered = filtered.filter(service => userVehicleIds.has(service.vehicleId));
 
     if (vehicleId !== 'all') {
       filtered = filtered.filter(service => service.vehicleId === vehicleId);
@@ -276,14 +275,12 @@ export default function ReportsPage() {
       const [startDate, endDate] = dateRange;
       filtered = filtered.filter(service => {
         const serviceDate = new Date(service.date);
-        // Normalizar para início do dia (00:00:00) para comparação correta
         serviceDate.setHours(0, 0, 0, 0);
         
         const start = new Date(startDate);
         start.setHours(0, 0, 0, 0);
         
         const end = new Date(endDate);
-        // Normalizar para fim do dia (23:59:59) para incluir todo o dia
         end.setHours(23, 59, 59, 999);
         
         return serviceDate >= start && serviceDate <= end;
@@ -364,7 +361,6 @@ export default function ReportsPage() {
     });
   }, []);
 
-  // Gráfico: Tendência mensal de gastos (adaptável ao filtro de período)
   const monthlyExpensesData = useMemo(() => {
     const filteredServices = filterServices(services, selectedVehicle, dateRange, 'all', 'all', vehicles);
     const monthlyData: { [key: string]: { month: string; total: number } } = {};
@@ -391,7 +387,6 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
-  // Gráfico: Comparação de gastos por veículo (respeita filtro de veículo)
   const vehicleExpensesData = useMemo(() => {
     const vehicleToShow = selectedVehicle !== 'all' ? selectedVehicle : 'all';
     const filteredServices = filterServices(services, vehicleToShow, dateRange, 'all', 'all', vehicles);
@@ -424,7 +419,6 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [services, selectedVehicle, dateRange, vehicles]);
 
-  // Verificar se há serviços para exibir
   const hasServices = services.length > 0;
 
   if (!hasServices) {
@@ -462,7 +456,6 @@ export default function ReportsPage() {
   return (
     <DefaultFrame title="Relatórios e Análises" loading={loading}>
       <div className={styles.reportsContainer}>
-        {/* Filtros */}
         <Card className={componentStyles.professionalCard} style={{ marginBottom: '24px' }} styles={{ body: { padding: '16px 24px' } }}>
           <div className={styles.filtersContainer}>
             <Row gutter={[12, 12]} className={styles.filterRow}>
@@ -503,8 +496,8 @@ export default function ReportsPage() {
                       dayjs(dateRange[1])
                     ] as [dayjs.Dayjs, dayjs.Dayjs] : null}
                     onChange={(dates) => {
-                      if (dates && dates[0] && dates[1]) {
-                        setDateRange([dates[0].toISOString(), dates[1].toISOString()]);
+                      if (dates?.[0] && dates?.[1]) {
+                        setDateRange([dates[0]?.toISOString() ?? '', dates[1]?.toISOString() ?? '']);
                       } else {
                         setDateRange(null);
                       }
@@ -560,7 +553,6 @@ export default function ReportsPage() {
           </div>
         </Card>
 
-        {/* Estatísticas Principais */}
         <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
           <Col xs={24} sm={12} md={12} lg={6} xl={6}>
             <Card className={componentStyles.professionalStatistic}>
@@ -619,7 +611,6 @@ export default function ReportsPage() {
           </Col>
         </Row>
 
-        {/* Insights Adicionais */}
         {(reportData.topSpendingVehicle || reportData.topCategory) && (
           <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
             {reportData.topSpendingVehicle && (
@@ -666,7 +657,6 @@ export default function ReportsPage() {
           </Row>
         )}
 
-        {/* Gráficos */}
         <Row gutter={[24, 24]}>
           <Col xs={24} sm={24} md={24} lg={24} xl={selectedVehicle === 'all' ? 14 : 24}>
             <Card 
@@ -800,7 +790,6 @@ export default function ReportsPage() {
           )}
         </Row>
 
-        {/* Seção de Top 5 e Distribuição por Categoria */}
         <Row gutter={[24, 24]} style={{ marginTop: '24px' }}>
           <Col xs={24} sm={24} md={24} lg={12} xl={12}>
             <Card 
@@ -898,8 +887,8 @@ export default function ReportsPage() {
                       dataKey="value"
                       className={styles.pieChartElement}
                       >
-                        {categoryDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {categoryDistributionData.map((entry) => (
+                          <Cell key={`cell-${entry.name}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <RechartsTooltip 

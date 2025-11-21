@@ -11,7 +11,6 @@ import {
   Avatar, 
   Divider,
   Alert,
-  Spin,
   Modal,
   Tooltip,
   Progress,
@@ -45,11 +44,12 @@ interface ProfileFormData {
 
 export default function ProfilePage() {
   const [api, contextHolder] = notification.useNotification();
-  const { user, updateProfile, deleteAccount } = useAuth();
+  const { user, updateProfile, deleteAccount, loading: authLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
@@ -68,6 +68,21 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        setPageLoading(true);
+        await refreshUser();
+      } catch (error) {
+        console.error('Erro ao recarregar perfil:', error);
+      } finally {
+        setPageLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [refreshUser]);
+
+  useEffect(() => {
     if (user) {
       form.setFieldsValue({
         name: user.name,
@@ -83,7 +98,6 @@ export default function ProfilePage() {
       email: user?.email
     };
 
-    // Para contas Google, não considerar mudanças no email
     const keysToCheck = user?.authProvider === 'google' 
       ? ['name'] 
       : ['name', 'email'];
@@ -97,7 +111,6 @@ export default function ProfilePage() {
   const onFinish = async (values: ProfileFormData) => {
     try {
       setLoading(true);
-      // Para contas Google, não enviar o email (não pode ser alterado)
       const updateData: ProfileFormData = {
         name: values.name,
         email: user?.authProvider === 'google' ? user.email : values.email
@@ -111,14 +124,15 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
       setHasChanges(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao atualizar perfil:', error);
       let errorMessage = 'Erro ao atualizar perfil. Tente novamente.';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
       
       api.error({
@@ -174,7 +188,7 @@ export default function ProfilePage() {
     return "Fraco";
   };
 
-  const handlePasswordChange = async (values: any) => {
+  const handlePasswordChange = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
     try {
       setPasswordLoading(true);
       await authService.changePassword({
@@ -201,14 +215,15 @@ export default function ProfilePage() {
           special: false,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao alterar senha:', error);
       let errorMessage = 'Erro ao alterar senha. Verifique sua senha atual.';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
       
       api.error({
@@ -249,14 +264,15 @@ export default function ProfilePage() {
       });
       setDeleteModalVisible(false);
       navigate('/');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao deletar conta:', error);
       let errorMessage = 'Erro ao excluir conta. Tente novamente.';
       
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      const apiError = error as { response?: { data?: { message?: string } }; message?: string };
+      if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
       
       api.error({
@@ -274,18 +290,18 @@ export default function ProfilePage() {
     setDeleteModalVisible(false);
   };
 
-  if (!user) {
+  // Mostrar loading enquanto está carregando o auth ou recarregando o perfil
+  if (authLoading || pageLoading || !user) {
     return (
       <>
         {contextHolder}
-      <DefaultFrame title="Perfil" loading={true}>
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
-          <Text style={{ display: 'block', marginTop: '16px' }}>
-            Carregando perfil...
-          </Text>
-        </div>
-      </DefaultFrame>
+        <DefaultFrame title="Perfil" loading={true}>
+          <div style={{ textAlign: 'center', padding: '48px' }}>
+            <Text style={{ display: 'block', marginTop: '16px' }}>
+              {authLoading ? 'Verificando autenticação...' : 'Carregando perfil...'}
+            </Text>
+          </div>
+        </DefaultFrame>
       </>
     );
   }
@@ -338,7 +354,7 @@ export default function ProfilePage() {
                         Último acesso
                       </Text>
                       <Text strong style={{ display: 'block', fontSize: '14px' }}>
-                        {new Date((user as any).lastLogin || Date.now()).toLocaleDateString('pt-BR')}
+                        {new Date((user as { lastLogin?: string | number | Date }).lastLogin || Date.now()).toLocaleDateString('pt-BR')}
                       </Text>
                     </div>
                   </Col>
@@ -358,7 +374,7 @@ export default function ProfilePage() {
                         Tipo de conta
                       </Text>
                       <Text strong style={{ display: 'block', fontSize: '14px' }}>
-                        {(user as any).role === 'admin' ? 'Administrador' : 'Usuário'}
+                        {(user as { role?: string }).role === 'admin' ? 'Administrador' : 'Usuário'}
                       </Text>
                     </div>
                   </Col>
@@ -785,7 +801,6 @@ export default function ProfilePage() {
               danger 
               type="primary"
               loading={deleteLoading}
-              icon={<DeleteOutlined />}
               onClick={handleDeleteAccount}
             >
               Excluir Conta
@@ -800,13 +815,8 @@ export default function ProfilePage() {
             description={
               <div>
                 <Text style={{ display: 'block', marginBottom: '12px', color: '#F9FAFB' }}>
-                  Tem certeza que deseja excluir sua conta? Os seguintes dados serão removidos do nosso sistema:
+                  Tem certeza que deseja excluir sua conta?
                 </Text>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: '#F9FAFB' }}>
-                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Seu perfil e informações pessoais</li>
-                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Credenciais de acesso</li>
-                  <li style={{ color: '#F9FAFB', marginBottom: '8px' }}>Preferências de conta</li>
-                </ul>
                 <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(107, 114, 128, 0.1)', borderRadius: '8px', border: '1px solid rgba(107, 114, 128, 0.2)' }}>
                   <Text style={{ color: '#6B7280', fontSize: '12px', display: 'block' }}>
                     <strong style={{ color: '#F9FAFB' }}>Nota:</strong> Os registros de serviços e histórico armazenados na blockchain permanecerão intactos, pois são registros imutáveis e descentralizados.
@@ -815,7 +825,6 @@ export default function ProfilePage() {
               </div>
             }
             type="error"
-            showIcon
           />
         </Modal>
       </div>

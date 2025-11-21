@@ -7,7 +7,7 @@ import {
   PaperClipOutlined,
 } from "@ant-design/icons"
 import type { TableColumnsType } from "antd"
-import type { VehicleEvent, VehicleDocument, VehicleEventType } from "../types/vehicle.types"
+import type { VehicleEvent, VehicleDocument, VehicleEventType, ChainStatus } from "../types/vehicle.types"
 import { currencyBRL, formatBRDate, kmFormat } from "../../../shared/utils/format"
 import { getChainStatusConfig, getVehicleEventTypeLabel } from "./helpers"
 
@@ -48,8 +48,8 @@ export function createEventColumns(
       title: "Blockchain",
       dataIndex: "blockchainStatus",
       key: "blockchainStatus",
-      render: (blockchainStatus: any) => {
-        if (!blockchainStatus || !blockchainStatus.status) {
+      render: (blockchainStatus: ChainStatus | undefined) => {
+        if (!blockchainStatus?.status) {
           return <Tag color="default">N/A</Tag>
         }
         const config = getChainStatusConfig(blockchainStatus)

@@ -58,7 +58,6 @@ class Logger {
    */
   warn(message: string, ...args: unknown[]): void {
     if (this.level <= LogLevel.WARN) {
-      // eslint-disable-next-line no-console
       console.warn(`[WARN] ${message}`, ...args);
     }
   }
@@ -68,7 +67,6 @@ class Logger {
    */
   error(message: string, error?: unknown, ...args: unknown[]): void {
     if (this.level <= LogLevel.ERROR) {
-      // eslint-disable-next-line no-console
       console.error(`[ERROR] ${message}`, error, ...args);
     }
   }

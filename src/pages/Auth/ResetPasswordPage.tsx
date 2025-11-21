@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, Typography, Progress, Space, notification } 
 import { LockOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { passwordRecoveryService } from "../../features/auth/services/passwordRecoveryService";
+import { logger } from "../../shared/utils/logger";
 import styles from "./Auth.module.css";
 import type { ReactNode } from "react";
 
@@ -48,8 +49,8 @@ const CONFIRM_PASSWORD_VALIDATION_RULES = [
   { required: true, message: "Por favor, confirme sua senha!" },
   { min: 8, message: "" },
   { pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: "" },
-  ({ getFieldValue }: any) => ({
-    validator(_: any, value: string) {
+  ({ getFieldValue }: { getFieldValue: (name: string) => unknown }) => ({
+    validator(_: unknown, value: string) {
       if (!value || getFieldValue("password") === value) {
         return Promise.resolve();
       }
@@ -209,7 +210,7 @@ export default function ResetPasswordPage() {
     return PASSWORD_STRENGTH_LABELS.weak;
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { password: string; confirmPassword: string }) => {
     if (!token) {
       return;
     }
@@ -228,15 +229,18 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         navigate("/login");
       }, 3000);
-    } catch (err: any) {
-      console.error("Erro ao resetar senha:", err);
+    } catch (err: unknown) {
+      logger.error("Erro ao resetar senha:", err);
       
       let errorMessage = "Erro ao processar solicitação. Tente novamente.";
       
-      if (err.message) {
+      if (err instanceof Error) {
         errorMessage = err.message;
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
+      } else if (err && typeof err === 'object' && 'response' in err) {
+        const errorResponse = err as { response?: { data?: { message?: string } } };
+        if (errorResponse.response?.data?.message) {
+          errorMessage = errorResponse.response.data.message;
+        }
       }
 
       api.error({

@@ -4,12 +4,13 @@ import { MailOutlined, ReloadOutlined, LogoutOutlined } from "@ant-design/icons"
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../features/auth";
 import { emailVerificationService } from "../../features/auth/services/emailVerificationService";
+import { logger } from "../../shared/utils/logger";
 import styles from "./Auth.module.css";
 
 const { Title, Text } = Typography;
 
 const COOLDOWN_SECONDS = 60;
-const POLLING_INTERVAL = 5000; // 5 segundos
+const POLLING_INTERVAL = 5000;
 
 export default function EmailVerificationPendingPage() {
   const [api, contextHolder] = notification.useNotification();
@@ -22,7 +23,7 @@ export default function EmailVerificationPendingPage() {
   useEffect(() => {
     const savedCooldown = localStorage.getItem('emailVerificationCooldown');
     if (savedCooldown) {
-      const remaining = Math.max(0, parseInt(savedCooldown) - Math.floor(Date.now() / 1000));
+      const remaining = Math.max(0, Number.parseInt(savedCooldown) - Math.floor(Date.now() / 1000));
       if (remaining > 0) {
         setCooldown(remaining);
       }
@@ -70,7 +71,6 @@ export default function EmailVerificationPendingPage() {
     try {
       await emailVerificationService.resendVerificationEmail();
       
-      // Mostrar notificação de sucesso
       api.success({
         message: 'Email reenviado!',
         description: 'Verifique sua caixa de entrada.',
@@ -82,13 +82,15 @@ export default function EmailVerificationPendingPage() {
       const cooldownEnd = Date.now() / 1000 + COOLDOWN_SECONDS;
       localStorage.setItem('emailVerificationCooldown', cooldownEnd.toString());
       
-    } catch (error: any) {
-      console.error('Erro ao reenviar email:', error);
+    } catch (error: unknown) {
+      logger.error('Erro ao reenviar email:', error);
       
-      // Mostrar notificação de erro
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Tente novamente.'
+        : 'Tente novamente.';
       api.error({
         message: 'Erro ao reenviar email',
-        description: error.response?.data?.message || 'Tente novamente.',
+        description: errorMessage,
         placement: 'bottomRight',
         duration: 5,
       });

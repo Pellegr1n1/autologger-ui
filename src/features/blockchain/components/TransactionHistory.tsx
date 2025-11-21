@@ -44,20 +44,20 @@ export default function TransactionHistory() {
       const services = await BlockchainService.getAllServices();
 
       const mapped: Transaction[] = (services || [])
-        .map((s: any) => ({
-          id: s.id || s.serviceId,
-          hash: s.transactionHash || s.blockchainHash || null,
+        .map((s) => ({
+          id: String(s.id || ''),
+          hash: (s as { transactionHash?: string; blockchainHash?: string }).transactionHash || (s as { transactionHash?: string; blockchainHash?: string }).blockchainHash || null,
           status: (s.status || 'PENDING') as Transaction['status'],
           category: s.category || s.type || 'SERVICO',
           description: s.description || '',
           location: s.location || '—',
-          date: s.createdAt || s.blockchainConfirmedAt || s.serviceDate,
+          date: s.createdAt || s.serviceDate || '',
           mileage: s.mileage || 0,
-          blockNumber: s.blockNumber,
+          blockNumber: (s as { blockNumber?: number }).blockNumber,
           vehicleId: s.vehicleId,
-          vehicle: s.vehicle,
+          vehicle: (s as { vehicle?: { brand?: string; model?: string; plate?: string } }).vehicle,
         }))
-        .filter((tx: Transaction) => tx.hash); // Apenas transações com hash real
+        .filter((tx: Transaction) => tx.hash);
 
       setTransactions(mapped);
     } catch (error) {
@@ -130,7 +130,6 @@ export default function TransactionHistory() {
       const [year, month, day] = dateStr.split('-').map(Number);
       
       if (year && month && day) {
-        // Criar data no meio do dia para evitar problemas de fuso horário
         date = new Date(year, month - 1, day, 12, 0, 0, 0);
       } else {
         date = new Date(dateString);
@@ -139,11 +138,10 @@ export default function TransactionHistory() {
       date = dateString;
     }
     
-    if (isNaN(date.getTime())) {
+    if (Number.isNaN(date.getTime())) {
       return 'Data inválida';
     }
     
-    // Formatar data no formato brasileiro sem hora
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -174,7 +172,7 @@ export default function TransactionHistory() {
       title: 'Veículo',
       key: 'vehicle',
       align: 'left',
-      render: (_: any, record: Transaction) => {
+      render: (_: unknown, record: Transaction) => {
         if (record.vehicle) {
           const vehicleName = `${record.vehicle.brand || ''} ${record.vehicle.model || ''}`.trim();
           const plate = record.vehicle.plate || '';
@@ -268,7 +266,7 @@ export default function TransactionHistory() {
       title: 'Status Blockchain',
       key: 'blockchain',
       align: 'left',
-      render: (_: any, record: Transaction) => {
+      render: (_: unknown, record: Transaction) => {
         if (record.status === 'CONFIRMED' && record.hash) {
           return (
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
@@ -364,7 +362,6 @@ export default function TransactionHistory() {
         className="professionalTable"
       />
 
-      {/* Modal de Detalhes do Hash */}
       <Modal
         title={
           <Space>

@@ -8,6 +8,7 @@ import {
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
 import { emailVerificationService } from "../../features/auth/services/emailVerificationService"
+import { logger } from "../../shared/utils/logger"
 import styles from "./Auth.module.css"
 
 const { Title, Text } = Typography
@@ -18,7 +19,7 @@ export default function RegisterPage() {
   const [api, contextHolder] = notification.useNotification()
   const [loading, setLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState<any>({})
+  const [formData, setFormData] = useState<Record<string, unknown>>({})
   const [form] = Form.useForm()
   const { register } = useAuth()
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ export default function RegisterPage() {
       setFormData({ ...formData, ...currentValues })
       setCurrentStep(currentStep + 1)
     } catch (errorInfo) {
-      console.log('Validation failed:', errorInfo)
+      logger.debug('Validation failed:', errorInfo)
     }
   }
 
@@ -87,17 +88,17 @@ export default function RegisterPage() {
     form.setFieldsValue(formData)
   }
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: Record<string, unknown>) => {
     const allFormData = { ...formData, ...values }
 
     setLoading(true)
 
     try {
       const registerData = {
-        name: allFormData.name,
-        email: allFormData.email,
-        password: allFormData.password,
-        confirmPassword: allFormData.confirmPassword,
+        name: String(allFormData.name || ''),
+        email: String(allFormData.email || ''),
+        password: String(allFormData.password || ''),
+        confirmPassword: String(allFormData.confirmPassword || ''),
       }
 
       const currentUser = await register(registerData)
@@ -116,16 +117,19 @@ export default function RegisterPage() {
       
       navigate("/email-verification-pending")
       
-    } catch (err: any) {
-      console.error("Erro no registro:", err)
+    } catch (err: unknown) {
+      logger.error("Erro no registro:", err)
 
       let errorMessage = "Erro ao criar conta. Tente novamente."
 
-      if (err.response?.data?.error?.message && Array.isArray(err.response.data.error.message)) {
-        errorMessage = err.response.data.error.message.join('\n')
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message
-      } else if (err.message) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const errorResponse = err as { response?: { data?: { error?: { message?: string[] }; message?: string } } };
+        if (errorResponse.response?.data?.error?.message && Array.isArray(errorResponse.response.data.error.message)) {
+          errorMessage = errorResponse.response.data.error.message.join('\n')
+        } else if (errorResponse.response?.data?.message) {
+          errorMessage = errorResponse.response.data.message
+        }
+      } else if (err instanceof Error) {
         errorMessage = err.message
       }
 

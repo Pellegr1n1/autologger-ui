@@ -19,10 +19,22 @@ interface BlockchainData {
   lastSyncTime?: Date;
 }
 
+interface NetworkInfo {
+  chainId?: number;
+  blockNumber?: number;
+  gasPrice?: number;
+  networkName?: string;
+}
+
+interface ContractStats {
+  totalHashes?: number;
+  contractBalance?: string;
+}
+
 interface BesuData {
   connectionStatus: boolean;
-  networkInfo: any;
-  contractStats: any;
+  networkInfo: NetworkInfo | null;
+  contractStats: ContractStats | null;
   error: string | null;
 }
 
@@ -278,7 +290,7 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
                             <strong>Chain ID:</strong> {besuData.networkInfo.chainId}
                           </Text>
                           <Text style={{ color: 'var(--text-secondary)' }}>
-                            <strong>Bloco Atual:</strong> {besuData.networkInfo.blockNumber.toLocaleString()}
+                            <strong>Bloco Atual:</strong> {besuData.networkInfo.blockNumber?.toLocaleString() || 'N/A'}
                           </Text>
                           <Text style={{ color: 'var(--text-secondary)' }}>
                             <strong>Gas Price:</strong> {besuData.networkInfo.gasPrice} gwei
@@ -303,7 +315,7 @@ export default function BlockchainOverview({ data, besuData }: BlockchainOvervie
                       <div style={{ marginTop: '8px' }}>
                         <Space direction="vertical" size="small">
                           <Text style={{ color: 'var(--text-secondary)' }}>
-                            <strong>Total de Hashes:</strong> {besuData.contractStats.totalHashes.toLocaleString()}
+                            <strong>Total de Hashes:</strong> {besuData.contractStats.totalHashes?.toLocaleString() || 'N/A'}
                           </Text>
                           <Text style={{ color: 'var(--text-secondary)' }}>
                             <strong>Saldo do Contrato:</strong> {besuData.contractStats.contractBalance} ETH

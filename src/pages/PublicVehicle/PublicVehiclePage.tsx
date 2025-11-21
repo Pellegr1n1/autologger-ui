@@ -42,6 +42,7 @@ import {
 } from '@ant-design/icons';
 import { VehicleShareService, PublicVehicleInfo } from '../../features/vehicles/services/vehicleShareService';
 import { formatBRDate } from '../../shared/utils/format';
+import { getColorHex } from '../../shared/utils/colorUtils';
 import styles from './PublicVehiclePage.module.css';
 
 const { Title, Text } = Typography;
@@ -57,7 +58,7 @@ const PublicVehiclePage: React.FC = () => {
   const [vehicleInfo, setVehicleInfo] = useState<PublicVehicleInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const [selectedAttachments, setSelectedAttachments] = useState<any[]>([]);
+  const [selectedAttachments, setSelectedAttachments] = useState<Array<{ id: string; fileUrl: string; fileName: string; fileType: string; fileSize: number }>>([]);
   const [selectedServiceTitle, setSelectedServiceTitle] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -81,9 +82,10 @@ const PublicVehiclePage: React.FC = () => {
     try {
       const data = await VehicleShareService.getPublicVehicleInfo(shareToken);
       setVehicleInfo(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao carregar informações do veículo:', error);
-      setError(error.response?.data?.message || 'Erro ao carregar informações do veículo');
+      const errorMessage = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Erro ao carregar informações do veículo';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -256,69 +258,62 @@ const PublicVehiclePage: React.FC = () => {
   }
 
   const totalCost = vehicleInfo.maintenanceHistory.reduce((sum, service) => {
-    const cost = typeof service.cost === 'number' ? service.cost : parseFloat(service.cost) || 0;
+    const cost = typeof service.cost === 'number' ? service.cost : Number.parseFloat(service.cost) || 0;
     return sum + cost;
   }, 0);
   
-  // Ordenar histórico completo por data de serviço (criar cópia para não mutar original)
   const sortedHistory = [...vehicleInfo.maintenanceHistory]
     .sort((a, b) => new Date(b.serviceDate).getTime() - new Date(a.serviceDate).getTime());
   
-  // Ordenar últimos serviços registrados por createdAt (mais recentes primeiro)
   const sortedByCreatedAt = [...vehicleInfo.maintenanceHistory]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // Aplicar filtros
+  const matchesTypeFilter = (service: { type: string }, filterType: string): boolean => {
+    return filterType === 'all' || service.type.toLowerCase() === filterType.toLowerCase();
+  };
+
+  const matchesCategoryFilter = (service: { category: string }, filterCategory: string): boolean => {
+    return filterCategory === 'all' || service.category.toLowerCase() === filterCategory.toLowerCase();
+  };
+
+  const matchesSearchText = (service: { description?: string; location?: string; technician?: string; notes?: string }, searchText: string): boolean => {
+    if (!searchText) return true;
+    
+    const searchLower = searchText.toLowerCase();
+    const matchesDescription = service.description?.toLowerCase().includes(searchLower) ?? false;
+    const matchesLocation = service.location?.toLowerCase().includes(searchLower) ?? false;
+    const matchesTechnician = service.technician?.toLowerCase().includes(searchLower) ?? false;
+    const matchesNotes = service.notes?.toLowerCase().includes(searchLower) ?? false;
+    
+    return matchesDescription || matchesLocation || matchesTechnician || matchesNotes;
+  };
+
+  const matchesDateRangeFilter = (service: { serviceDate: string | Date }, dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null): boolean => {
+    if (!dateRange || !dateRange[0] || !dateRange[1]) return true;
+    
+    const serviceDate = dayjs(service.serviceDate);
+    return serviceDate.isAfter(dateRange[0]?.subtract(1, 'day')) && serviceDate.isBefore(dateRange[1]?.add(1, 'day'));
+  };
+
   const filteredHistory = sortedHistory.filter((service) => {
-    // Filtro por tipo
-    if (filterType !== 'all' && service.type.toLowerCase() !== filterType.toLowerCase()) {
-      return false;
-    }
-
-    // Filtro por categoria
-    if (filterCategory !== 'all' && service.category.toLowerCase() !== filterCategory.toLowerCase()) {
-      return false;
-    }
-
-    // Filtro por texto (busca em descrição, local, técnico, notas)
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      const matchesDescription = service.description?.toLowerCase().includes(searchLower);
-      const matchesLocation = service.location?.toLowerCase().includes(searchLower);
-      const matchesTechnician = service.technician?.toLowerCase().includes(searchLower);
-      const matchesNotes = service.notes?.toLowerCase().includes(searchLower);
-      
-      if (!matchesDescription && !matchesLocation && !matchesTechnician && !matchesNotes) {
-        return false;
-      }
-    }
-
-    // Filtro por período de data
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      const serviceDate = dayjs(service.serviceDate);
-      if (!serviceDate.isAfter(dateRange[0].subtract(1, 'day')) || !serviceDate.isBefore(dateRange[1].add(1, 'day'))) {
-        return false;
-      }
-    }
-
+    if (!matchesTypeFilter(service, filterType)) return false;
+    if (!matchesCategoryFilter(service, filterCategory)) return false;
+    if (!matchesSearchText(service, searchText)) return false;
+    if (!matchesDateRangeFilter(service, dateRange)) return false;
     return true;
   });
 
-  // Extrair tipos e categorias únicos para os filtros
   const uniqueTypes: string[] = Array.from(new Set(sortedHistory.map(s => s.type)));
   const uniqueCategories: string[] = Array.from(new Set(sortedHistory.map(s => s.category)));
 
-  // Calcular itens da página atual
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentItems = filteredHistory.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll suave para o início do grid de serviços (não esconde os cards acima)
     const maintenanceGrid = document.querySelector('#maintenance-grid-start');
     if (maintenanceGrid) {
-      // Offset de 100px para mostrar um pouco do contexto acima
       const yOffset = -120;
       const element = maintenanceGrid as HTMLElement;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
@@ -326,7 +321,7 @@ const PublicVehiclePage: React.FC = () => {
     }
   };
 
-  const handleViewAttachments = (attachments: any[], serviceTitle: string) => {
+  const handleViewAttachments = (attachments: Array<{ id: string; fileUrl: string; fileName: string; fileType: string; fileSize: number }>, serviceTitle: string) => {
     setSelectedAttachments(attachments);
     setSelectedServiceTitle(serviceTitle);
     setAttachmentsModalOpen(true);
@@ -345,7 +340,6 @@ const PublicVehiclePage: React.FC = () => {
   return (
     <div className={styles.publicContainer}>
       <div className={styles.contentWrapper}>
-        {/* Header */}
         <Card className={styles.headerCard}>
           <div className={styles.headerContent}>
             <div className={styles.vehicleIcon}>
@@ -386,7 +380,6 @@ const PublicVehiclePage: React.FC = () => {
         </Card>
 
         <Row gutter={[24, 24]}>
-          {/* Informações do Veículo */}
           <Col xs={24} lg={8}>
             <Card
               title={
@@ -411,21 +404,7 @@ const PublicVehiclePage: React.FC = () => {
                         width: '18px',
                         height: '18px',
                         borderRadius: '50%',
-                        backgroundColor: vehicleInfo.color.toLowerCase() === 'branco' ? '#f0f0f0' :
-                          vehicleInfo.color.toLowerCase() === 'preto' ? '#000000' :
-                            vehicleInfo.color.toLowerCase() === 'prata' ? '#c0c0c0' :
-                              vehicleInfo.color.toLowerCase() === 'cinza' ? '#808080' :
-                                vehicleInfo.color.toLowerCase() === 'azul' ? '#1890ff' :
-                                  vehicleInfo.color.toLowerCase() === 'vermelho' ? '#f5222d' :
-                                    vehicleInfo.color.toLowerCase() === 'verde' ? '#52c41a' :
-                                      vehicleInfo.color.toLowerCase() === 'amarelo' ? '#fadb14' :
-                                        vehicleInfo.color.toLowerCase() === 'marrom' ? '#8b4513' :
-                                          vehicleInfo.color.toLowerCase() === 'bege' ? '#f5f5dc' :
-                                            vehicleInfo.color.toLowerCase() === 'roxo' ? '#722ed1' :
-                                              vehicleInfo.color.toLowerCase() === 'laranja' ? '#fa8c16' :
-                                                vehicleInfo.color.toLowerCase() === 'rosa' ? '#eb2f96' :
-                                                  vehicleInfo.color.toLowerCase() === 'dourado' ? '#d4af37' :
-                                                    '#808080',
+                        backgroundColor: getColorHex(vehicleInfo.color),
                         border: '2px solid rgba(139, 92, 246, 0.3)',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                       }}
@@ -447,7 +426,6 @@ const PublicVehiclePage: React.FC = () => {
             </Card>
           </Col>
 
-          {/* Estatísticas */}
           <Col xs={24} lg={8}>
             <Card
               title={
@@ -510,7 +488,6 @@ const PublicVehiclePage: React.FC = () => {
             </Card>
           </Col>
 
-          {/* Últimos Serviços Registrados */}
           <Col xs={24} lg={8}>
             <Card
               title={
@@ -529,7 +506,7 @@ const PublicVehiclePage: React.FC = () => {
               ) : (
                 <div className={styles.maintenanceList}>
                   {sortedByCreatedAt.slice(0, 2).map((service: typeof sortedByCreatedAt[0], index: number) => (
-                    <div key={index} className={styles.maintenanceListItem}>
+                    <div key={`service-${index}-${service.serviceDate}`} className={styles.maintenanceListItem}>
                       <div className={styles.maintenanceItemHeader}>
                         <div className={styles.maintenanceItemIcon}>
                           {getServiceIcon(service.type)}
@@ -572,7 +549,6 @@ const PublicVehiclePage: React.FC = () => {
           </Col>
         </Row>
 
-        {/* Histórico Completo */}
         {vehicleInfo.maintenanceHistory.length > 0 && (
           <Card
             id="complete-history"
@@ -585,7 +561,6 @@ const PublicVehiclePage: React.FC = () => {
             className={styles.statisticCard}
             styles={{ body: { padding: '24px' } }}
           >
-            {/* Filtros */}
             <div className={styles.filterSection}>
               <div className={styles.filterHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -694,7 +669,6 @@ const PublicVehiclePage: React.FC = () => {
               </Row>
             </div>
 
-            {/* Grid de Serviços */}
             <div id="maintenance-grid-start"></div>
             {filteredHistory.length === 0 ? (
               <div style={{ 
@@ -715,8 +689,7 @@ const PublicVehiclePage: React.FC = () => {
             ) : (
               <div className={styles.maintenanceGrid}>
               {currentItems.map((service: typeof currentItems[0], index: number) => (
-                <div key={startIndex + index} className={styles.maintenanceCard}>
-                  {/* Header */}
+                <div key={`service-${index}-${service.serviceDate}`} className={styles.maintenanceCard}>
                   <div className={styles.maintenanceCardHeader}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', flex: 1 }}>
                       <div className={styles.maintenanceCardIcon}>
@@ -735,7 +708,6 @@ const PublicVehiclePage: React.FC = () => {
                         </div>
                       </div>
 
-                  {/* Body */}
                   <div className={styles.maintenanceCardBody}>
                     <div className={styles.maintenanceCardDescription}>
                       {service.description}
@@ -795,7 +767,6 @@ const PublicVehiclePage: React.FC = () => {
 
                   </div>
 
-                  {/* Footer */}
                   <div className={styles.maintenanceCardFooter}>
                     <div className={styles.maintenanceCardTags}>
                       <Tag color={getServiceColor(service.type)} style={{ fontSize: '10px', margin: 0 }}>
@@ -848,7 +819,6 @@ const PublicVehiclePage: React.FC = () => {
 
       </div>
 
-      {/* Modal de Anexos */}
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

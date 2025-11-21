@@ -35,16 +35,14 @@ export const ResendVerificationButton: React.FC<ResendVerificationButtonProps> =
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Restaurar cooldown do localStorage
     const savedCooldown = localStorage.getItem('emailVerificationCooldown');
     if (savedCooldown) {
-      const remaining = Math.max(0, parseInt(savedCooldown) - Math.floor(Date.now() / 1000));
+      const remaining = Math.max(0, Number.parseInt(savedCooldown) - Math.floor(Date.now() / 1000));
       if (remaining > 0) {
         setCooldown(remaining);
       }
     }
 
-    // Iniciar countdown
     const interval = setInterval(() => {
       setCooldown((prev) => {
         if (prev > 0) {
@@ -69,7 +67,6 @@ export const ResendVerificationButton: React.FC<ResendVerificationButtonProps> =
     try {
       await emailVerificationService.resendVerificationEmail();
       
-      // Iniciar cooldown
       setCooldown(COOLDOWN_SECONDS);
       const cooldownEnd = Date.now() / 1000 + COOLDOWN_SECONDS;
       localStorage.setItem('emailVerificationCooldown', cooldownEnd.toString());

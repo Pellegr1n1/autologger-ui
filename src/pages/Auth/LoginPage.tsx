@@ -4,6 +4,7 @@ import { UserOutlined, LockOutlined } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
 import { GoogleLoginButton } from "../../components/GoogleLoginButton"
+import { logger } from "../../shared/utils/logger"
 import styles from "./Auth.module.css"
 
 const { Title, Text } = Typography
@@ -15,7 +16,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const [isProcessingAuth, setIsProcessingAuth] = useState(false)
 
-  const handleGoogleError = useCallback((error: any) => {
+  const handleGoogleError = useCallback((error: Error) => {
     const errorMessage = error.message || "Erro ao fazer login com Google. Tente novamente."
     
     api.error({
@@ -28,21 +29,28 @@ export default function LoginPage() {
     setIsProcessingAuth(false)
   }, [api])
 
-  const handleGoogleSuccess = useCallback(async (response: any) => {
+  const handleGoogleSuccess = useCallback(async (response: unknown) => {
     setLoading(true)
 
     try {
       // Token é gerenciado automaticamente via cookie httpOnly pelo backend
       // Não precisamos mais armazenar no localStorage
-      if (response.user) {
-        // Login user
-        await login(response.user)
+      const responseData = response && typeof response === 'object' && 'user' in response ? response as { user: unknown } : null;
+      if (responseData?.user) {
+        // Login user - o user pode ser LoginData ou User
+        const userData = responseData.user;
+        if (userData && typeof userData === 'object' && ('id' in userData || 'email' in userData)) {
+          await login(userData as Parameters<typeof login>[0])
+        } else {
+          throw new Error('Formato de dados do usuário inválido')
+        }
         navigate("/vehicles")
       } else {
         throw new Error('Dados do usuário não recebidos')
       }
-    } catch (err: any) {
-      const errorMessage = err.message || err.response?.data?.message || "Erro ao fazer login com Google. Tente novamente."
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 
+        (err && typeof err === 'object' && 'response' in err && typeof err.response === 'object' && err.response !== null && 'data' in err.response && typeof err.response.data === 'object' && err.response.data !== null && 'message' in err.response.data && typeof err.response.data.message === 'string' ? err.response.data.message : "Erro ao fazer login com Google. Tente novamente.")
       
       api.error({
         message: 'Erro no login',
@@ -80,7 +88,7 @@ export default function LoginPage() {
     };
   }, [isProcessingAuth, handleGoogleSuccess, handleGoogleError]);
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true)
 
     try {
@@ -90,8 +98,8 @@ export default function LoginPage() {
       })
 
       navigate("/vehicles")
-    } catch (err: any) {
-      
+    } catch (err: unknown) {
+      logger.error('Erro ao fazer login', err);
       setTimeout(() => {
         api.error({
           message: 'Erro ao fazer login',

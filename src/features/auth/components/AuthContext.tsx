@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { authService } from '../services/apiAuth';
 import { AuthContextType, AuthUser, LoginData, RegisterData, User } from "../../../shared/types/user.types";
 import { logger } from '../../../shared/utils/logger';
@@ -19,14 +19,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // Tentar buscar o perfil do usuário
-      // Se o cookie httpOnly existir e for válido, o backend retornará o perfil
-      // Se não existir ou for inválido, o backend retornará 401
       const userData = await authService.getProfile();
       setUser(userData);
     } catch (error) {
-      // Se houver erro (401, etc), o usuário não está autenticado
-      // O cookie será removido pelo backend se necessário
       setUser(null);
     } finally {
       setLoading(false);
@@ -37,13 +32,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return {
       ...authUser,
       isActive: true,
-      isEmailVerified: false, // Default value, will be updated by backend
+      isEmailVerified: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
   };
 
-  const login = async (data: LoginData | User): Promise<void> => {
+  const login = useCallback(async (data: LoginData | User): Promise<void> => {
     try {
       if ('id' in data && 'authProvider' in data && data.authProvider === 'google') {
         setUser(data);
@@ -65,15 +60,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const fullUser = await authService.getProfile();
         setUser(fullUser);
       } catch (profileError) {
-        // Fallback: Mantém tempUser já setado se não conseguir buscar o perfil completo
         logger.warn('Perfil completo não disponível após login, usando dados básicos', profileError);
       }
     } catch (error) {
       throw error;
     }
-  };
+  }, []);
 
-  const register = async (data: RegisterData): Promise<User> => {
+  const register = useCallback(async (data: RegisterData): Promise<User> => {
     try {
       const response = await authService.register(data);
       const tempUser = convertAuthUserToUser(response.user);
@@ -84,30 +78,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(fullUser);
         return fullUser;
       } catch (profileError) {
-        // Fallback: Retorna tempUser se não conseguir buscar o perfil completo
         logger.warn('Perfil completo não disponível após registro, usando dados básicos', profileError);
         return tempUser;
       }
     } catch (error) {
       throw error;
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout();
     setUser(null);
-  };
+  }, []);
 
-  const updateProfile = async (data: Partial<User>) => {
+  const updateProfile = useCallback(async (data: Partial<User>) => {
     try {
       const updatedUser = await authService.updateProfile(data);
       setUser(updatedUser);
     } catch (error) {
       throw error;
     }
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const userData = await authService.getProfile();
       setUser(userData);
@@ -115,18 +108,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
       throw error;
     }
-  };
+  }, []);
 
-  const deleteAccount = async () => {
+  const deleteAccount = useCallback(async () => {
     try {
       await authService.deleteAccount();
       setUser(null);
     } catch (error) {
       throw error;
     }
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     loading,
     login,
@@ -136,11 +129,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUser,
     deleteAccount,
     isAuthenticated: !!user,
-  };
+  }), [user, loading, login, register, logout, updateProfile, refreshUser, deleteAccount]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {

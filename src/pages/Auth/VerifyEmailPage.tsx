@@ -4,6 +4,7 @@ import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from "@ant-
 import { useParams, useNavigate } from "react-router-dom";
 import { emailVerificationService } from "../../features/auth/services/emailVerificationService";
 import { useAuth } from "../../features/auth";
+import { logger } from "../../shared/utils/logger";
 import styles from "./Auth.module.css";
 
 const { Text } = Typography;
@@ -60,18 +61,21 @@ export default function VerifyEmailPage() {
         navigate('/vehicles');
       }, 3000);
       
-    } catch (error: any) {
-      console.error('Erro ao verificar email:', error);
+    } catch (error: unknown) {
+      logger.error('Erro ao verificar email:', error);
       
       let message = 'Erro ao verificar email. Tente novamente.';
       
-      if (error.response?.status === 404) {
-        message = 'Link de verificação inválido ou expirado. Solicite um novo link.';
-      } else if (error.response?.status === 400) {
-        message = 'Este link já foi utilizado ou é inválido.';
-      } else if (error.response?.data?.message) {
-        message = error.response.data.message;
-      } else if (error.message) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const errorResponse = error as { response?: { status?: number; data?: { message?: string } } };
+        if (errorResponse.response?.status === 404) {
+          message = 'Link de verificação inválido ou expirado. Solicite um novo link.';
+        } else if (errorResponse.response?.status === 400) {
+          message = 'Este link já foi utilizado ou é inválido.';
+        } else if (errorResponse.response?.data?.message) {
+          message = errorResponse.response.data.message;
+        }
+      } else if (error instanceof Error) {
         message = error.message;
       }
       

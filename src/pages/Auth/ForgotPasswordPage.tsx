@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, Typography, notification } from "antd";
 import { MailOutlined, ArrowLeftOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import { passwordRecoveryService } from "../../features/auth/services/passwordRecoveryService";
+import { logger } from "../../shared/utils/logger";
 import styles from "./Auth.module.css";
 
 const { Title, Text } = Typography;
@@ -13,7 +14,7 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: { email: string }) => {
     setLoading(true);
 
     try {
@@ -30,14 +31,19 @@ export default function ForgotPasswordPage() {
       
       setSuccess(true);
       
-    } catch (err: any) {
-      console.error("Erro ao solicitar recuperação de senha:", err);
+    } catch (err: unknown) {
+      logger.error("Erro ao solicitar recuperação de senha:", err);
       
       let errorMessage = "Erro ao processar solicitação. Tente novamente.";
       
-      if (err.response?.status === 429) {
-        errorMessage = "Muitas solicitações. Aguarde alguns minutos.";
-      } else if (err.message) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const errorResponse = err as { response?: { status?: number } };
+        if (errorResponse.response?.status === 429) {
+          errorMessage = "Muitas solicitações. Aguarde alguns minutos.";
+        }
+      }
+      
+      if (err instanceof Error) {
         errorMessage = err.message;
       }
 
