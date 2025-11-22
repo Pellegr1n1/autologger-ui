@@ -907,14 +907,14 @@ const ServiceModal: React.FC<ServiceModalProps> = React.memo(({
                     formatter={(value) => {
                       if (!value && value !== 0) return '';
                       const num = Number(value);
-                      if (isNaN(num)) return '';
+                      if (Number.isNaN(num)) return '';
                       return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     }}
                     parser={(value) => {
                       if (!value) return 0;
                       const cleaned = String(value).replace(/\./g, '').replace(',', '.');
-                      const parsed = parseFloat(cleaned);
-                      return isNaN(parsed) ? 0 : parsed;
+                      const parsed = Number.parseFloat(cleaned);
+                      return Number.isNaN(parsed) ? 0 : parsed;
                     }}
                     controls={false}
                     addonBefore="R$"

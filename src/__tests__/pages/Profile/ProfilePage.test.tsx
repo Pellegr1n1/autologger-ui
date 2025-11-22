@@ -29,6 +29,7 @@ jest.mock('../../../components/layout/Components.module.css', () => ({
 // Mock useAuth
 const mockUpdateProfile = jest.fn(() => Promise.resolve());
 const mockDeleteAccount = jest.fn(() => Promise.resolve());
+const mockRefreshUser = jest.fn(() => Promise.resolve());
 const mockUser = {
   id: '1',
   name: 'Test User',
@@ -41,6 +42,8 @@ jest.mock('../../../features/auth', () => ({
     user: mockUser,
     updateProfile: mockUpdateProfile,
     deleteAccount: mockDeleteAccount,
+    refreshUser: mockRefreshUser,
+    loading: false,
   }),
 }));
 
@@ -77,15 +80,23 @@ describe('ProfilePage', () => {
     expect(screen.getByTestId('default-frame')).toBeInTheDocument();
   });
 
-  it('should display user information', () => {
+  it('should display user information', async () => {
+    mockRefreshUser.mockResolvedValueOnce(undefined);
+    
     render(
       <BrowserRouter>
         <ProfilePage />
       </BrowserRouter>
     );
 
-    expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando perfil/i)).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument();
+    });
   });
 
   it('should show edit button when not editing', () => {
@@ -324,15 +335,23 @@ describe('ProfilePage', () => {
     }
   });
 
-  it('should display user stats correctly', () => {
+  it('should display user stats correctly', async () => {
+    mockRefreshUser.mockResolvedValueOnce(undefined);
+    
     const { container } = render(
       <BrowserRouter>
         <ProfilePage />
       </BrowserRouter>
     );
 
-    expect(container.textContent).toContain('Test User');
-    expect(container.textContent).toContain('test@example.com');
+    await waitFor(() => {
+      expect(screen.queryByText(/Carregando perfil/i)).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    await waitFor(() => {
+      expect(container.textContent).toContain('Test User');
+      expect(container.textContent).toContain('test@example.com');
+    });
   });
 
   it('should handle form change detection', async () => {

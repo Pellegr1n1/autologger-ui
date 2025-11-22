@@ -289,10 +289,10 @@ const PublicVehiclePage: React.FC = () => {
   };
 
   const matchesDateRangeFilter = (service: { serviceDate: string | Date }, dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null): boolean => {
-    if (!dateRange || !dateRange[0] || !dateRange[1]) return true;
+    if (!dateRange?.[0] || !dateRange?.[1]) return true;
     
     const serviceDate = dayjs(service.serviceDate);
-    return serviceDate.isAfter(dateRange[0]?.subtract(1, 'day')) && serviceDate.isBefore(dateRange[1]?.add(1, 'day'));
+    return serviceDate.isAfter(dateRange[0]!.subtract(1, 'day')) && serviceDate.isBefore(dateRange[1]!.add(1, 'day'));
   };
 
   const filteredHistory = sortedHistory.filter((service) => {

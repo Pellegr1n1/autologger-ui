@@ -43,9 +43,9 @@ const routes: RouteType[] = [
 const Router: React.FC = () => {
   return (
     <Routes>
-      {routes.map((route, key) => (
+      {routes.map((route) => (
         <Route
-          key={key}
+          key={route.path}
           path={route.path}
           element={
             route.isProtected ? (

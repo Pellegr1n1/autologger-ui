@@ -136,9 +136,12 @@
 }
 
 .formSection .ant-form-item-explain-error {
+  display: flex;
+  align-items: center;
   color: #EF4444;
   font-size: 12px;
   margin-top: 4px;
+  gap: 4px;
 }
 
 .formSection .ant-input,
@@ -483,13 +486,6 @@
 
 .formSection .ant-form-item-explain {
   margin-top: 4px;
-}
-
-.formSection .ant-form-item-explain-error {
-  display: flex;
-  align-items: center;
-  color: #EF4444;
-  gap: 4px;
 }
 
 .formSection .ant-form-item-explain-error::before {

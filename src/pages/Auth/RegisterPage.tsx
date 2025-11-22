@@ -367,9 +367,9 @@ export default function RegisterPage() {
             style={{ marginBottom: 20 }}
             size="small"
           >
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <Step
-                key={index}
+                key={step.title}
                 title={step.title}
                 icon={step.icon}
               />

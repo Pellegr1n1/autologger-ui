@@ -49,8 +49,19 @@ export default function LoginPage() {
         throw new Error('Dados do usuário não recebidos')
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 
-        (err && typeof err === 'object' && 'response' in err && typeof err.response === 'object' && err.response !== null && 'data' in err.response && typeof err.response.data === 'object' && err.response.data !== null && 'message' in err.response.data && typeof err.response.data.message === 'string' ? err.response.data.message : "Erro ao fazer login com Google. Tente novamente.")
+      let errorMessage = "Erro ao fazer login com Google. Tente novamente.";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object' && 'response' in err) {
+        const response = (err as { response?: unknown }).response;
+        if (response && typeof response === 'object' && 'data' in response) {
+          const data = (response as { data?: unknown }).data;
+          if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+            errorMessage = data.message;
+          }
+        }
+      }
       
       api.error({
         message: 'Erro no login',

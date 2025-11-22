@@ -189,14 +189,14 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   }, []);
 
   const matchesDateRange = useCallback((event: VehicleEvent, dateRange: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
-    if (!dateRange || !dateRange[0] || !dateRange[1]) return true;
+    if (!dateRange?.[0] || !dateRange?.[1]) return true;
     
     const eventWithExtras = event as VehicleEvent & { serviceDate?: string; date?: string; createdAt?: string };
     const eventDateSource = eventWithExtras.serviceDate || eventWithExtras.date || eventWithExtras.createdAt;
     if (!eventDateSource) return false;
     
     const eventDate = dayjs(eventDateSource);
-    return eventDate.isAfter(dateRange[0].subtract(1, 'day')) && eventDate.isBefore(dateRange[1].add(1, 'day'));
+    return eventDate.isAfter(dateRange[0]!.subtract(1, 'day')) && eventDate.isBefore(dateRange[1]!.add(1, 'day'));
   }, []);
 
   const filteredMaintenance = useMemo(() => {

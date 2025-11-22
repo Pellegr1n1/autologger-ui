@@ -26,6 +26,102 @@ import { getColorHex } from '../../../shared/utils/colorUtils';
 
 const { Title, Text } = Typography;
 
+interface StatCardProps {
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  suffix?: string;
+  color: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, title, value, suffix, color }) => (
+  <div
+    role="article"
+    aria-label={`${title}: ${value}${suffix ? ` ${suffix}` : ''}`}
+    style={{
+      background: 'var(--card-background)',
+      border: '1px solid var(--gray-2)',
+      borderRadius: 'var(--border-radius-md)',
+      padding: 'var(--space-lg)',
+      textAlign: 'center',
+      transition: 'all var(--transition-fast)',
+      height: '100%'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = color;
+      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = 'var(--gray-2)';
+      e.currentTarget.style.boxShadow = 'none';
+    }}
+  >
+    <div
+      style={{
+        width: '48px',
+        height: '48px',
+        background: `${color}15`,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto var(--space-sm) auto',
+        color: color,
+        fontSize: '20px'
+      }}
+    >
+      {icon}
+    </div>
+    <Text
+      style={{
+        fontSize: '12px',
+        color: 'var(--gray-5)',
+        display: 'block',
+        marginBottom: 'var(--space-xs)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        fontWeight: 500
+      }}
+    >
+      {title}
+    </Text>
+    <Text
+      style={{
+        fontSize: '24px',
+        fontWeight: 700,
+        color: 'var(--text-dark)',
+        display: 'block'
+      }}
+    >
+      {value} {suffix && value !== '...' && <span style={{ fontSize: '14px', color: 'var(--gray-5)' }}>{suffix}</span>}
+    </Text>
+  </div>
+);
+
+interface InfoRowProps {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+const InfoRow: React.FC<InfoRowProps> = ({ label, value, icon }) => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 'var(--space-md) 0',
+      borderBottom: '1px solid var(--gray-2)'
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+      {icon && <span style={{ color: 'var(--gray-5)' }}>{icon}</span>}
+      <Text style={{ color: 'var(--gray-6)', fontWeight: 500 }}>{label}</Text>
+    </div>
+    <div>{value}</div>
+  </div>
+);
+
 interface VehicleModalProps {
   visible: boolean;
   vehicle: Vehicle | null;
@@ -142,95 +238,6 @@ const VehicleModal: React.FC<VehicleModalProps> = ({
     }
   };
 
-  const StatCard: React.FC<{
-    icon: React.ReactNode;
-    title: string;
-    value: string | number;
-    suffix?: string;
-    color: string;
-  }> = ({ icon, title, value, suffix, color }) => (
-    <div
-      style={{
-        background: 'var(--card-background)',
-        border: '1px solid var(--gray-2)',
-        borderRadius: 'var(--border-radius-md)',
-        padding: 'var(--space-lg)',
-        textAlign: 'center',
-        transition: 'all var(--transition-fast)',
-        height: '100%'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.borderColor = color;
-        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = 'var(--gray-2)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      <div
-        style={{
-          width: '48px',
-          height: '48px',
-          background: `${color}15`,
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto var(--space-sm) auto',
-          color: color,
-          fontSize: '20px'
-        }}
-      >
-        {icon}
-      </div>
-      <Text
-        style={{
-          fontSize: '12px',
-          color: 'var(--gray-5)',
-          display: 'block',
-          marginBottom: 'var(--space-xs)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          fontWeight: 500
-        }}
-      >
-        {title}
-      </Text>
-      <Text
-        style={{
-          fontSize: '24px',
-          fontWeight: 700,
-          color: 'var(--text-dark)',
-          display: 'block'
-        }}
-      >
-        {value} {suffix && value !== '...' && <span style={{ fontSize: '14px', color: 'var(--gray-5)' }}>{suffix}</span>}
-      </Text>
-    </div>
-  );
-
-  const InfoRow: React.FC<{
-    label: string;
-    value: React.ReactNode;
-    icon?: React.ReactNode;
-  }> = ({ label, value, icon }) => (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 'var(--space-md) 0',
-        borderBottom: '1px solid var(--gray-2)'
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-        {icon && <span style={{ color: 'var(--gray-5)' }}>{icon}</span>}
-        <Text style={{ color: 'var(--gray-6)', fontWeight: 500 }}>{label}</Text>
-      </div>
-      <div>{value}</div>
-    </div>
-  );
 
   return (
     <Modal
