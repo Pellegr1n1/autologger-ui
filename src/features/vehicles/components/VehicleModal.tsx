@@ -34,28 +34,31 @@ interface StatCardProps {
   color: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ icon, title, value, suffix, color }) => (
-  <div
-    role="article"
-    aria-label={`${title}: ${value}${suffix ? ` ${suffix}` : ''}`}
-    style={{
-      background: 'var(--card-background)',
-      border: '1px solid var(--gray-2)',
-      borderRadius: 'var(--border-radius-md)',
-      padding: 'var(--space-lg)',
-      textAlign: 'center',
-      transition: 'all var(--transition-fast)',
-      height: '100%'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.borderColor = color;
-      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.borderColor = 'var(--gray-2)';
-      e.currentTarget.style.boxShadow = 'none';
-    }}
-  >
+const StatCard: React.FC<StatCardProps> = ({ icon, title, value, suffix, color }) => {
+  const suffixText = suffix ? ` ${suffix}` : '';
+  const ariaLabel = `${title}: ${value}${suffixText}`;
+  
+  return (
+    <article
+      aria-label={ariaLabel}
+      style={{
+        background: 'var(--card-background)',
+        border: '1px solid var(--gray-2)',
+        borderRadius: 'var(--border-radius-md)',
+        padding: 'var(--space-lg)',
+        textAlign: 'center',
+        transition: 'all var(--transition-fast)',
+        height: '100%'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = color;
+        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--gray-2)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    >
     <div
       style={{
         width: '48px',
@@ -95,8 +98,9 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, value, suffix, color }
     >
       {value} {suffix && value !== '...' && <span style={{ fontSize: '14px', color: 'var(--gray-5)' }}>{suffix}</span>}
     </Text>
-  </div>
-);
+  </article>
+  );
+};
 
 interface InfoRowProps {
   label: string;

@@ -195,8 +195,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     const eventDateSource = eventWithExtras.serviceDate || eventWithExtras.date || eventWithExtras.createdAt;
     if (!eventDateSource) return false;
     
+    const startDate = dateRange[0];
+    const endDate = dateRange[1];
     const eventDate = dayjs(eventDateSource);
-    return eventDate.isAfter(dateRange[0]!.subtract(1, 'day')) && eventDate.isBefore(dateRange[1]!.add(1, 'day'));
+    return eventDate.isAfter(startDate.subtract(1, 'day')) && eventDate.isBefore(endDate.add(1, 'day'));
   }, []);
 
   const filteredMaintenance = useMemo(() => {
