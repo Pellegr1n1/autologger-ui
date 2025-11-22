@@ -3,9 +3,9 @@ import { Card, Statistic, Row, Col, Typography, message, Button } from 'antd';
 import { 
   BlockOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   SafetyCertificateOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
@@ -215,7 +215,7 @@ export default function BlockchainPage() {
   const { 
     totalTransactions, 
     confirmedTransactions, 
-    pendingTransactions, 
+    failedTransactions,
     reliabilityScore,
     networkStatus 
   } = blockchainData;
@@ -274,9 +274,9 @@ export default function BlockchainPage() {
             <Col xs={24} sm={8}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
-                  title="Aguardando Confirmação"
-                  value={pendingTransactions}
-                  prefix={<ClockCircleOutlined style={{ color: 'var(--warning-color)' }} />}
+                  title="Registros Falhados"
+                  value={failedTransactions}
+                  prefix={<CloseCircleOutlined style={{ color: 'var(--error-color)' }} />}
                   valueStyle={{ color: 'var(--text-primary)' }}
                 />
               </Card>

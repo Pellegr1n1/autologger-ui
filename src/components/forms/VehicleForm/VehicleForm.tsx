@@ -59,6 +59,36 @@ const FormSection: React.FC<FormSectionProps> = ({ title, icon, children }) => (
   </div>
 );
 
+interface ModelNotFoundContentProps {
+  loadingModels: boolean;
+  selectedBrandCode: string;
+}
+
+const ModelNotFoundContent: React.FC<ModelNotFoundContentProps> = ({ loadingModels, selectedBrandCode }) => {
+  if (loadingModels) {
+    return <Spin size="small" />;
+  }
+  if (!selectedBrandCode) {
+    return "Selecione uma marca primeiro";
+  }
+  return "Nenhum modelo encontrado";
+};
+
+interface YearNotFoundContentProps {
+  loadingYears: boolean;
+  selectedModelCode: number | null;
+}
+
+const YearNotFoundContent: React.FC<YearNotFoundContentProps> = ({ loadingYears, selectedModelCode }) => {
+  if (loadingYears) {
+    return <Spin size="small" />;
+  }
+  if (!selectedModelCode) {
+    return "Selecione um modelo primeiro";
+  }
+  return "Nenhum ano encontrado";
+};
+
 interface VehicleFormValues {
   plate?: string;
   brand: string;
@@ -543,15 +573,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                         return option.children.toLowerCase().includes(input.toLowerCase());
                       }}
                       onChange={handleModelChange}
-                      notFoundContent={(() => {
-                        if (loadingModels) {
-                          return <Spin size="small" />;
-                        }
-                        if (!selectedBrandCode) {
-                          return "Selecione uma marca primeiro";
-                        }
-                        return "Nenhum modelo encontrado";
-                      })()}
+                      notFoundContent={<ModelNotFoundContent loadingModels={loadingModels} selectedBrandCode={selectedBrandCode} />}
                     >
                       {fipeModels.map(model => (
                         <Option key={model.codigo} value={model.nome}>
@@ -594,15 +616,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                       size="large"
                       style={{ borderRadius: 'var(--radius-md)' }}
                       onChange={handleYearChange}
-                      notFoundContent={(() => {
-                        if (loadingYears) {
-                          return <Spin size="small" />;
-                        }
-                        if (!selectedModelCode) {
-                          return "Selecione um modelo primeiro";
-                        }
-                        return "Nenhum ano encontrado";
-                      })()}
+                      notFoundContent={<YearNotFoundContent loadingYears={loadingYears} selectedModelCode={selectedModelCode} />}
                     >
                       {fipeYears.map(year => (
                         <Option key={year.codigo} value={year.nome}>

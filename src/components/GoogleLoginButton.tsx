@@ -59,18 +59,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
         return;
       }
       
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setIsLoading(false);
-        }
-      }, 1000);
-      
       setTimeout(() => {
-        if (!popup.closed) {
-          popup.close();
-        }
-        clearInterval(checkClosed);
         setIsLoading(false);
       }, 300000);
       

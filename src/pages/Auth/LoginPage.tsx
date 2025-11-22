@@ -29,28 +29,55 @@ export default function LoginPage() {
     setIsProcessingAuth(false)
   }, [api])
 
+  const extractErrorMessage = useCallback((err: unknown): string => {
+    if (err instanceof Error) {
+      return err.message;
+    }
+    
+    if (err && typeof err === 'object' && 'response' in err) {
+      const response = (err as { response?: unknown }).response;
+      if (response && typeof response === 'object' && 'data' in response) {
+        const data = (response as { data?: unknown }).data;
+        if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+          return data.message;
+        }
+      }
+    }
+    
+    return "Erro ao fazer login com Google. Tente novamente.";
+  }, []);
+
+  const validateUserData = useCallback((userData: unknown): boolean => {
+    return userData !== null && 
+           typeof userData === 'object' && 
+           ('id' in userData || 'email' in userData);
+  }, []);
+
+  const processGoogleResponse = useCallback(async (response: unknown) => {
+    const responseData = response && typeof response === 'object' && 'user' in response 
+      ? response as { user: unknown } 
+      : null;
+    
+    if (!responseData?.user) {
+      throw new Error('Dados do usuário não recebidos');
+    }
+
+    const userData = responseData.user;
+    if (!validateUserData(userData)) {
+      throw new Error('Formato de dados do usuário inválido');
+    }
+
+    await login(userData as Parameters<typeof login>[0]);
+    navigate("/vehicles");
+  }, [login, navigate, validateUserData]);
+
   const handleGoogleSuccess = useCallback(async (response: unknown) => {
     setLoading(true)
 
     try {
-      // Token é gerenciado automaticamente via cookie httpOnly pelo backend
-      // Não precisamos mais armazenar no localStorage
-      const responseData = response && typeof response === 'object' && 'user' in response ? response as { user: unknown } : null;
-      if (responseData?.user) {
-        // Login user - o user pode ser LoginData ou User
-        const userData = responseData.user;
-        if (userData && typeof userData === 'object' && ('id' in userData || 'email' in userData)) {
-          await login(userData as Parameters<typeof login>[0])
-        } else {
-          throw new Error('Formato de dados do usuário inválido')
-        }
-        navigate("/vehicles")
-      } else {
-        throw new Error('Dados do usuário não recebidos')
-      }
+      await processGoogleResponse(response);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 
-        (err && typeof err === 'object' && 'response' in err && typeof err.response === 'object' && err.response !== null && 'data' in err.response && typeof err.response.data === 'object' && err.response.data !== null && 'message' in err.response.data && typeof err.response.data.message === 'string' ? err.response.data.message : "Erro ao fazer login com Google. Tente novamente.")
+      const errorMessage = extractErrorMessage(err);
       
       api.error({
         message: 'Erro no login',
@@ -62,7 +89,7 @@ export default function LoginPage() {
       setLoading(false)
       setIsProcessingAuth(false)
     }
-  }, [login, navigate, api])
+  }, [api, processGoogleResponse, extractErrorMessage])
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

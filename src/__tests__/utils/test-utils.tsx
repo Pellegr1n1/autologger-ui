@@ -1,8 +1,6 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
-import { AuthProvider } from '../../features/auth/components/AuthContext';
 
 // Mock do tema do Ant Design para testes
 const mockTheme = {

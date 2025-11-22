@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Space, Typography, Table, Button, Tag, Spin, message, Modal, Tooltip } from 'antd';
+import { Space, Typography, Table, Button, Tag, Spin, message, Modal, Tooltip, Tabs } from 'antd';
 import { 
   LinkOutlined, 
   CheckCircleOutlined, 
   ClockCircleOutlined, 
   BlockOutlined,
   EyeOutlined,
-  CopyOutlined
+  CopyOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { BlockchainService } from '../services/blockchainService';
@@ -37,6 +38,7 @@ export default function TransactionHistory() {
   const [refreshing, setRefreshing] = useState(false);
   const [hashModalVisible, setHashModalVisible] = useState(false);
   const [selectedHash, setSelectedHash] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('confirmed');
 
   const loadTransactions = async () => {
     try {
@@ -56,8 +58,7 @@ export default function TransactionHistory() {
           blockNumber: (s as { blockNumber?: number }).blockNumber,
           vehicleId: s.vehicleId,
           vehicle: (s as { vehicle?: { brand?: string; model?: string; plate?: string } }).vehicle,
-        }))
-        .filter((tx: Transaction) => tx.hash);
+        }));
 
       setTransactions(mapped);
     } catch (error) {
@@ -263,16 +264,13 @@ export default function TransactionHistory() {
       defaultSortOrder: 'descend',
     },
     {
-      title: 'Status Blockchain',
+      title: 'Hash',
       key: 'blockchain',
-      align: 'left',
+      align: 'center',
       render: (_: unknown, record: Transaction) => {
         if (record.status === 'CONFIRMED' && record.hash) {
           return (
             <Space direction="vertical" size={4} style={{ width: '100%' }}>
-              <Tag color="success" icon={<CheckCircleOutlined />} style={{ margin: 0 }}>
-                Protegido
-              </Tag>
               <Tooltip title="Clique para ver detalhes do hash">
                 <Button 
                   type="link" 
@@ -293,6 +291,36 @@ export default function TransactionHistory() {
             </Space>
           );
         }
+        if (record.status === 'FAILED') {
+          return (
+            <Space direction="vertical" size={4} style={{ width: '100%' }}>
+              {record.hash && (
+                <Tooltip title="Clique para ver detalhes do hash">
+                  <Button 
+                    type="link" 
+                    size="small" 
+                    icon={<EyeOutlined />}
+                    style={{ 
+                      color: 'var(--error-color)',
+                      padding: '0',
+                      height: 'auto',
+                      fontSize: '11px',
+                      lineHeight: '1'
+                    }}
+                    onClick={() => handleViewHash(record.hash!)}
+                  >
+                    {shortenHash(record.hash)}
+                  </Button>
+                </Tooltip>
+              )}
+              {!record.hash && (
+                <Text style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
+                  Sem hash
+                </Text>
+              )}
+            </Space>
+          );
+        }
         return (
           <Text style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
             Aguardando...
@@ -301,6 +329,10 @@ export default function TransactionHistory() {
       },
     },
   ];
+
+  // Separar transações por status
+  const confirmedTransactions = transactions.filter(tx => tx.status === 'CONFIRMED');
+  const failedTransactions = transactions.filter(tx => tx.status === 'FAILED');
 
   if (loading) {
     return (
@@ -327,11 +359,78 @@ export default function TransactionHistory() {
     );
   }
 
+  const renderTable = (data: Transaction[]) => (
+    <Table
+      columns={columns}
+      dataSource={data}
+      rowKey="id"
+      pagination={{
+        pageSize: 5,
+        showSizeChanger: false,
+        showTotal: (total) => `Total: ${total} transações`,
+        style: { marginTop: '16px' }
+      }}
+      style={{
+        background: 'var(--surface-color)',
+        borderRadius: '12px',
+        overflow: 'hidden'
+      }}
+      className="professionalTable"
+    />
+  );
+
+  const tabItems = [
+    {
+      key: 'confirmed',
+      label: (
+        <Space>
+          <CheckCircleOutlined />
+          <span>Confirmadas ({confirmedTransactions.length})</span>
+        </Space>
+      ),
+      children: confirmedTransactions.length > 0 ? (
+        renderTable(confirmedTransactions)
+      ) : (
+        <div style={{ padding: '32px', textAlign: 'center' }}>
+          <CheckCircleOutlined style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }} />
+          <Text style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '16px', marginBottom: '8px' }}>
+            Nenhuma transação confirmada
+          </Text>
+          <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            As transações confirmadas aparecerão aqui
+          </Text>
+        </div>
+      ),
+    },
+    {
+      key: 'failed',
+      label: (
+        <Space>
+          <CloseCircleOutlined />
+          <span>Falhadas ({failedTransactions.length})</span>
+        </Space>
+      ),
+      children: failedTransactions.length > 0 ? (
+        renderTable(failedTransactions)
+      ) : (
+        <div style={{ padding: '32px', textAlign: 'center' }}>
+          <CloseCircleOutlined style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }} />
+          <Text style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '16px', marginBottom: '8px' }}>
+            Nenhuma transação falhada
+          </Text>
+          <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Ótimo! Todas as transações foram processadas com sucesso
+          </Text>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text strong style={{ color: 'var(--text-primary)', fontSize: '16px' }}>
-          Últimas Transações ({transactions.length})
+          Transações ({transactions.length})
         </Text>
         <Button 
           type="link" 
@@ -344,22 +443,15 @@ export default function TransactionHistory() {
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={transactions}
-        rowKey="id"
-        pagination={{
-          pageSize: 5,
-          showSizeChanger: false,
-          showTotal: (total) => `Total: ${total} transações`,
-          style: { marginTop: '16px' }
-        }}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={tabItems}
         style={{
           background: 'var(--surface-color)',
           borderRadius: '12px',
-          overflow: 'hidden'
+          padding: '16px'
         }}
-        className="professionalTable"
       />
 
       <Modal
