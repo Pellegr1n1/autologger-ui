@@ -3,6 +3,20 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ProfilePage from '../../../pages/Profile/ProfilePage';
 
+jest.mock('../../../shared/utils/env', () => ({
+  getApiBaseUrl: jest.fn(() => 'http://localhost:3001'),
+  getGoogleClientId: jest.fn(() => 'test-client-id'),
+  getEnvVar: jest.fn((key: string, defaultValue?: string) => {
+    if (key === 'VITE_API_URL' || key === 'VITE_API_BASE_URL') {
+      return 'http://localhost:3001';
+    }
+    if (key === 'VITE_GOOGLE_CLIENT_ID') {
+      return 'test-client-id';
+    }
+    return defaultValue;
+  }),
+}));
+
 // Mock CSS modules
 jest.mock('../../../pages/Profile/ProfilePage.module.css', () => ({
   profilePage: 'profilePage',

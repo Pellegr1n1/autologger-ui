@@ -28,6 +28,7 @@ import { EVENT_TYPES } from '../../features/vehicles/utils/constants';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './MaintenancePage.module.css';
+import { getApiBaseUrl } from '../../shared/utils/env';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
 import { logger } from '../../shared/utils/logger';
 
@@ -103,7 +104,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
       return fileUrl;
     }
-    const backendUrl = 'http://localhost:3001';
+    const backendUrl = getApiBaseUrl();
     return `${backendUrl}${fileUrl}`;
   };
 

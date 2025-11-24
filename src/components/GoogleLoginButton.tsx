@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from 'antd';
 import { GoogleOutlined } from '@ant-design/icons';
 import { logger } from '../shared/utils/logger';
+import { getGoogleClientId, getApiBaseUrl } from '../shared/utils/env';
 
 interface GoogleLoginButtonProps {
   onSuccess?: (response: unknown) => void;
@@ -17,7 +18,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const googleClientId = getGoogleClientId();
     
     if (!googleClientId) {
       onError(new Error('Google Client ID não configurado'));
@@ -28,7 +29,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       setIsLoading(true);
       
       // Configurar parâmetros OAuth2
-      const backendUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const backendUrl = getApiBaseUrl();
       const redirectUri = `${backendUrl}/auth/google/callback`;
       const scope = 'openid email profile';
       const responseType = 'code';
@@ -71,7 +72,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
     }
   };
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = getGoogleClientId();
   
   if (!googleClientId) {
     return (
