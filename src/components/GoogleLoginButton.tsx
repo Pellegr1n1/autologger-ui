@@ -28,7 +28,8 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       setIsLoading(true);
       
       // Configurar parâmetros OAuth2
-      const redirectUri = `http://localhost:3001/auth/google/callback`;
+      const backendUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const redirectUri = `${backendUrl}/auth/google/callback`;
       const scope = 'openid email profile';
       const responseType = 'code';
       const accessType = 'offline';

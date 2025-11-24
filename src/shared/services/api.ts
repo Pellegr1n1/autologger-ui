@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
 // Configuração da API
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 class ApiBase {
     public api: AxiosInstance;
