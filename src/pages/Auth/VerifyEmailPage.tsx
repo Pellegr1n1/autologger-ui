@@ -29,12 +29,15 @@ const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
  * - error: Mostra erro + opções
  */
 export default function VerifyEmailPage() {
-  const { token } = useParams<{ token: string }>();
+  const { token: rawToken } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Decodificar token da URL (pode estar encoded)
+  const token = rawToken ? decodeURIComponent(rawToken) : null;
 
   useEffect(() => {
     verifyEmail();
@@ -49,10 +52,16 @@ export default function VerifyEmailPage() {
     }
 
     try {
+      // Fazer a verificação
       await emailVerificationService.verifyEmail(token);
       
-      // Atualizar dados do usuário no contexto
-      await refreshUser();
+      // Tentar atualizar dados do usuário (não crítico se falhar)
+      try {
+        await refreshUser();
+      } catch (refreshError) {
+        logger.warn('Não foi possível atualizar dados do usuário após verificação', refreshError);
+        // Não falha a verificação se não conseguir atualizar o contexto
+      }
       
       setStatus('success');
       
@@ -71,7 +80,14 @@ export default function VerifyEmailPage() {
         if (errorResponse.response?.status === 404) {
           message = 'Link de verificação inválido ou expirado. Solicite um novo link.';
         } else if (errorResponse.response?.status === 400) {
-          message = 'Este link já foi utilizado ou é inválido.';
+          const backendMessage = errorResponse.response?.data?.message || '';
+          if (backendMessage.includes('expirado')) {
+            message = 'Este link expirou. Solicite um novo link de verificação.';
+          } else if (backendMessage.includes('utilizado')) {
+            message = 'Este link já foi utilizado. Seu email já está verificado.';
+          } else {
+            message = backendMessage || 'Este link já foi utilizado ou é inválido.';
+          }
         } else if (errorResponse.response?.data?.message) {
           message = errorResponse.response.data.message;
         }
@@ -133,14 +149,31 @@ export default function VerifyEmailPage() {
           title="Falha na verificação"
           subTitle={errorMessage}
           extra={[
-            <Button type="primary" key="resend" onClick={() => navigate('/email-verification-pending')}>
+            <Button 
+              type="primary" 
+              key="resend" 
+              onClick={() => {
+                navigate('/email-verification-pending');
+              }}
+              style={{ marginRight: 8 }}
+            >
               Reenviar email
             </Button>,
-            <Button key="login" onClick={() => navigate('/login')}>
+            <Button 
+              key="login" 
+              onClick={() => {
+                navigate('/login');
+              }}
+            >
               Voltar ao login
             </Button>,
           ]}
         />
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <Text type="secondary" style={{ fontSize: 14 }}>
+            Se você já verificou seu email anteriormente, você pode fazer login normalmente.
+          </Text>
+        </div>
       </div>
     </div>
   );
