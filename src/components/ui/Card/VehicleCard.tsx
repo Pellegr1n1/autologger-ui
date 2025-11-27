@@ -113,9 +113,9 @@ export default function VehicleCard({
       <div className={styles.cardActions}>
         <Button
           type="primary"
+          className={styles.viewButton}
           onClick={() => onView(vehicle)}
           style={{
-            flex: 1,
             height: '40px',
             borderRadius: '8px',
             background: 'linear-gradient(135deg, var(--primary-color), var(--accent-color))',

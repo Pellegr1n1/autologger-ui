@@ -55,19 +55,24 @@ export default function VerifyEmailPage() {
       // Fazer a verificação
       await emailVerificationService.verifyEmail(token);
       
-      // Tentar atualizar dados do usuário (não crítico se falhar)
       try {
         await refreshUser();
-      } catch (refreshError) {
-        logger.warn('Não foi possível atualizar dados do usuário após verificação', refreshError);
-        // Não falha a verificação se não conseguir atualizar o contexto
+      } catch (refreshError: unknown) {
+        const errorResponse = refreshError && typeof refreshError === 'object' && 'response' in refreshError
+          ? (refreshError as { response?: { status?: number } }).response
+          : null;
+        
+        if (errorResponse?.status === 401) {
+          logger.info('Usuário não autenticado na nova guia (esperado), redirecionando para login');
+        } else if (errorResponse?.status !== 401) {
+          logger.warn('Não foi possível atualizar dados do usuário após verificação', refreshError);
+        }
       }
       
       setStatus('success');
       
-      // Redirecionar para dashboard após 3 segundos
       setTimeout(() => {
-        navigate('/vehicles');
+        navigate('/login');
       }, 3000);
       
     } catch (error: unknown) {
@@ -83,7 +88,7 @@ export default function VerifyEmailPage() {
           const backendMessage = errorResponse.response?.data?.message || '';
           if (backendMessage.includes('expirado')) {
             message = 'Este link expirou. Solicite um novo link de verificação.';
-          } else if (backendMessage.includes('utilizado')) {
+          } else if (backendMessage.includes('utilizado') || backendMessage.includes('já foi')) {
             message = 'Este link já foi utilizado. Seu email já está verificado.';
           } else {
             message = backendMessage || 'Este link já foi utilizado ou é inválido.';
@@ -128,10 +133,10 @@ export default function VerifyEmailPage() {
           <Result
             icon={<CheckCircleOutlined style={{ fontSize: 72, color: "#52c41a" }} />}
             title="Email verificado com sucesso!"
-            subTitle="Você será redirecionado para a área de trabalho em instantes."
+            subTitle="Você será redirecionado para a página de login em instantes. Faça login para acessar sua conta."
             extra={[
-              <Button type="primary" key="redirect" onClick={() => navigate('/vehicles')}>
-                Ir para Dashboard
+              <Button type="primary" key="redirect" onClick={() => navigate('/login')}>
+                Ir para Login
               </Button>,
             ]}
           />

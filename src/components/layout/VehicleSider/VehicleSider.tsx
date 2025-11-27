@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../../features/auth";
 import { 
   CarOutlined, 
   ToolOutlined, 
   BarChartOutlined, 
   UserOutlined, 
-  LogoutOutlined,
+  ArrowLeftOutlined,
   BlockOutlined
 } from "@ant-design/icons";
 import { FiMenu } from "react-icons/fi";
@@ -42,6 +43,7 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
     const [canToggle, setCanToggle] = useState<boolean>(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const { logout } = useAuth();
 
     useEffect(() => {
         const checkScreenSize = () => {
@@ -151,17 +153,22 @@ const VehicleSider: React.FC<VehicleSiderProps> = ({ onCollapseChange }) => {
             }}>
                 <Button
                     type="text"
-                    icon={<LogoutOutlined />}
-                    onClick={() => {
-                        localStorage.clear();
-                        window.location.href = '/login';
+                    icon={<ArrowLeftOutlined />}
+                    onClick={async () => {
+                        try {
+                            await logout();
+                            navigate('/login');
+                        } catch (error) {
+                            console.error('Erro ao fazer logout:', error);
+                            navigate('/');
+                        }
                     }}
                     style={{
                         width: '100%',
                         height: '48px',
                         color: 'var(--text-primary)',
                         background: 'transparent',
-                        border: '1px solid rgba(139, 92, 246, 0.2)',
+                        border: 'none',
                         borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',

@@ -28,9 +28,13 @@ jest.mock('react-router-dom', () => ({
 
 // Mock useAuth
 const mockLogin = jest.fn();
+const mockIsAuthenticated = false;
+const mockAuthLoading = false;
 jest.mock('../../../features/auth', () => ({
   useAuth: () => ({
     login: mockLogin,
+    isAuthenticated: mockIsAuthenticated,
+    loading: mockAuthLoading,
   }),
 }));
 
@@ -133,6 +137,7 @@ describe('LoginPage', () => {
       expect(mockLogin).toHaveBeenCalledWith({
         email: 'test@test.com',
         password: 'password123',
+        rememberMe: false,
       });
     });
   });

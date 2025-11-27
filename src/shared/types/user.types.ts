@@ -32,6 +32,7 @@ export interface RegisterData {
 export interface LoginData {
     email: string;
     password: string;
+    rememberMe?: boolean;
 }
 
 export interface UpdateProfileData {

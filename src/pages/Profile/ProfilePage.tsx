@@ -25,11 +25,13 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   CloseOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../features/auth';
 import { authService } from '../../features/auth/services/apiAuth';
 import { useNavigate } from 'react-router-dom';
+import { apiBase } from '../../shared/services/api';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './ProfilePage.module.css';
@@ -44,7 +46,7 @@ interface ProfileFormData {
 
 export default function ProfilePage() {
   const [api, contextHolder] = notification.useNotification();
-  const { user, updateProfile, deleteAccount, loading: authLoading, refreshUser } = useAuth();
+  const { user, updateProfile, deleteAccount, loading: authLoading, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
@@ -255,15 +257,25 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     try {
       setDeleteLoading(true);
-      await deleteAccount();
-      api.success({
-        message: 'Conta excluída',
-        description: 'Sua conta foi excluída com sucesso.',
-        placement: 'bottomRight',
-        duration: 5,
-      });
+      
+      await apiBase.api.delete('/users/account');
+      
       setDeleteModalVisible(false);
-      navigate('/');
+      
+      api.success({
+        message: 'Conta excluída com sucesso',
+        description: 'Sua conta foi excluída permanentemente. Você será redirecionado em instantes.',
+        placement: 'bottomRight',
+        duration: 3,
+        icon: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
+      });
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      apiBase.removeToken();
+      
+      window.location.href = '/';
+      
     } catch (error: unknown) {
       console.error('Erro ao deletar conta:', error);
       let errorMessage = 'Erro ao excluir conta. Tente novamente.';
@@ -281,7 +293,7 @@ export default function ProfilePage() {
         placement: 'bottomRight',
         duration: 5,
       });
-    } finally {
+      
       setDeleteLoading(false);
     }
   };

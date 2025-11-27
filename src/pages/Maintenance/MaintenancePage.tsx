@@ -97,7 +97,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   };
 
   const getFileName = (fileUrl: string) => {
-    return fileUrl.split('/').pop() || 'Arquivo';
+    const urlWithoutParams = fileUrl.split('?')[0];
+    const fileName = urlWithoutParams.split('/').pop() || 'Arquivo';
+    return fileName;
   };
 
   const getAbsoluteUrl = (fileUrl: string) => {
@@ -456,10 +458,21 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     }
 
     const headers = Object.keys(exportData[0] || {});
-      const csvContent = [
+    
+    const escapeCSVValue = (value: string): string => {
+      if (value.includes(',') || value.includes('\n') || value.includes('\r') || value.includes('"')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+    
+    const csvContent = [
       headers.join(','),
       ...exportData.map(row => 
-        headers.map(header => `"${String((row as Record<string, unknown>)[header] || '')}"`).join(',')
+        headers.map(header => {
+          const value = String((row as Record<string, unknown>)[header] || '');
+          return escapeCSVValue(value);
+        }).join(',')
       )
     ].join('\n');
 
@@ -501,49 +514,86 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         return;
       }
 
-      const parseCSVLine = (line: string): string[] => {
-        const result: string[] = [];
-        let current = '';
+      const parseCSV = (csv: string): string[][] => {
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
+        let currentField = '';
         let inQuotes = false;
-        
-        for (const char of line) {
+        let i = 0;
+
+        while (i < csv.length) {
+          const char = csv[i];
+          const nextChar = i + 1 < csv.length ? csv[i + 1] : '';
+
           if (char === '"') {
-            inQuotes = !inQuotes;
+            if (inQuotes && nextChar === '"') {
+              currentField += '"';
+              i += 2;
+            } else {
+              inQuotes = !inQuotes;
+              i++;
+            }
           } else if (char === ',' && !inQuotes) {
-            result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
-            current = '';
+            currentRow.push(currentField);
+            currentField = '';
+            i++;
+          } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+            if (char === '\r' && nextChar === '\n') {
+              i += 2;
+            } else {
+              i++;
+            }
+            currentRow.push(currentField);
+            if (currentRow.length > 0 && currentRow.some(field => field.trim() !== '')) {
+              rows.push(currentRow);
+            }
+            currentRow = [];
+            currentField = '';
           } else {
-            current += char;
+            currentField += char;
+            i++;
           }
         }
-        result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
-        return result;
+
+        if (currentField !== '' || currentRow.length > 0) {
+          currentRow.push(currentField);
+          if (currentRow.length > 0 && currentRow.some(field => field.trim() !== '')) {
+            rows.push(currentRow);
+          }
+        }
+
+        return rows;
       };
 
-      const lines = csvContent.split('\n').filter(line => line.trim() !== '');
-      if (lines.length === 0) {
+      const parsedRows = parseCSV(csvContent);
+      if (parsedRows.length === 0) {
         message.warning('Nenhum dado para exportar');
         return;
       }
 
-      const headers = parseCSVLine(lines[0]);
-      const rows = lines.slice(1).map(line => parseCSVLine(line));
+      const headers = parsedRows[0];
+      const rows = parsedRows.slice(1);
+
+      const escapeTSVValue = (value: string): string => {
+        return value.replace(/\n/g, ' ').replace(/\r/g, '');
+      };
 
       const tsvContent = [
-        headers.join('\t'),
-        ...rows.map(row => row.join('\t'))
+        headers.map(escapeTSVValue).join('\t'),
+        ...rows.map(row => row.map(escapeTSVValue).join('\t'))
       ].join('\n');
 
+      // Para CSV melhorado, mantém as quebras de linha mas escapa corretamente
+      const escapeCSVValue = (value: string): string => {
+        if (value.includes(',') || value.includes('\n') || value.includes('\r') || value.includes('"')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+
       const improvedCSV = [
-        headers.join(','),
-        ...rows.map(row => 
-          row.map(cell => {
-            if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
-              return `"${cell.replaceAll('"', '""')}"`;
-            }
-            return cell;
-          }).join(',')
-        )
+        headers.map(escapeCSVValue).join(','),
+        ...rows.map(row => row.map(escapeCSVValue).join(','))
       ].join('\n');
 
       navigator.clipboard.writeText(tsvContent).then(() => {

@@ -3,7 +3,8 @@ import { Form, Input, Button, Card, Typography, Checkbox, Steps, Space, Progress
 import {
   UserOutlined,
   LockOutlined,
-  MailOutlined
+  MailOutlined,
+  HomeOutlined
 } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
@@ -353,6 +354,13 @@ export default function RegisterPage() {
       <div className={styles.authContainer}>
         <div className={styles.authContent}>
           <Card className={styles.authCard}>
+          <Button
+            type="text"
+            icon={<HomeOutlined />}
+            onClick={() => navigate('/')}
+            className={styles.homeButton}
+            title="Voltar para a página inicial"
+          />
           <div className={styles.authHeader}>
             <Title level={2} className={styles.authTitle} style={{ marginBottom: 8, fontSize: '1.8rem' }}>
               Crie sua conta
