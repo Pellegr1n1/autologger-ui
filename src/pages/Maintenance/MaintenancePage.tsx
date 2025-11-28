@@ -264,27 +264,32 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       const updated = await VehicleServiceService.getServiceById(serviceId);
       if (!updated) return { shouldContinue: true };
 
-      // Atualizar a lista de serviços imediatamente
-      setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? updated : ev));
-
-      // Verificar status de múltiplas formas
-      const blockchainStatus = updated.blockchainStatus?.status;
+      // Normalizar o blockchainStatus baseado no status direto do backend
       const directStatus = (updated as any).status;
-      const statusField = (updated as any).status;
+      let normalizedStatus = updated.blockchainStatus?.status;
       
-      // Mapear status do backend para frontend
-      let finalStatus = blockchainStatus;
-      if (!finalStatus) {
-        if (statusField === 'confirmed' || statusField === 'CONFIRMED') {
-          finalStatus = 'CONFIRMED';
-        } else if (statusField === 'rejected' || statusField === 'REJECTED') {
-          finalStatus = 'FAILED';
-        } else if (statusField === 'pending' || statusField === 'PENDING') {
-          finalStatus = 'PENDING';
+      if (!normalizedStatus && directStatus) {
+        if (directStatus === 'confirmed' || directStatus === 'CONFIRMED') {
+          normalizedStatus = 'CONFIRMED';
+        } else if (directStatus === 'rejected' || directStatus === 'REJECTED') {
+          normalizedStatus = 'FAILED';
+        } else if (directStatus === 'pending' || directStatus === 'PENDING') {
+          normalizedStatus = 'PENDING';
         }
       }
+
+      const normalizedService = {
+        ...updated,
+        blockchainStatus: {
+          ...(updated.blockchainStatus || {}),
+          status: normalizedStatus || updated.blockchainStatus?.status || 'PENDING'
+        }
+      };
+
+      setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? normalizedService : ev));
+
+      const finalStatus = normalizedStatus || updated.blockchainStatus?.status || 'PENDING';
       
-      // Verificar se tem hash ou confirmedAt (o backend retorna hash ou blockchainHash)
       const hasHash = !!(updated as any).blockchainHash || 
                       !!(updated as any).hash || 
                       !!(updated as any).confirmationHash;
@@ -292,24 +297,20 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                               !!(updated as any).confirmedAt;
       const hasDefinitiveProof = hasHash && hasConfirmedAt;
 
-      // Log para debug (remover em produção se necessário)
       logger.debug('Verificando status do serviço', {
         serviceId,
-        blockchainStatus,
+        blockchainStatus: normalizedStatus,
         directStatus,
-        statusField,
         finalStatus,
         hasHash,
         hasConfirmedAt,
         hasDefinitiveProof
       });
 
-      // Verificar se está confirmado - aceitar se status é CONFIRMED E tem hash
-      if (finalStatus === 'CONFIRMED' || (statusField === 'confirmed' && hasHash)) {
-        // Atualizar notificação imediatamente quando confirmado
+      if (finalStatus === 'CONFIRMED' || (directStatus === 'confirmed' && hasHash)) {
         api.success({
           key: notifKey,
-          message: '✅ Confirmado na blockchain',
+          message: 'Confirmado na blockchain',
           description: 'O serviço foi registrado com sucesso na blockchain.',
           placement: 'bottomRight',
           duration: 5
@@ -317,11 +318,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         return { shouldContinue: false, status: 'CONFIRMED' };
       }
 
-      // Verificar se falhou - aceitar se status é FAILED ou REJECTED
-      if (finalStatus === 'FAILED' || statusField === 'rejected' || statusField === 'REJECTED') {
+      if (finalStatus === 'FAILED' || directStatus === 'rejected' || directStatus === 'REJECTED') {
         api.error({
           key: notifKey,
-          message: '❌ Falha na blockchain',
+          message: 'Falha na blockchain',
           description: 'Não foi possível registrar na blockchain. Você pode tentar reenviar usando o botão de reenvio.',
           placement: 'bottomRight',
           duration: 8
@@ -329,21 +329,18 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         return { shouldContinue: false, status: 'FAILED' };
       }
 
-      // Se ainda está PENDING mas tem hash, pode estar processando
       if ((finalStatus === 'PENDING' || !finalStatus) && hasHash) {
-        // Atualizar notificação para indicar que está processando
         api.info({
           key: notifKey,
-          message: '⏳ Processando na blockchain',
+          message: 'Processando na blockchain',
           description: 'Aguardando confirmação... isso pode levar alguns segundos.',
           placement: 'bottomRight',
           duration: 0
         });
       } else if (finalStatus === 'PENDING' || !finalStatus) {
-        // PENDING sem hash - ainda não tentou registrar
         api.info({
           key: notifKey,
-          message: '⏳ Aguardando registro',
+          message: 'Aguardando registro',
           description: 'O serviço será registrado na blockchain em breve...',
           placement: 'bottomRight',
           duration: 0
@@ -377,21 +374,19 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     });
     
     let attempts = 0;
-    const maxAttempts = 20; // Aumentar para 20 tentativas (60 segundos total)
+    const maxAttempts = 20;
     
     const intervalId = setInterval(async () => {
       attempts += 1;
       const result = await checkBlockchainStatus(newService.id, notifKey);
       
       if (!result.shouldContinue) {
-        // O checkBlockchainStatus já atualiza a notificação quando o status muda
         clearInterval(intervalId);
         pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
         return;
       }
 
       if (attempts >= maxAttempts) {
-        // Fazer uma última verificação detalhada antes de parar
         try {
           const lastCheck = await VehicleServiceService.getServiceById(newService.id);
           const lastBlockchainStatus = lastCheck.blockchainStatus?.status;
@@ -408,12 +403,21 @@ const MaintenancePage = React.memo(function MaintenancePage() {
               finalLastStatus = 'FAILED';
             }
           }
+
+          // Normalizar o blockchainStatus e atualizar o estado
+          const normalizedLastService = {
+            ...lastCheck,
+            blockchainStatus: {
+              ...(lastCheck.blockchainStatus || {}),
+              status: finalLastStatus || lastCheck.blockchainStatus?.status || 'PENDING'
+            }
+          };
+          setMaintenanceEvents(prev => prev.map(ev => ev.id === lastCheck.id ? normalizedLastService : ev));
           
-          // Se está confirmado, mostrar sucesso
           if (finalLastStatus === 'CONFIRMED' || (lastDirectStatus === 'confirmed' && lastHasHash)) {
             api.success({
               key: notifKey,
-              message: '✅ Confirmado na blockchain',
+              message: 'Confirmado na blockchain',
               description: 'O serviço foi registrado com sucesso na blockchain.',
               placement: 'bottomRight',
               duration: 5
@@ -423,11 +427,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             return;
           }
           
-          // Se está rejeitado, mostrar erro
           if (finalLastStatus === 'FAILED' || lastDirectStatus === 'rejected' || lastDirectStatus === 'REJECTED') {
             api.error({
               key: notifKey,
-              message: '❌ Falha na blockchain',
+              message: 'Falha na blockchain',
               description: 'O registro falhou após várias tentativas. Use o botão de reenvio para tentar novamente.',
               placement: 'bottomRight',
               duration: 8
@@ -437,11 +440,10 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             return;
           }
           
-          // Se ainda está pendente mas tem hash, pode estar processando
           if (lastHasHash && !lastHasConfirmedAt) {
             api.warning({
               key: notifKey,
-              message: '⏳ Processando na blockchain',
+              message: ' Processando na blockchain',
               description: 'O registro está sendo processado. Pode demorar alguns minutos. Verifique mais tarde.',
               placement: 'bottomRight',
               duration: 8
@@ -449,7 +451,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           } else {
             api.warning({
               key: notifKey,
-              message: '⏳ Ainda aguardando confirmação',
+              message: ' Ainda aguardando confirmação',
               description: 'A confirmação está demorando mais que o esperado. O serviço continuará sendo processado em segundo plano. Verifique mais tarde ou tente reenviar.',
               placement: 'bottomRight',
               duration: 8
@@ -459,7 +461,7 @@ const MaintenancePage = React.memo(function MaintenancePage() {
           logger.warn('Erro na verificação final do status', e);
           api.warning({
             key: notifKey,
-            message: '⏳ Ainda aguardando confirmação',
+            message: ' Ainda aguardando confirmação',
             description: 'A confirmação está demorando mais que o esperado. Verifique mais tarde ou tente reenviar.',
             placement: 'bottomRight',
             duration: 8
