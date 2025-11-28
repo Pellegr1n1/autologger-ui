@@ -22,18 +22,11 @@ interface ResetPasswordRequest {
 export const passwordRecoveryService = {
   /**
    * Solicitar reset de senha
-   * Deve retornar mensagem genérica (não revelar se email existe)
    */
   async requestPasswordReset(data: ForgotPasswordRequest): Promise<void> {
     try {
       await authService.forgotPassword(data.email);
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'response' in error) {
-        const errorResponse = error as { response?: { status?: number } };
-        if (errorResponse.response?.status === 404) {
-          return;
-        }
-      }
       logger.error('Erro ao solicitar reset de senha', error);
       throw error;
     }

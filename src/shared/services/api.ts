@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
+import { getApiBaseUrl } from '../utils/env';
 
 // Configuração da API
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiBase {
     public api: AxiosInstance;

@@ -131,4 +131,62 @@ describe('ForgotPasswordPage', () => {
       expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
   });
+
+  it('should show error message for Google Auth email', async () => {
+    const mockRequest = passwordRecoveryService.requestPasswordReset as jest.Mock;
+    const googleAuthError = {
+      response: {
+        status: 400,
+        data: {
+          message: 'Este email está associado a uma conta Google. Use a opção "Entrar com Google" para acessar sua conta.',
+        },
+      },
+    };
+    mockRequest.mockRejectedValue(googleAuthError);
+
+    render(
+      <BrowserRouter>
+        <ForgotPasswordPage />
+      </BrowserRouter>
+    );
+
+    const emailInput = screen.getByPlaceholderText(/seu@email.com/i);
+    const submitButton = screen.getByText(/Enviar instruções/i);
+
+    fireEvent.change(emailInput, { target: { value: 'google@test.com' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockRequest).toHaveBeenCalledWith({ email: 'google@test.com' });
+    });
+  });
+
+  it('should show error message for non-existent email', async () => {
+    const mockRequest = passwordRecoveryService.requestPasswordReset as jest.Mock;
+    const notFoundError = {
+      response: {
+        status: 404,
+        data: {
+          message: 'Email não encontrado',
+        },
+      },
+    };
+    mockRequest.mockRejectedValue(notFoundError);
+
+    render(
+      <BrowserRouter>
+        <ForgotPasswordPage />
+      </BrowserRouter>
+    );
+
+    const emailInput = screen.getByPlaceholderText(/seu@email.com/i);
+    const submitButton = screen.getByText(/Enviar instruções/i);
+
+    fireEvent.change(emailInput, { target: { value: 'nonexistent@test.com' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockRequest).toHaveBeenCalledWith({ email: 'nonexistent@test.com' });
+    });
+  });
 });

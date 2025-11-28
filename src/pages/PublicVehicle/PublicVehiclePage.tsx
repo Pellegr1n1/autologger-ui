@@ -43,6 +43,7 @@ import {
 import { VehicleShareService, PublicVehicleInfo } from '../../features/vehicles/services/vehicleShareService';
 import { formatBRDate } from '../../shared/utils/format';
 import { getColorHex } from '../../shared/utils/colorUtils';
+import { getApiBaseUrl } from '../../shared/utils/env';
 import styles from './PublicVehiclePage.module.css';
 
 const { Title, Text } = Typography;
@@ -184,7 +185,7 @@ const PublicVehiclePage: React.FC = () => {
       return fileUrl;
     }
     // Se é relativa, adiciona o prefixo do backend (mesma URL da API)
-    const backendUrl = 'http://localhost:3001';
+    const backendUrl = getApiBaseUrl();
     return `${backendUrl}${fileUrl}`;
   };
 

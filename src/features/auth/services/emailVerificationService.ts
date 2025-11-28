@@ -28,7 +28,8 @@ export const emailVerificationService = {
    */
   async verifyEmail(token: string): Promise<void> {
     try {
-      await apiBase.api.post(`/auth/verify-email/${token}`);
+      const encodedToken = encodeURIComponent(token);
+      await apiBase.api.post(`/auth/verify-email/${encodedToken}`);
     } catch (error) {
       throw error;
     }

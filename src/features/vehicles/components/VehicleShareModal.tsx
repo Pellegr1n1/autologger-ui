@@ -9,6 +9,7 @@ import {
   Spin,
   Card,
   Checkbox,
+  Select,
 } from 'antd';
 import {
   ShareAltOutlined,
@@ -16,8 +17,7 @@ import {
   QrcodeOutlined,
   DownloadOutlined,
   CloseOutlined,
-  CheckCircleOutlined,
-  PaperClipOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 import QRCode from 'qrcode';
 import { VehicleShareService, VehicleShareResponse } from '../services/vehicleShareService';
@@ -25,6 +25,7 @@ import { Vehicle, VehicleStatus } from '../types/vehicle.types';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Option } = Select;
 
 interface VehicleShareModalProps {
   visible: boolean;
@@ -42,6 +43,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [includeAttachments, setIncludeAttachments] = useState(false);
+  const [expiresInDays, setExpiresInDays] = useState<number>(30);
 
   useEffect(() => {
     if (visible && vehicle) {
@@ -54,6 +56,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
       
       // Reset quando o modal abre
       setIncludeAttachments(false);
+      setExpiresInDays(30);
       setShareData(null);
       setQrCodeDataUrl('');
       setCopied(false);
@@ -88,7 +91,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
 
     setLoading(true);
     try {
-      const response = await VehicleShareService.generateShareLink(vehicle.id, 30, includeAttachments);
+      const response = await VehicleShareService.generateShareLink(vehicle.id, expiresInDays, includeAttachments);
       setShareData(response);
       
       const qrCodeUrl = await generateQRCode(response.shareUrl);
@@ -140,8 +143,8 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
     <Modal
       open={visible}
       onCancel={onClose}
-      width={800}
-      style={{ top: 20 }}
+      width="90%"
+      style={{ top: 20, maxWidth: 800 }}
       footer={null}
       closeIcon={null}
       styles={{
@@ -155,7 +158,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
       <div
         style={{
           background: `linear-gradient(135deg, var(--primary-color), var(--secondary-color))`,
-          padding: 'var(--space-xxl)',
+          padding: 'var(--space-lg) var(--space-md)',
           color: 'var(--text-light)',
           position: 'relative',
           overflow: 'hidden'
@@ -217,7 +220,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
             style={{
               color: 'var(--text-light)',
               margin: '0 0 var(--space-sm) 0',
-              fontSize: '28px',
+              fontSize: 'clamp(20px, 4vw, 28px)',
               fontWeight: 700
             }}
           >
@@ -227,7 +230,8 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
           <Text
             style={{
               color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '16px'
+              fontSize: 'clamp(14px, 3vw, 16px)',
+              wordBreak: 'break-word'
             }}
           >
             {vehicle.brand} {vehicle.model} - {vehicle.plate}
@@ -235,7 +239,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
         </div>
       </div>
 
-      <div style={{ padding: 'var(--space-xxl)' }}>
+      <div style={{ padding: 'var(--space-lg) var(--space-md)' }}>
         {(() => {
           if (loading) {
             return (
@@ -262,21 +266,48 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                   <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: 'var(--space-md)' }}>
                     Configurações de Compartilhamento
                   </Text>
-                  <Checkbox
-                    checked={includeAttachments}
-                    onChange={(e) => setIncludeAttachments(e.target.checked)}
-                    style={{ fontSize: '14px' }}
-                  >
-                    <Space>
-                      <PaperClipOutlined style={{ color: 'var(--primary-color)' }} />
-                      <span>Incluir anexos nos dados compartilhados</span>
-                    </Space>
-                  </Checkbox>
-                  <div style={{ marginTop: 'var(--space-sm)' }}>
-                    <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                      Se marcado, os anexos dos serviços serão visíveis na página pública.
-                    </Text>
-                  </div>
+                  
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    <div>
+                      <Text style={{ fontSize: '14px', display: 'block', marginBottom: 'var(--space-xs)' }}>
+                        Tempo de expiração do link:
+                      </Text>
+                      <Select
+                        value={expiresInDays}
+                        onChange={setExpiresInDays}
+                        style={{ width: '100%' }}
+                        size="large"
+                      >
+                        <Option value={7}>7 dias</Option>
+                        <Option value={15}>15 dias</Option>
+                        <Option value={30}>30 dias</Option>
+                        <Option value={60}>60 dias</Option>
+                        <Option value={90}>90 dias</Option>
+                        <Option value={180}>180 dias</Option>
+                        <Option value={365}>1 ano</Option>
+                      </Select>
+                      <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: 'var(--space-xs)' }}>
+                        O link expirará automaticamente após o período selecionado.
+                      </Text>
+                    </div>
+                    
+                    <div>
+                      <Checkbox
+                        checked={includeAttachments}
+                        onChange={(e) => setIncludeAttachments(e.target.checked)}
+                        style={{ fontSize: '14px' }}
+                      >
+                        <Space>
+                          <span>Incluir anexos nos dados compartilhados</span>
+                        </Space>
+                      </Checkbox>
+                      <div style={{ marginTop: 'var(--space-xs)' }}>
+                        <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                          Se marcado, os anexos dos serviços serão visíveis na página pública.
+                        </Text>
+                      </div>
+                    </div>
+                  </Space>
                 </div>
                 
                 <Button
@@ -288,12 +319,20 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                   style={{
                     background: 'var(--primary-color)',
                     borderColor: 'var(--primary-color)',
-                    height: '48px',
-                    fontSize: '16px',
-                    fontWeight: 600
+                    minHeight: '48px',
+                    fontSize: 'clamp(14px, 3vw, 16px)',
+                    fontWeight: 600,
+                    padding: '12px 16px',
+                    lineHeight: '1.4'
                   }}
                 >
-                  Gerar Link de Compartilhamento
+                  <span style={{ 
+                    display: 'block',
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word'
+                  }}>
+                    Gerar Link de Compartilhamento
+                  </span>
                 </Button>
               </Space>
             </Card>
@@ -326,11 +365,11 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                 
                 <div>
                   <Text type="secondary" style={{ fontSize: '12px' }}>LINK PÚBLICO:</Text>
-                  <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                     <TextArea
                       value={shareData.shareUrl}
                       readOnly
-                      style={{ flex: 1, fontFamily: 'monospace', fontSize: '12px' }}
+                      style={{ flex: 1, minWidth: '200px', fontFamily: 'monospace', fontSize: '12px' }}
                       rows={2}
                     />
                     <Button
@@ -339,7 +378,8 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                       onClick={() => copyToClipboard(shareData.shareUrl)}
                       style={{
                         background: copied ? 'var(--success-color)' : 'var(--primary-color)',
-                        borderColor: copied ? 'var(--success-color)' : 'var(--primary-color)'
+                        borderColor: copied ? 'var(--success-color)' : 'var(--primary-color)',
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {copied ? 'Copiado!' : 'Copiar'}
@@ -364,8 +404,9 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                     src={qrCodeDataUrl}
                     alt="QR Code"
                     style={{
-                      width: '256px',
-                      height: '256px',
+                      width: '100%',
+                      maxWidth: '256px',
+                      height: 'auto',
                       border: '1px solid var(--gray-2)',
                       borderRadius: 'var(--border-radius-sm)',
                       marginBottom: 'var(--space-md)'
@@ -378,6 +419,7 @@ const VehicleShareModal: React.FC<VehicleShareModalProps> = ({
                       onClick={downloadQRCode}
                       size="large"
                       style={{ marginTop: 'var(--space-sm)' }}
+                      block
                     >
                       Baixar QR Code
                     </Button>

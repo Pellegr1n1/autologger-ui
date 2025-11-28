@@ -11,6 +11,21 @@ jest.mock('../../../components/ui/Card/VehicleCard.module.css', () => ({
   actions: 'actions',
 }));
 
+// Mock do módulo env para garantir consistência
+jest.mock('../../../../shared/utils/env', () => ({
+  getApiBaseUrl: jest.fn(() => 'http://localhost:3001'),
+  getGoogleClientId: jest.fn(() => 'test-client-id'),
+  getEnvVar: jest.fn((key: string, defaultValue?: string) => {
+    if (key === 'VITE_API_URL' || key === 'VITE_API_BASE_URL') {
+      return 'http://localhost:3001';
+    }
+    if (key === 'VITE_GOOGLE_CLIENT_ID') {
+      return 'test-client-id';
+    }
+    return defaultValue;
+  }),
+}));
+
 const mockVehicle: Vehicle = {
   id: '1',
   brand: 'Toyota',
@@ -154,8 +169,6 @@ describe('VehicleCard', () => {
       ...mockVehicle,
       imageUrl: '/uploads/image.jpg',
     };
-
-    process.env.VITE_API_BASE_URL = 'http://localhost:3001';
 
     render(
       <VehicleCard

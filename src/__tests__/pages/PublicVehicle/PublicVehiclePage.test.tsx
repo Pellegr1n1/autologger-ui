@@ -4,6 +4,20 @@ import { BrowserRouter } from 'react-router-dom';
 import PublicVehiclePage from '../../../pages/PublicVehicle/PublicVehiclePage';
 import { VehicleShareService } from '../../../features/vehicles/services/vehicleShareService';
 
+jest.mock('../../../shared/utils/env', () => ({
+  getApiBaseUrl: jest.fn(() => 'http://localhost:3001'),
+  getGoogleClientId: jest.fn(() => 'test-client-id'),
+  getEnvVar: jest.fn((key: string, defaultValue?: string) => {
+    if (key === 'VITE_API_URL' || key === 'VITE_API_BASE_URL') {
+      return 'http://localhost:3001';
+    }
+    if (key === 'VITE_GOOGLE_CLIENT_ID') {
+      return 'test-client-id';
+    }
+    return defaultValue;
+  }),
+}));
+
 // Mock CSS module
 jest.mock('../../../pages/PublicVehicle/PublicVehiclePage.module.css', () => ({
   container: 'container',

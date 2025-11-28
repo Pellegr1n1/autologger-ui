@@ -83,9 +83,31 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.homeButton {
+  position: absolute;
+  top: var(--space-lg);
+  left: var(--space-lg);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+  z-index: 20;
+  padding: var(--space-xs);
+}
+
+.homeButton:hover {
+  color: var(--text-primary);
+}
+
+.homeButton:focus {
+  color: var(--text-primary);
+}
+
 .authHeader {
   text-align: center;
   margin-bottom: var(--space-xl);
+  margin-top: var(--space-md);
 }
 
 .logo {
@@ -293,6 +315,11 @@
   .socialButtons {
     flex-direction: column;
   }
+
+  .homeButton {
+    top: var(--space-md);
+    left: var(--space-md);
+  }
 }
 
 @media (max-width: 480px) {
@@ -306,5 +333,10 @@
 
   .authSubtitle {
     font-size: 1rem;
+  }
+
+  .homeButton {
+    top: var(--space-sm);
+    left: var(--space-sm);
   }
 }

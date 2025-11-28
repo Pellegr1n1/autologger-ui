@@ -28,6 +28,7 @@ import { EVENT_TYPES } from '../../features/vehicles/utils/constants';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
 import styles from './MaintenancePage.module.css';
+import { getApiBaseUrl } from '../../shared/utils/env';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
 import { logger } from '../../shared/utils/logger';
 
@@ -96,14 +97,16 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   };
 
   const getFileName = (fileUrl: string) => {
-    return fileUrl.split('/').pop() || 'Arquivo';
+    const urlWithoutParams = fileUrl.split('?')[0];
+    const fileName = urlWithoutParams.split('/').pop() || 'Arquivo';
+    return fileName;
   };
 
   const getAbsoluteUrl = (fileUrl: string) => {
     if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
       return fileUrl;
     }
-    const backendUrl = 'http://localhost:3001';
+    const backendUrl = getApiBaseUrl();
     return `${backendUrl}${fileUrl}`;
   };
 
@@ -259,35 +262,97 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     try {
       // Buscar apenas o serviço específico em vez de todos os serviços
       const updated = await VehicleServiceService.getServiceById(serviceId);
-      if (!updated) return { shouldContinue: true, consecutiveConfirmed: 0 };
+      if (!updated) return { shouldContinue: true };
 
-      setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? updated : ev));
-
-      const status = updated.blockchainStatus?.status;
-      const updatedWithExtras = updated as VehicleEvent & { confirmedAt?: string; hash?: string };
-      const hasDefinitiveProof = !!updatedWithExtras.confirmedAt || !!updatedWithExtras.hash;
-
-      if (status === 'CONFIRMED' && hasDefinitiveProof) {
-        return { shouldContinue: false, consecutiveConfirmed: 1, status: 'CONFIRMED' };
+      // Normalizar o blockchainStatus baseado no status direto do backend
+      const directStatus = (updated as any).status;
+      let normalizedStatus = updated.blockchainStatus?.status;
+      
+      if (!normalizedStatus && directStatus) {
+        if (directStatus === 'confirmed' || directStatus === 'CONFIRMED') {
+          normalizedStatus = 'CONFIRMED';
+        } else if (directStatus === 'rejected' || directStatus === 'REJECTED') {
+          normalizedStatus = 'FAILED';
+        } else if (directStatus === 'pending' || directStatus === 'PENDING') {
+          normalizedStatus = 'PENDING';
+        }
       }
 
-      if (status === 'FAILED') {
+      const normalizedService = {
+        ...updated,
+        blockchainStatus: {
+          ...(updated.blockchainStatus || {}),
+          status: normalizedStatus || updated.blockchainStatus?.status || 'PENDING'
+        }
+      };
+
+      setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? normalizedService : ev));
+
+      const finalStatus = normalizedStatus || updated.blockchainStatus?.status || 'PENDING';
+      
+      const hasHash = !!(updated as any).blockchainHash || 
+                      !!(updated as any).hash || 
+                      !!(updated as any).confirmationHash;
+      const hasConfirmedAt = !!(updated as any).blockchainConfirmedAt || 
+                              !!(updated as any).confirmedAt;
+      const hasDefinitiveProof = hasHash && hasConfirmedAt;
+
+      logger.debug('Verificando status do serviço', {
+        serviceId,
+        blockchainStatus: normalizedStatus,
+        directStatus,
+        finalStatus,
+        hasHash,
+        hasConfirmedAt,
+        hasDefinitiveProof
+      });
+
+      if (finalStatus === 'CONFIRMED' || (directStatus === 'confirmed' && hasHash)) {
+        api.success({
+          key: notifKey,
+          message: 'Confirmado na blockchain',
+          description: 'O serviço foi registrado com sucesso na blockchain.',
+          placement: 'bottomRight',
+          duration: 5
+        });
+        return { shouldContinue: false, status: 'CONFIRMED' };
+      }
+
+      if (finalStatus === 'FAILED' || directStatus === 'rejected' || directStatus === 'REJECTED') {
         api.error({
           key: notifKey,
           message: 'Falha na blockchain',
-          description: 'Não foi possível registrar. Você pode tentar reenviar.',
+          description: 'Não foi possível registrar na blockchain. Você pode tentar reenviar usando o botão de reenvio.',
           placement: 'bottomRight',
-          duration: 6
+          duration: 8
         });
-        return { shouldContinue: false, consecutiveConfirmed: 0, status: 'FAILED' };
+        return { shouldContinue: false, status: 'FAILED' };
       }
 
-      return { shouldContinue: true, consecutiveConfirmed: 0 };
+      if ((finalStatus === 'PENDING' || !finalStatus) && hasHash) {
+        api.info({
+          key: notifKey,
+          message: 'Processando na blockchain',
+          description: 'Aguardando confirmação... isso pode levar alguns segundos.',
+          placement: 'bottomRight',
+          duration: 0
+        });
+      } else if (finalStatus === 'PENDING' || !finalStatus) {
+        api.info({
+          key: notifKey,
+          message: 'Aguardando registro',
+          description: 'O serviço será registrado na blockchain em breve...',
+          placement: 'bottomRight',
+          duration: 0
+        });
+      }
+
+      return { shouldContinue: true };
     } catch (e) {
       logger.warn('Erro ao verificar status da blockchain', e);
-      return { shouldContinue: true, consecutiveConfirmed: 0 };
+      return { shouldContinue: true };
     }
-  }, [api]);
+  }, [api, logger]);
 
   const handleServiceAdd = useCallback((newService: VehicleEvent) => {
     const pendingInjected = {
@@ -309,39 +374,100 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     });
     
     let attempts = 0;
-    const maxAttempts = 12;
-    let consecutiveConfirmed = 0;
+    const maxAttempts = 20;
     
     const intervalId = setInterval(async () => {
       attempts += 1;
       const result = await checkBlockchainStatus(newService.id, notifKey);
       
       if (!result.shouldContinue) {
-        if (result.status === 'CONFIRMED') {
-          consecutiveConfirmed += 1;
-          if (consecutiveConfirmed >= 2) {
-            api.success({
-              key: notifKey,
-              message: 'Confirmado na blockchain',
-              description: 'O serviço foi registrado com sucesso.',
-              placement: 'bottomRight',
-              duration: 4
-            });
-          }
-        }
         clearInterval(intervalId);
         pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
         return;
       }
 
       if (attempts >= maxAttempts) {
-        api.warning({
-          key: notifKey,
-          message: 'Ainda aguardando confirmação',
-          description: 'A confirmação pode demorar. Verifique mais tarde ou tente reenviar.',
-          placement: 'bottomRight',
-          duration: 6
-        });
+        try {
+          const lastCheck = await VehicleServiceService.getServiceById(newService.id);
+          const lastBlockchainStatus = lastCheck.blockchainStatus?.status;
+          const lastDirectStatus = (lastCheck as any).status;
+          const lastHasHash = !!(lastCheck as any).blockchainHash || !!(lastCheck as any).hash;
+          const lastHasConfirmedAt = !!(lastCheck as any).blockchainConfirmedAt || !!(lastCheck as any).confirmedAt;
+          
+          // Determinar status final
+          let finalLastStatus = lastBlockchainStatus;
+          if (!finalLastStatus) {
+            if (lastDirectStatus === 'confirmed' || lastDirectStatus === 'CONFIRMED') {
+              finalLastStatus = 'CONFIRMED';
+            } else if (lastDirectStatus === 'rejected' || lastDirectStatus === 'REJECTED') {
+              finalLastStatus = 'FAILED';
+            }
+          }
+
+          // Normalizar o blockchainStatus e atualizar o estado
+          const normalizedLastService = {
+            ...lastCheck,
+            blockchainStatus: {
+              ...(lastCheck.blockchainStatus || {}),
+              status: finalLastStatus || lastCheck.blockchainStatus?.status || 'PENDING'
+            }
+          };
+          setMaintenanceEvents(prev => prev.map(ev => ev.id === lastCheck.id ? normalizedLastService : ev));
+          
+          if (finalLastStatus === 'CONFIRMED' || (lastDirectStatus === 'confirmed' && lastHasHash)) {
+            api.success({
+              key: notifKey,
+              message: 'Confirmado na blockchain',
+              description: 'O serviço foi registrado com sucesso na blockchain.',
+              placement: 'bottomRight',
+              duration: 5
+            });
+            clearInterval(intervalId);
+            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+            return;
+          }
+          
+          if (finalLastStatus === 'FAILED' || lastDirectStatus === 'rejected' || lastDirectStatus === 'REJECTED') {
+            api.error({
+              key: notifKey,
+              message: 'Falha na blockchain',
+              description: 'O registro falhou após várias tentativas. Use o botão de reenvio para tentar novamente.',
+              placement: 'bottomRight',
+              duration: 8
+            });
+            clearInterval(intervalId);
+            pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
+            return;
+          }
+          
+          if (lastHasHash && !lastHasConfirmedAt) {
+            api.warning({
+              key: notifKey,
+              message: ' Processando na blockchain',
+              description: 'O registro está sendo processado. Pode demorar alguns minutos. Verifique mais tarde.',
+              placement: 'bottomRight',
+              duration: 8
+            });
+          } else {
+            api.warning({
+              key: notifKey,
+              message: ' Ainda aguardando confirmação',
+              description: 'A confirmação está demorando mais que o esperado. O serviço continuará sendo processado em segundo plano. Verifique mais tarde ou tente reenviar.',
+              placement: 'bottomRight',
+              duration: 8
+            });
+          }
+        } catch (e) {
+          logger.warn('Erro na verificação final do status', e);
+          api.warning({
+            key: notifKey,
+            message: ' Ainda aguardando confirmação',
+            description: 'A confirmação está demorando mais que o esperado. Verifique mais tarde ou tente reenviar.',
+            placement: 'bottomRight',
+            duration: 8
+          });
+        }
+        
         clearInterval(intervalId);
         pollersRef.current = pollersRef.current.filter(id => id !== (intervalId as unknown as number));
       }
@@ -455,10 +581,21 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     }
 
     const headers = Object.keys(exportData[0] || {});
-      const csvContent = [
+    
+    const escapeCSVValue = (value: string): string => {
+      if (value.includes(',') || value.includes('\n') || value.includes('\r') || value.includes('"')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+    
+    const csvContent = [
       headers.join(','),
       ...exportData.map(row => 
-        headers.map(header => `"${String((row as Record<string, unknown>)[header] || '')}"`).join(',')
+        headers.map(header => {
+          const value = String((row as Record<string, unknown>)[header] || '');
+          return escapeCSVValue(value);
+        }).join(',')
       )
     ].join('\n');
 
@@ -500,49 +637,86 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         return;
       }
 
-      const parseCSVLine = (line: string): string[] => {
-        const result: string[] = [];
-        let current = '';
+      const parseCSV = (csv: string): string[][] => {
+        const rows: string[][] = [];
+        let currentRow: string[] = [];
+        let currentField = '';
         let inQuotes = false;
-        
-        for (const char of line) {
+        let i = 0;
+
+        while (i < csv.length) {
+          const char = csv[i];
+          const nextChar = i + 1 < csv.length ? csv[i + 1] : '';
+
           if (char === '"') {
-            inQuotes = !inQuotes;
+            if (inQuotes && nextChar === '"') {
+              currentField += '"';
+              i += 2;
+            } else {
+              inQuotes = !inQuotes;
+              i++;
+            }
           } else if (char === ',' && !inQuotes) {
-            result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
-            current = '';
+            currentRow.push(currentField);
+            currentField = '';
+            i++;
+          } else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+            if (char === '\r' && nextChar === '\n') {
+              i += 2;
+            } else {
+              i++;
+            }
+            currentRow.push(currentField);
+            if (currentRow.length > 0 && currentRow.some(field => field.trim() !== '')) {
+              rows.push(currentRow);
+            }
+            currentRow = [];
+            currentField = '';
           } else {
-            current += char;
+            currentField += char;
+            i++;
           }
         }
-        result.push(current.trim().replaceAll(/(^"|"$)/g, ''));
-        return result;
+
+        if (currentField !== '' || currentRow.length > 0) {
+          currentRow.push(currentField);
+          if (currentRow.length > 0 && currentRow.some(field => field.trim() !== '')) {
+            rows.push(currentRow);
+          }
+        }
+
+        return rows;
       };
 
-      const lines = csvContent.split('\n').filter(line => line.trim() !== '');
-      if (lines.length === 0) {
+      const parsedRows = parseCSV(csvContent);
+      if (parsedRows.length === 0) {
         message.warning('Nenhum dado para exportar');
         return;
       }
 
-      const headers = parseCSVLine(lines[0]);
-      const rows = lines.slice(1).map(line => parseCSVLine(line));
+      const headers = parsedRows[0];
+      const rows = parsedRows.slice(1);
+
+      const escapeTSVValue = (value: string): string => {
+        return value.replace(/\n/g, ' ').replace(/\r/g, '');
+      };
 
       const tsvContent = [
-        headers.join('\t'),
-        ...rows.map(row => row.join('\t'))
+        headers.map(escapeTSVValue).join('\t'),
+        ...rows.map(row => row.map(escapeTSVValue).join('\t'))
       ].join('\n');
 
+      // Para CSV melhorado, mantém as quebras de linha mas escapa corretamente
+      const escapeCSVValue = (value: string): string => {
+        if (value.includes(',') || value.includes('\n') || value.includes('\r') || value.includes('"')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+
       const improvedCSV = [
-        headers.join(','),
-        ...rows.map(row => 
-          row.map(cell => {
-            if (cell.includes(',') || cell.includes('\n') || cell.includes('"')) {
-              return `"${cell.replaceAll('"', '""')}"`;
-            }
-            return cell;
-          }).join(',')
-        )
+        headers.map(escapeCSVValue).join(','),
+        ...rows.map(row => row.map(escapeCSVValue).join(','))
       ].join('\n');
 
       navigator.clipboard.writeText(tsvContent).then(() => {

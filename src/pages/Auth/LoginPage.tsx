@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { Form, Input, Button, Card, Typography, Checkbox, Divider, notification } from "antd"
-import { UserOutlined, LockOutlined } from "@ant-design/icons"
+import { UserOutlined, LockOutlined, ArrowLeftOutlined } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
 import { GoogleLoginButton } from "../../components/GoogleLoginButton"
@@ -12,7 +12,7 @@ const { Title, Text } = Typography
 export default function LoginPage() {
   const [api, contextHolder] = notification.useNotification()
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, isAuthenticated, loading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [isProcessingAuth, setIsProcessingAuth] = useState(false)
 
@@ -91,6 +91,13 @@ export default function LoginPage() {
     }
   }, [api, processGoogleResponse, extractErrorMessage])
 
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/vehicles', { replace: true });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
@@ -115,13 +122,14 @@ export default function LoginPage() {
     };
   }, [isProcessingAuth, handleGoogleSuccess, handleGoogleError]);
 
-  const onFinish = async (values: { email: string; password: string }) => {
+  const onFinish = async (values: { email: string; password: string; rememberMe?: boolean }) => {
     setLoading(true)
 
     try {
       await login({
         email: values.email,
         password: values.password,
+        rememberMe: values.rememberMe || false,
       })
 
       navigate("/vehicles")
@@ -141,12 +149,30 @@ export default function LoginPage() {
   }
 
 
+  // Mostrar loading enquanto verifica autenticação
+  if (authLoading) {
+    return (
+      <div className={styles.authContainer} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Text type="secondary">Verificando autenticação...</Text>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {contextHolder}
       <div className={styles.authContainer}>
       <div className={styles.authContent}>
         <Card className={styles.authCard}>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/')}
+            className={styles.homeButton}
+            title="Voltar para a página inicial"
+          />
           <div className={styles.authHeader}>
             <Title level={2} className={styles.authTitle}>
               Bem-vindo de volta
@@ -182,7 +208,9 @@ export default function LoginPage() {
 
             <Form.Item>
               <div className={styles.formOptions}>
+                <Form.Item name="rememberMe" valuePropName="checked" noStyle>
                 <Checkbox>Lembrar-me</Checkbox>
+                </Form.Item>
                 <Link to="/forgot-password" className={styles.forgotLink}>
                   Esqueceu a senha?
                 </Link>

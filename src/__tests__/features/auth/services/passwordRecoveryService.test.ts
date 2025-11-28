@@ -26,13 +26,29 @@ describe('passwordRecoveryService', () => {
       expect(mockForgotPassword).toHaveBeenCalledWith('test@test.com');
     });
 
-    it('should handle 404 error silently', async () => {
+    it('should propagate 404 error', async () => {
       const mockForgotPassword = authService.forgotPassword as jest.Mock;
-      mockForgotPassword.mockRejectedValue({ response: { status: 404 } });
+      const error404 = { response: { status: 404, data: { message: 'Email não encontrado' } } };
+      mockForgotPassword.mockRejectedValue(error404);
 
       await expect(
         passwordRecoveryService.requestPasswordReset({ email: 'test@test.com' })
-      ).resolves.not.toThrow();
+      ).rejects.toEqual(error404);
+    });
+
+    it('should propagate 400 error (Google Auth)', async () => {
+      const mockForgotPassword = authService.forgotPassword as jest.Mock;
+      const error400 = { 
+        response: { 
+          status: 400, 
+          data: { message: 'Este email está associado a uma conta Google. Use a opção "Entrar com Google" para acessar sua conta.' } 
+        } 
+      };
+      mockForgotPassword.mockRejectedValue(error400);
+
+      await expect(
+        passwordRecoveryService.requestPasswordReset({ email: 'google@test.com' })
+      ).rejects.toEqual(error400);
     });
   });
 

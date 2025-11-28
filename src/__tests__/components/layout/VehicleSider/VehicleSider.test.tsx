@@ -3,6 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import VehicleSider from '../../../../components/layout/VehicleSider/VehicleSider';
 
+// Mock env utils
+jest.mock('../../../../shared/utils/env', () => ({
+  getApiBaseUrl: () => 'http://localhost:3000',
+}));
+
 // Mock CSS module
 jest.mock('../../../components/layout/VehicleSider/Sider.module.css', () => ({
   sider: 'sider',
@@ -18,11 +23,21 @@ jest.mock('react-router-dom', () => ({
   useLocation: () => mockLocation,
 }));
 
+// Mock useAuth
+const mockLogout = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../../../features/auth', () => ({
+  useAuth: () => ({
+    logout: mockLogout,
+  }),
+}));
+
 describe('VehicleSider', () => {
   const mockOnCollapseChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLogout.mockClear();
+    mockNavigate.mockClear();
   });
 
   it('should render vehicle sider', () => {
@@ -162,9 +177,7 @@ describe('VehicleSider', () => {
     expect(screen.getByText(/Veículos/i)).toBeInTheDocument();
   });
 
-  it('should handle logout button click', () => {
-    const localStorageClearSpy = jest.spyOn(Storage.prototype, 'clear');
-    
+  it('should handle logout button click', async () => {
     // Mock window.innerWidth to be >= 768 so the sider can be toggled
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
@@ -187,12 +200,12 @@ describe('VehicleSider', () => {
     const logoutButton = screen.getByText(/Sair/i);
     fireEvent.click(logoutButton);
 
-    // Verify that localStorage.clear was called when logout button is clicked
-    // Note: window.location.href assignment cannot be easily mocked in jsdom,
-    // but the component code sets it to '/login' which is sufficient
-    expect(localStorageClearSpy).toHaveBeenCalled();
+    // Wait for async logout to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    localStorageClearSpy.mockRestore();
+    // Verify that logout was called and navigate was called with '/login'
+    expect(mockLogout).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith('/login');
   });
 
   it('should handle collapsed state with logout button', () => {
