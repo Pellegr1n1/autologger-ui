@@ -182,6 +182,18 @@ export default function BlockchainPage() {
     try {
       logger.info('Iniciando sincronização dos serviços do usuário');
       
+      // Sincronizar status de serviços falhados/rejeitados que estão na blockchain
+      const syncResult = await BlockchainService.syncFailedServicesStatus();
+      logger.info('Resultado da sincronização', syncResult);
+      
+      if (syncResult.corrected > 0) {
+        message.success(`✅ ${syncResult.corrected} serviço(s) corrigido(s)! Status atualizado para CONFIRMED.`);
+      } else if (syncResult.total > 0) {
+        message.warning(`⚠️ ${syncResult.notFound} serviço(s) não encontrado(s) na blockchain. Eles podem ser reenviados.`);
+      } else {
+        message.info('Nenhum serviço para sincronizar.');
+      }
+      
       // Forçar verificação de todos os serviços do usuário na blockchain
       await BlockchainService.forceVerifyAllServices();
       
