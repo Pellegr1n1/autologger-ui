@@ -125,6 +125,11 @@
   border: none !important;
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2) !important;
   transition: all 0.2s ease !important;
+  flex: 1 !important;
+}
+
+.viewButton {
+  flex: 1 !important;
 }
 
 .cardActions :global(.ant-btn-primary:hover) {
@@ -159,6 +164,16 @@
   .cardActions {
     padding: 0 16px 16px 16px;
     padding-top: 16px;
+  }
+  
+  .viewButton {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+  
+  .cardActions :global(.ant-btn-primary) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
   }
   
   .vehicleTitle {

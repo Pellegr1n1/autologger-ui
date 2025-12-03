@@ -3,11 +3,11 @@ import { Form, Input, Button, Card, Typography, Checkbox, Steps, Space, Progress
 import {
   UserOutlined,
   LockOutlined,
-  MailOutlined
+  MailOutlined,
+  HomeOutlined
 } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
-import { emailVerificationService } from "../../features/auth/services/emailVerificationService"
 import { logger } from "../../shared/utils/logger"
 import styles from "./Auth.module.css"
 
@@ -101,20 +101,9 @@ export default function RegisterPage() {
         confirmPassword: String(allFormData.confirmPassword || ''),
       }
 
-      const currentUser = await register(registerData)
+      await register(registerData)
       
-      if (currentUser?.id) {
-        try {
-          await emailVerificationService.sendVerificationEmail(currentUser.id)
-          navigate("/email-verification-pending")
-          return
-        } catch (verificationError) {
-          console.error("Erro ao enviar email de verificação:", verificationError)
-          navigate("/email-verification-pending")
-          return
-        }
-      }
-      
+      // O backend já envia o email de verificação automaticamente após o registro
       navigate("/email-verification-pending")
       
     } catch (err: unknown) {
@@ -353,6 +342,13 @@ export default function RegisterPage() {
       <div className={styles.authContainer}>
         <div className={styles.authContent}>
           <Card className={styles.authCard}>
+          <Button
+            type="text"
+            icon={<HomeOutlined />}
+            onClick={() => navigate('/')}
+            className={styles.homeButton}
+            title="Voltar para a página inicial"
+          />
           <div className={styles.authHeader}>
             <Title level={2} className={styles.authTitle} style={{ marginBottom: 8, fontSize: '1.8rem' }}>
               Crie sua conta

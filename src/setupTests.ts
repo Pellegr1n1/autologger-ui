@@ -1,9 +1,10 @@
 /// <reference types="@testing-library/jest-dom" />
 import '@testing-library/jest-dom';
 import { TextEncoder, TextDecoder } from 'node:util';
+import { jest, beforeAll, afterAll } from '@jest/globals';
 
-globalThis.TextEncoder = TextEncoder;
-globalThis.TextDecoder = TextDecoder as any;
+globalThis.TextEncoder = TextEncoder as typeof globalThis.TextEncoder;
+globalThis.TextDecoder = TextDecoder as typeof globalThis.TextDecoder;
 
 Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
@@ -33,6 +34,7 @@ globalThis.ResizeObserver = class ResizeObserver {
 
 process.env.VITE_GOOGLE_CLIENT_ID = 'test-client-id';
 process.env.VITE_API_BASE_URL = 'http://localhost:3001';
+process.env.VITE_API_URL = 'http://localhost:3001';
 process.env.MODE = 'test';
 process.env.PROD = 'false';
 process.env.DEV = 'true';
@@ -42,6 +44,7 @@ process.env.DEV = 'true';
     env: {
       VITE_GOOGLE_CLIENT_ID: 'test-client-id',
       VITE_API_BASE_URL: 'http://localhost:3001',
+      VITE_API_URL: 'http://localhost:3001',
       MODE: 'test',
       PROD: false,
       DEV: true,

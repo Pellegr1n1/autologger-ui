@@ -82,7 +82,7 @@ describe('VerifyEmailPage', () => {
     });
   });
 
-  it('should navigate to vehicles on success', async () => {
+  it('should navigate to login on success', async () => {
     const mockVerify = emailVerificationService.verifyEmail as jest.Mock;
     mockVerify.mockResolvedValue({});
 
@@ -103,7 +103,7 @@ describe('VerifyEmailPage', () => {
     });
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/vehicles');
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     }, { timeout: 4000 });
   });
 

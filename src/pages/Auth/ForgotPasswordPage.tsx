@@ -35,20 +35,36 @@ export default function ForgotPasswordPage() {
       logger.error("Erro ao solicitar recuperação de senha:", err);
       
       let errorMessage = "Erro ao processar solicitação. Tente novamente.";
+      let errorTitle = 'Erro ao solicitar recuperação';
       
       if (err && typeof err === 'object' && 'response' in err) {
-        const errorResponse = err as { response?: { status?: number } };
-        if (errorResponse.response?.status === 429) {
+        const errorResponse = err as { 
+          response?: { 
+            status?: number;
+            data?: { message?: string };
+          } 
+        };
+        
+        const status = errorResponse.response?.status;
+        const responseMessage = errorResponse.response?.data?.message;
+        
+        if (status === 400) {
+          errorTitle = 'Não é possível redefinir senha';
+          errorMessage = responseMessage || 'Este email está associado a uma conta Google. Use a opção "Entrar com Google" para acessar sua conta.';
+        } else if (status === 404) {
+          errorTitle = 'Email não encontrado';
+          errorMessage = 'O email informado não está cadastrado em nossa aplicação.';
+        } else if (status === 429) {
           errorMessage = "Muitas solicitações. Aguarde alguns minutos.";
+        } else if (responseMessage) {
+          errorMessage = responseMessage;
         }
-      }
-      
-      if (err instanceof Error) {
+      } else if (err instanceof Error) {
         errorMessage = err.message;
       }
 
       api.error({
-        message: 'Erro ao solicitar recuperação',
+        message: errorTitle,
         description: errorMessage,
         placement: 'bottomRight',
         duration: 5,

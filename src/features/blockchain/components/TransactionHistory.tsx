@@ -368,7 +368,12 @@ export default function TransactionHistory() {
         pageSize: 5,
         showSizeChanger: false,
         showTotal: (total) => `Total: ${total} transações`,
-        style: { marginTop: '16px' }
+        style: { marginTop: '16px' },
+        responsive: true
+      }}
+      scroll={{ 
+        x: 'max-content',
+        y: undefined
       }}
       style={{
         background: 'var(--surface-color)',

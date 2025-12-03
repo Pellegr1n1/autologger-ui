@@ -7,6 +7,7 @@ import {
 import { Vehicle } from '../../../features/vehicles/types/vehicle.types';
 import styles from './VehicleCard.module.css';
 import type { MenuProps } from 'antd';
+import { getApiBaseUrl } from '../../../shared/utils/env';
 
 const { Text, Title } = Typography;
 
@@ -36,14 +37,8 @@ export default function VehicleCard({
       return url;
     }
     
-    // Support both Vite (import.meta.env) and Jest (process.env) environments
-    let apiBaseUrl: string;
-    if (typeof process !== 'undefined' && process.env?.VITE_API_BASE_URL) {
-      apiBaseUrl = process.env.VITE_API_BASE_URL;
-    } else {
-      const globalEnv = globalThis as { import?: { meta?: { env?: { VITE_API_BASE_URL?: string } } } };
-      apiBaseUrl = globalEnv.import?.meta?.env?.VITE_API_BASE_URL || 'http://localhost:3001';
-    }
+    // Usa a função helper que funciona tanto em produção quanto em testes
+    const apiBaseUrl = getApiBaseUrl();
     const fullUrl = `${apiBaseUrl}${url}`;
     return fullUrl;
   };
@@ -118,9 +113,9 @@ export default function VehicleCard({
       <div className={styles.cardActions}>
         <Button
           type="primary"
+          className={styles.viewButton}
           onClick={() => onView(vehicle)}
           style={{
-            flex: 1,
             height: '40px',
             borderRadius: '8px',
             background: 'linear-gradient(135deg, var(--primary-color), var(--accent-color))',

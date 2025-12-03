@@ -132,6 +132,14 @@ export class BlockchainService {
     return response.data;
   }
 
+  // Sincronizar status de serviços falhados com a blockchain
+  static async syncFailedServicesStatus(): Promise<{ success: boolean; total: number; corrected: number; notFound: number; errors: number; message: string }> {
+    const response = await apiBase.api.post<{ success: boolean; total: number; corrected: number; notFound: number; errors: number; message: string }>(
+      `${this.BASE_PATH}/services/sync-status`
+    );
+    return response.data;
+  }
+
   // Registrar todos os hashes existentes no contrato
   static async registerAllExistingHashes(): Promise<{ success: boolean; message: string; successCount: number; errorCount: number }> {
     const response = await apiBase.api.post<{ success: boolean; message: string; successCount: number; errorCount: number }>(
