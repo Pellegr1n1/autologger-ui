@@ -8,7 +8,6 @@ import {
 } from "@ant-design/icons"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../../features/auth"
-import { emailVerificationService } from "../../features/auth/services/emailVerificationService"
 import { logger } from "../../shared/utils/logger"
 import styles from "./Auth.module.css"
 
@@ -102,20 +101,9 @@ export default function RegisterPage() {
         confirmPassword: String(allFormData.confirmPassword || ''),
       }
 
-      const currentUser = await register(registerData)
+      await register(registerData)
       
-      if (currentUser?.id) {
-        try {
-          await emailVerificationService.sendVerificationEmail(currentUser.id)
-          navigate("/email-verification-pending")
-          return
-        } catch (verificationError) {
-          console.error("Erro ao enviar email de verificação:", verificationError)
-          navigate("/email-verification-pending")
-          return
-        }
-      }
-      
+      // O backend já envia o email de verificação automaticamente após o registro
       navigate("/email-verification-pending")
       
     } catch (err: unknown) {

@@ -148,18 +148,6 @@ export default function LoginPage() {
     }
   }
 
-
-  // Mostrar loading enquanto verifica autenticação
-  if (authLoading) {
-    return (
-      <div className={styles.authContainer} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <Text type="secondary">Verificando autenticação...</Text>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {contextHolder}
