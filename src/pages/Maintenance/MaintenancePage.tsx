@@ -31,6 +31,8 @@ import styles from './MaintenancePage.module.css';
 import { getApiBaseUrl } from '../../shared/utils/env';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
 import { logger } from '../../shared/utils/logger';
+import { useIntegrityVerification } from '../../features/blockchain/hooks/useIntegrityVerification';
+import IntegrityStatusBadge from '../../components/ui/IntegrityStatusBadge/IntegrityStatusBadge';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -72,6 +74,13 @@ const MaintenancePage = React.memo(function MaintenancePage() {
   
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // Hook para verificação de integridade
+  useIntegrityVerification(maintenanceEvents, {
+    enabled: true,
+    checkInterval: 120000, // Verificar a cada 2 minutos
+    showNotifications: true,
+  });
 
   const handleAddMaintenance = useCallback(() => {
     if (vehicles.length === 0) {
@@ -883,6 +892,29 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       },
     },
     {
+      title: 'Integridade',
+      key: 'integrity',
+      align: 'center' as const,
+      render: (record: MaintenanceEvent) => {
+        // Só mostrar status de integridade para serviços confirmados na blockchain
+        if (
+          !record.blockchainHash ||
+          record.blockchainStatus?.status !== 'CONFIRMED'
+        ) {
+          return null;
+        }
+
+        return (
+          <IntegrityStatusBadge
+            status={record.integrityStatus}
+            checkedAt={record.integrityCheckedAt}
+            showDetails={true}
+            size="small"
+          />
+        );
+      },
+    },
+    {
       title: 'Visualizar',
       key: 'actions',
       align: 'center' as const,
@@ -1344,6 +1376,16 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                 <Typography.Text code style={{ fontSize: '12px' }}>
                   {pageState.selectedMaintenance.blockchainHash}
                 </Typography.Text>
+              </Descriptions.Item>
+            )}
+            {pageState.selectedMaintenance.blockchainHash && 
+             pageState.selectedMaintenance.blockchainStatus?.status === 'CONFIRMED' && (
+              <Descriptions.Item label="Status de Integridade">
+                <IntegrityStatusBadge
+                  status={pageState.selectedMaintenance.integrityStatus}
+                  checkedAt={pageState.selectedMaintenance.integrityCheckedAt}
+                  showDetails={true}
+                />
               </Descriptions.Item>
             )}
             {pageState.selectedMaintenance.attachments && pageState.selectedMaintenance.attachments.length > 0 && (

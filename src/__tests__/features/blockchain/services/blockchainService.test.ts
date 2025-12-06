@@ -110,13 +110,22 @@ describe('BlockchainService', () => {
     it('should return hash verification result', async () => {
       const mockResult = {
         exists: true,
-        info: {
-          owner: '0x123',
-          timestamp: 1234567890,
-          vehicleId: 'v1',
-          eventType: 'maintenance',
-          verificationCount: 1,
+        hash: '0xhash',
+        blockchainData: {
+          blockNumber: 12345,
+          timestamp: '2024-01-15T10:31:00Z',
+          transactionHash: '0xhash',
         },
+        info: {
+          service: 'Manutenção',
+          vehicle: 'Toyota Corolla 2020',
+          serviceDate: '2024-01-15',
+          cost: 250.00,
+          category: 'maintenance',
+          description: 'Troca de óleo e filtro',
+        },
+        verified: true,
+        message: 'Dados verificados com sucesso na blockchain',
       };
 
       (apiBase.api.get as jest.Mock).mockResolvedValue({ data: mockResult });
@@ -124,7 +133,9 @@ describe('BlockchainService', () => {
       const result = await BlockchainService.verifyHash('0xhash');
 
       expect(result.exists).toBe(true);
-      expect(result.info?.vehicleId).toBe('v1');
+      expect(result.info?.service).toBe('Manutenção');
+      expect(result.info?.vehicle).toBe('Toyota Corolla 2020');
+      expect(result.blockchainData?.blockNumber).toBe(12345);
       expect(apiBase.api.get).toHaveBeenCalledWith('/blockchain/besu/hash/verify/0xhash');
     });
   });

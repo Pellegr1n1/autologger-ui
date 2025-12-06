@@ -48,7 +48,9 @@ export default function TransactionHistory() {
       const mapped: Transaction[] = (services || [])
         .map((s) => ({
           id: String(s.id || ''),
-          hash: (s as { transactionHash?: string; blockchainHash?: string }).transactionHash || (s as { transactionHash?: string; blockchainHash?: string }).blockchainHash || null,
+          hash: (s as { transactionHash?: string; hash?: string; blockchainHash?: string }).transactionHash || 
+                (s as { transactionHash?: string; hash?: string; blockchainHash?: string }).hash || 
+                (s as { transactionHash?: string; hash?: string; blockchainHash?: string }).blockchainHash || null,
           status: (s.status || 'PENDING') as Transaction['status'],
           category: s.category || s.type || 'SERVICO',
           description: s.description || '',
@@ -486,7 +488,7 @@ export default function TransactionHistory() {
         <Space direction="vertical" size="middle" style={{ width: '100%', marginTop: '16px' }}>
           <div>
             <Text strong style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'block', marginBottom: '8px' }}>
-              Hash Completo:
+              Hash da Transação:
             </Text>
             <Text 
               code 
@@ -516,12 +518,13 @@ export default function TransactionHistory() {
                 O que é este hash?
               </Text>
               <Text style={{ color: 'var(--text-secondary)', fontSize: '12px', lineHeight: '1.6' }}>
-                Este hash é a assinatura única do seu registro na blockchain. Ele prova que:
+                Este é o <strong>hash da transação</strong> que registrou seu serviço na blockchain. Use este hash para:
               </Text>
               <ul style={{ margin: '8px 0 0 20px', padding: 0, color: 'var(--text-secondary)', fontSize: '12px' }}>
-                <li>O registro está protegido na blockchain</li>
-                <li>Não pode ser alterado ou deletado</li>
-                <li>Pode ser verificado por qualquer pessoa que tenha o hash</li>
+                <li>Verificar o registro na blockchain</li>
+                <li>Obter o bloco exato onde foi registrado</li>
+                <li>Confirmar que o registro não foi alterado</li>
+                <li>Compartilhar para validação externa</li>
               </ul>
             </Space>
           </div>

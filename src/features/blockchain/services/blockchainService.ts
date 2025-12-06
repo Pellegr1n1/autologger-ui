@@ -58,17 +58,56 @@ export interface BesuContractStats {
 
 export interface BesuHashInfo {
   exists: boolean;
-  info?: {
-    owner: string;
-    timestamp: number;
-    vehicleId: string;
-    eventType: string;
-    verificationCount: number;
+  hash?: string;
+  blockchainData?: {
+    blockNumber: number;
+    timestamp: string;
+    transactionHash: string;
   };
+  info?: {
+    service: string;
+    vehicle: string;
+    serviceDate: string;
+    cost?: number;
+    category?: string;
+    description?: string;
+  };
+  verified?: boolean;
+  message?: string;
 }
 
 export interface BesuConnectionStatus {
   connected: boolean;
+}
+
+export enum IntegrityStatus {
+  VALID = 'valid',
+  VIOLATED = 'violated',
+  UNKNOWN = 'unknown',
+  NOT_VERIFIED = 'not_verified',
+}
+
+export interface IntegrityVerificationResult {
+  isValid: boolean;
+  integrityStatus: IntegrityStatus;
+  currentHash: string;
+  blockchainHash: string;
+  hashMatches: boolean;
+  existsInBlockchain: boolean;
+  message: string;
+}
+
+export interface IntegrityVerificationStats {
+  total: number;
+  valid: number;
+  violated: number;
+  unknown: number;
+  notVerified: number;
+  results: Array<{
+    serviceId: string;
+    status: IntegrityStatus;
+    message: string;
+  }>;
 }
 
 export class BlockchainService {
@@ -267,6 +306,22 @@ export class BlockchainService {
   static async getOwnerHashes(address: string): Promise<string[]> {
     const response = await apiBase.api.get<string[]>(
       `${this.BASE_PATH}/besu/owner/${address}/hashes`
+    );
+    return response.data;
+  }
+
+  // Verificar integridade de um serviço
+  static async verifyServiceIntegrity(serviceId: string): Promise<IntegrityVerificationResult> {
+    const response = await apiBase.api.get<IntegrityVerificationResult>(
+      `${this.BASE_PATH}/services/${serviceId}/integrity`
+    );
+    return response.data;
+  }
+
+  // Verificar integridade de todos os serviços
+  static async verifyAllServicesIntegrity(): Promise<IntegrityVerificationStats> {
+    const response = await apiBase.api.post<IntegrityVerificationStats>(
+      `${this.BASE_PATH}/services/verify-integrity-all`
     );
     return response.data;
   }

@@ -3,7 +3,7 @@
  * Reduz duplicação de código ao mapear serviços do backend para frontend
  */
 
-import { VehicleEvent, VehicleEventType } from '../types/vehicle.types';
+import { VehicleEvent, VehicleEventType, IntegrityStatus } from '../types/vehicle.types';
 import { parseDate } from '../../../shared/utils/date';
 
 /**
@@ -76,12 +76,15 @@ export function mapServiceToFrontend(service: {
   updatedAt: string | Date;
   status: string;
   blockchainHash?: string;
+  transactionHash?: string;
   previousHash?: string;
   merkleRoot?: string;
   isImmutable?: boolean;
   canEdit?: boolean;
   confirmedBy?: string;
   blockchainConfirmedAt?: string | Date;
+  integrityStatus?: string;
+  integrityCheckedAt?: string | Date;
 }): VehicleEvent {
   const lastUpdate = service.blockchainConfirmedAt
     ? parseDate(service.blockchainConfirmedAt)
@@ -116,7 +119,7 @@ export function mapServiceToFrontend(service: {
       retryCount: 0,
       maxRetries: 3,
     },
-    hash: service.blockchainHash,
+    hash: service.transactionHash || service.blockchainHash, // ✅ Usar transactionHash se disponível
     previousHash: service.previousHash,
     merkleRoot: service.merkleRoot,
     isImmutable: service.isImmutable ?? false,
@@ -124,6 +127,8 @@ export function mapServiceToFrontend(service: {
     requiresConfirmation: false,
     confirmedBy: service.confirmedBy,
     confirmedAt: service.blockchainConfirmedAt ? parseDate(service.blockchainConfirmedAt) : undefined,
+    integrityStatus: service.integrityStatus as IntegrityStatus | undefined,
+    integrityCheckedAt: service.integrityCheckedAt ? parseDate(service.integrityCheckedAt) : undefined,
   };
 }
 
@@ -152,12 +157,15 @@ export function mapServicesToFrontend(
     updatedAt: string | Date;
     status: string;
     blockchainHash?: string;
+    transactionHash?: string;
     previousHash?: string;
     merkleRoot?: string;
     isImmutable?: boolean;
     canEdit?: boolean;
     confirmedBy?: string;
     blockchainConfirmedAt?: string | Date;
+    integrityStatus?: string;
+    integrityCheckedAt?: string | Date;
   }>
 ): VehicleEvent[] {
   return services.map(mapServiceToFrontend);

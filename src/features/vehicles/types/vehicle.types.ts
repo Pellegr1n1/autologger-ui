@@ -20,6 +20,13 @@ export interface ChainStatus {
   maxRetries: number;
 }
 
+export enum IntegrityStatus {
+  VALID = 'valid',
+  VIOLATED = 'violated',
+  UNKNOWN = 'unknown',
+  NOT_VERIFIED = 'not_verified',
+}
+
 export interface Vehicle {
   id: string
   plate: string
@@ -63,6 +70,8 @@ export interface VehicleEvent {
   confirmedBy?: string;
   confirmedAt?: Date;
   confirmationHash?: string;
+  integrityStatus?: IntegrityStatus;
+  integrityCheckedAt?: Date;
 }
 
 export interface VehicleDocument {

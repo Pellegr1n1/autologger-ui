@@ -22,12 +22,15 @@ interface BackendServiceResponse {
   updatedAt: string | Date;
   status: string;
   blockchainHash?: string;
+  transactionHash?: string;
   previousHash?: string;
   merkleRoot?: string;
   isImmutable?: boolean;
   canEdit?: boolean;
   confirmedBy?: string;
   blockchainConfirmedAt?: string | Date;
+  integrityStatus?: string;
+  integrityCheckedAt?: string | Date;
 }
 
 export interface CreateVehicleServiceData {
