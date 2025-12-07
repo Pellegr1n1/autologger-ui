@@ -13,6 +13,7 @@ import componentStyles from '../../components/layout/Components.module.css';
 import styles from './BlockchainPage.module.css';
 import TransactionHistory from '../../features/blockchain/components/TransactionHistory';
 import { BlockchainService } from '../../features/blockchain/services/blockchainService';
+import { IntegrityStatus } from '../../features/vehicles/types/vehicle.types';
 import { logger } from '../../shared/utils/logger';
 
 const { Text } = Typography;
@@ -106,13 +107,9 @@ export default function BlockchainPage() {
           const reliabilityScore = totalTransactions > 0 ? 
             Math.round((confirmedTransactions / totalTransactions) * 100) : 0;
 
-          // Calcular tempo médio de confirmação baseado nos serviços confirmados
           let averageConfirmationTime = 0;
           
           if (confirmedServices.length > 0) {
-            // Estimar tempo de confirmação baseado no número de transações
-            // Em um sistema real, isso seria calculado a partir de timestamps reais
-            // Usando uma estimativa fixa baseada no volume de transações
             const baseTime = 2;
             const volumeFactor = Math.min(1.5, confirmedServices.length * 0.01);
             averageConfirmationTime = Math.max(1, Math.min(5, baseTime + volumeFactor));
