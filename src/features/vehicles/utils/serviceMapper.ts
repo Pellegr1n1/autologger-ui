@@ -120,6 +120,7 @@ export function mapServiceToFrontend(service: {
       maxRetries: 3,
     },
     hash: service.transactionHash || service.blockchainHash, // ✅ Usar transactionHash se disponível
+    blockchainHash: service.blockchainHash, // ✅ Manter blockchainHash também para compatibilidade
     previousHash: service.previousHash,
     merkleRoot: service.merkleRoot,
     isImmutable: service.isImmutable ?? false,

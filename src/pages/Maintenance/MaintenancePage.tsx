@@ -33,6 +33,7 @@ import ServiceModal from '../../features/vehicles/components/ServiceModal';
 import { logger } from '../../shared/utils/logger';
 import { useIntegrityVerification } from '../../features/blockchain/hooks/useIntegrityVerification';
 import IntegrityStatusBadge from '../../components/ui/IntegrityStatusBadge/IntegrityStatusBadge';
+import { IntegrityStatus } from '../../features/vehicles/types/vehicle.types';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -292,8 +293,12 @@ const MaintenancePage = React.memo(function MaintenancePage() {
         blockchainStatus: {
           ...(updated.blockchainStatus || {}),
           status: normalizedStatus || updated.blockchainStatus?.status || 'PENDING'
-        }
-      };
+        },
+        integrityStatus: updated.integrityStatus,
+        integrityCheckedAt: updated.integrityCheckedAt,
+        blockchainHash: updated.blockchainHash || (updated as any).blockchainHash,
+        hash: updated.hash || (updated as any).hash || (updated as any).transactionHash,
+      } as VehicleEvent;
 
       setMaintenanceEvents(prev => prev.map(ev => ev.id === updated.id ? normalizedService : ev));
 
@@ -369,7 +374,9 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       blockchainStatus: {
         ...(newService.blockchainStatus || {}),
         status: 'PENDING' as const
-      }
+      },
+      integrityStatus: newService.integrityStatus || IntegrityStatus.NOT_VERIFIED,
+      blockchainHash: newService.blockchainHash,
     } as VehicleEvent;
     setMaintenanceEvents(prev => [pendingInjected, ...prev]);
     setPageState(prev => ({ ...prev, serviceModalOpen: false }));
@@ -896,17 +903,16 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       key: 'integrity',
       align: 'center' as const,
       render: (record: MaintenanceEvent) => {
-        // Só mostrar status de integridade para serviços confirmados na blockchain
-        if (
-          !record.blockchainHash ||
-          record.blockchainStatus?.status !== 'CONFIRMED'
-        ) {
+        const hasBlockchainHash = record.hash || record.blockchainHash;
+        if (!hasBlockchainHash) {
           return null;
         }
 
+        const integrityStatus = record.integrityStatus || IntegrityStatus.NOT_VERIFIED;
+
         return (
           <IntegrityStatusBadge
-            status={record.integrityStatus}
+            status={integrityStatus}
             checkedAt={record.integrityCheckedAt}
             showDetails={true}
             size="small"

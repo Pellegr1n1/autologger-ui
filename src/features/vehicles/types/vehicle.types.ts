@@ -62,6 +62,7 @@ export interface VehicleEvent {
   updatedAt: Date;
   blockchainStatus: ChainStatus;
   hash?: string;
+  blockchainHash?: string;
   previousHash?: string;
   merkleRoot?: string;
   isImmutable: boolean;
