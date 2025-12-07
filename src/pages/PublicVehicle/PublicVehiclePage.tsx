@@ -39,8 +39,11 @@ import {
   FilterOutlined,
   ClearOutlined,
   CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { VehicleShareService, PublicVehicleInfo } from '../../features/vehicles/services/vehicleShareService';
+import { IntegrityStatus } from '../../features/vehicles/types/vehicle.types';
 import { formatBRDate } from '../../shared/utils/format';
 import { getColorHex } from '../../shared/utils/colorUtils';
 import { getApiBaseUrl } from '../../shared/utils/env';
@@ -145,18 +148,50 @@ const PublicVehiclePage: React.FC = () => {
     }
   };
 
-  const getBlockchainStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'confirmado':
-        return 'success';
-      case 'pendente':
-        return 'warning';
-      case 'rejeitado':
-        return 'error';
-      case 'expirado':
-        return 'default';
-      default:
-        return 'default';
+  const getCombinedStatus = (blockchainStatus: string, integrityStatus?: string) => {
+    // Normalizar status do backend (pode vir como "Confirmado", "Pendente", etc. ou "CONFIRMED", "PENDING", etc.)
+    const statusLower = blockchainStatus?.toLowerCase() || '';
+    let normalizedBlockchainStatus: string;
+    
+    if (statusLower === 'confirmado' || statusLower === 'confirmed') {
+      normalizedBlockchainStatus = 'CONFIRMED';
+    } else if (statusLower === 'rejeitado' || statusLower === 'rejected' || statusLower === 'failed') {
+      normalizedBlockchainStatus = 'FAILED';
+    } else if (statusLower === 'reverted') {
+      normalizedBlockchainStatus = 'REVERTED';
+    } else {
+      normalizedBlockchainStatus = 'PENDING';
+    }
+    
+    const normalizedIntegrityStatus = integrityStatus as IntegrityStatus | undefined;
+    
+    if (normalizedBlockchainStatus === 'CONFIRMED' && normalizedIntegrityStatus === IntegrityStatus.VALID) {
+      return {
+        color: 'green',
+        icon: <CheckCircleOutlined />,
+        text: 'Verificado',
+      };
+    }
+    else if (normalizedBlockchainStatus === 'CONFIRMED' && normalizedIntegrityStatus === IntegrityStatus.VIOLATED) {
+      return {
+        color: 'red',
+        icon: <ExclamationCircleOutlined />,
+        text: 'Adulterado',
+      };
+    }
+    else if (normalizedBlockchainStatus === 'FAILED' || normalizedBlockchainStatus === 'REVERTED') {
+      return {
+        color: 'red',
+        icon: <ReloadOutlined />,
+        text: 'Falha',
+      };
+    }
+    else {
+      return {
+        color: 'orange',
+        icon: <ReloadOutlined />,
+        text: 'Pendente',
+      };
     }
   };
 
@@ -781,13 +816,21 @@ const PublicVehiclePage: React.FC = () => {
                         </Tag>
                       )}
                     </div>
-                    <Tag 
-                      color={service.blockchainHash ? getBlockchainStatusColor(service.blockchainStatus) : 'default'}
-                      icon={service.blockchainHash ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-                      style={{ fontSize: '10px', margin: 0 }}
-                    >
-                      {service.blockchainHash ? service.blockchainStatus : 'Não confirmado'}
-                    </Tag>
+                    {(() => {
+                      const statusInfo = service.blockchainHash 
+                        ? getCombinedStatus(service.blockchainStatus, (service as any).integrityStatus)
+                        : { color: 'default', icon: <CloseCircleOutlined />, text: 'Não confirmado' };
+                      
+                      return (
+                        <Tag 
+                          color={statusInfo.color}
+                          icon={statusInfo.icon}
+                          style={{ fontSize: '10px', margin: 0 }}
+                        >
+                          {statusInfo.text}
+                        </Tag>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

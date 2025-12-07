@@ -5,7 +5,8 @@ import {
   CheckCircleOutlined,
   SafetyCertificateOutlined,
   ReloadOutlined,
-  CloseCircleOutlined
+  CloseCircleOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { DefaultFrame } from '../../components/layout';
 import componentStyles from '../../components/layout/Components.module.css';
@@ -23,6 +24,7 @@ export default function BlockchainPage() {
     confirmedTransactions: number;
     pendingTransactions: number;
     failedTransactions: number;
+    adulteratedTransactions: number;
     reliabilityScore: number;
     networkStatus: 'connected' | 'disconnected';
     averageConfirmationTime: number;
@@ -34,6 +36,7 @@ export default function BlockchainPage() {
     confirmedTransactions: 0,
     pendingTransactions: 0,
     failedTransactions: 0,
+    adulteratedTransactions: 0,
     reliabilityScore: 0,
     networkStatus: 'connected',
     averageConfirmationTime: 0,
@@ -73,11 +76,18 @@ export default function BlockchainPage() {
           interface ServiceRecord {
             status: string;
             blockchainHash?: string;
+            integrityStatus?: string;
           }
           
           const services: ServiceRecord[] = allServices || [];
           const totalTransactions = services.length;
-          const confirmedTransactions = services.filter(service => service.status === 'CONFIRMED').length;
+          const confirmedServices = services.filter(service => service.status === 'CONFIRMED');
+          const confirmedTransactions = confirmedServices.filter(service => 
+            service.integrityStatus !== 'violated'
+          ).length;
+          const adulteratedTransactions = confirmedServices.filter(service => 
+            service.integrityStatus === 'violated'
+          ).length;
           const pendingTransactions = services.filter(service => service.status === 'PENDING' || service.status === 'SUBMITTED').length;
           const failedTransactions = services.filter(service => service.status === 'FAILED').length;
           const pendingServices = services.filter(service => 
@@ -97,7 +107,6 @@ export default function BlockchainPage() {
             Math.round((confirmedTransactions / totalTransactions) * 100) : 0;
 
           // Calcular tempo médio de confirmação baseado nos serviços confirmados
-          const confirmedServices = services.filter(service => service.status === 'CONFIRMED');
           let averageConfirmationTime = 0;
           
           if (confirmedServices.length > 0) {
@@ -114,6 +123,7 @@ export default function BlockchainPage() {
             confirmedTransactions,
             pendingTransactions,
             failedTransactions,
+            adulteratedTransactions,
             reliabilityScore,
             networkStatus: connectionStatusResponse.connected ? 'connected' : 'disconnected',
             averageConfirmationTime,
@@ -131,6 +141,7 @@ export default function BlockchainPage() {
             confirmedTransactions: 0,
             pendingTransactions: 0,
             failedTransactions: 0,
+            adulteratedTransactions: 0,
             reliabilityScore: 0,
             networkStatus: 'disconnected',
             averageConfirmationTime: 0,
@@ -155,6 +166,7 @@ export default function BlockchainPage() {
           confirmedTransactions: 0,
           pendingTransactions: 0,
           failedTransactions: 0,
+          adulteratedTransactions: 0,
           reliabilityScore: 0,
           networkStatus: 'disconnected',
           averageConfirmationTime: 0,
@@ -228,6 +240,7 @@ export default function BlockchainPage() {
     totalTransactions, 
     confirmedTransactions, 
     failedTransactions,
+    adulteratedTransactions,
     reliabilityScore,
     networkStatus 
   } = blockchainData;
@@ -272,10 +285,10 @@ export default function BlockchainPage() {
         {/* Estatísticas simplificadas - apenas o essencial */}
         <div className={styles.statsSection}>
           <Row gutter={[24, 24]}>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
-                  title="Registros Protegidos"
+                  title="Registros Verificados"
                   value={confirmedTransactions}
                   prefix={<CheckCircleOutlined style={{ color: 'var(--success-color)' }} />}
                   valueStyle={{ color: 'var(--text-primary)' }}
@@ -283,7 +296,17 @@ export default function BlockchainPage() {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
+              <Card className={componentStyles.professionalStatistic}>
+                <Statistic
+                  title="Registros Adulterados"
+                  value={adulteratedTransactions}
+                  prefix={<ExclamationCircleOutlined style={{ color: 'var(--error-color)' }} />}
+                  valueStyle={{ color: 'var(--text-primary)' }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
                   title="Registros Falhados"
@@ -293,7 +316,7 @@ export default function BlockchainPage() {
                 />
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card className={componentStyles.professionalStatistic}>
                 <Statistic
                   title="Status"
@@ -323,7 +346,6 @@ export default function BlockchainPage() {
         </div>
 
 
-        {/* Conteúdo principal - apenas histórico de transações */}
         <div className={styles.contentSection}>
           <Card className={componentStyles.professionalCard}>
             <TransactionHistory />

@@ -37,7 +37,16 @@ jest.mock('../../../features/vehicles/services/vehicleServiceService', () => ({
 jest.mock('../../../features/blockchain/services/blockchainService', () => ({
   BlockchainService: {
     getHealth: jest.fn(() => Promise.resolve({ status: 'healthy' })),
+    resendFailedService: jest.fn(() => Promise.resolve({ 
+      success: true, 
+      transactionHash: '0x123',
+      status: 'SUBMITTED'
+    })),
   },
+}));
+
+jest.mock('../../../features/blockchain/hooks/useIntegrityVerification', () => ({
+  useIntegrityVerification: jest.fn(() => {}),
 }));
 
 import { VehicleService } from '../../../features/vehicles/services/vehicleService';
@@ -120,7 +129,17 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date() },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -216,8 +235,28 @@ describe('MaintenancePage', () => {
       { id: '2', brand: 'Honda', model: 'Civic', plate: 'XYZ5678', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date() },
-      { id: '2', vehicleId: '2', description: 'Tire change', category: 'Maintenance', cost: 200, mileage: 20000, date: new Date() },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
+      { 
+        id: '2', 
+        vehicleId: '2', 
+        description: 'Tire change', 
+        category: 'Maintenance', 
+        cost: 200, 
+        mileage: 20000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -277,7 +316,9 @@ describe('MaintenancePage', () => {
         cost: 150, 
         mileage: 10000, 
         date: new Date(),
-        type: 'MAINTENANCE'
+        type: 'MAINTENANCE',
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
       },
     ];
 
@@ -300,7 +341,17 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date() },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -328,8 +379,30 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date(), type: 'MAINTENANCE' },
-      { id: '2', vehicleId: '1', description: 'Fuel', category: 'Fuel', cost: 200, mileage: 20000, date: new Date(), type: 'FUEL' },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(), 
+        type: 'MAINTENANCE',
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
+      { 
+        id: '2', 
+        vehicleId: '1', 
+        description: 'Fuel', 
+        category: 'Fuel', 
+        cost: 200, 
+        mileage: 20000, 
+        date: new Date(), 
+        type: 'FUEL',
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -357,7 +430,18 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Oil', cost: 150, mileage: 10000, date: new Date(), type: 'MAINTENANCE' },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Oil', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(), 
+        type: 'MAINTENANCE',
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -385,7 +469,18 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date('2024-01-15'), serviceDate: new Date('2024-01-15') },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date('2024-01-15'), 
+        serviceDate: new Date('2024-01-15'),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -413,7 +508,17 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date() },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -440,9 +545,10 @@ describe('MaintenancePage', () => {
     const { BlockchainService } = await import('../../../features/blockchain/services/blockchainService');
     jest.spyOn(console, 'error').mockImplementation(() => {});
     
-    (BlockchainService.resendFailedService as jest.Mock) = jest.fn().mockResolvedValueOnce({
+    (BlockchainService.resendFailedService as jest.Mock).mockResolvedValueOnce({
       success: true,
       transactionHash: '0x123',
+      status: 'SUBMITTED',
     });
 
     const mockVehicles = [
@@ -457,7 +563,9 @@ describe('MaintenancePage', () => {
         cost: 150, 
         mileage: 10000, 
         date: new Date(),
-        blockchainStatus: { status: 'FAILED' }
+        serviceDate: new Date(),
+        blockchainStatus: { status: 'FAILED' },
+        integrityStatus: undefined,
       },
     ];
 
@@ -490,8 +598,28 @@ describe('MaintenancePage', () => {
       { id: '1', brand: 'Toyota', model: 'Corolla', plate: 'ABC1234', status: 'active' },
     ];
     const mockServices = [
-      { id: '1', vehicleId: '1', description: 'Oil change', category: 'Maintenance', cost: 150, mileage: 10000, date: new Date() },
-      { id: '2', vehicleId: '1', description: 'Repair', category: 'Repair', cost: 300, mileage: 20000, date: new Date() },
+      { 
+        id: '1', 
+        vehicleId: '1', 
+        description: 'Oil change', 
+        category: 'Maintenance', 
+        cost: 150, 
+        mileage: 10000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
+      { 
+        id: '2', 
+        vehicleId: '1', 
+        description: 'Repair', 
+        category: 'Repair', 
+        cost: 300, 
+        mileage: 20000, 
+        date: new Date(),
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
+      },
     ];
 
     (VehicleService.getUserVehicles as jest.Mock).mockResolvedValueOnce({ active: mockVehicles, sold: [] });
@@ -523,7 +651,9 @@ describe('MaintenancePage', () => {
         cost: 150, 
         mileage: 10000, 
         date: new Date(),
-        type: 'MAINTENANCE'
+        type: 'MAINTENANCE',
+        blockchainStatus: { status: 'PENDING' },
+        integrityStatus: undefined,
       },
     ];
 

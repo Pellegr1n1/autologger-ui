@@ -116,3 +116,4 @@ const IntegrityStatusBadge: React.FC<IntegrityStatusBadgeProps> = ({
 };
 
 export default IntegrityStatusBadge;
+

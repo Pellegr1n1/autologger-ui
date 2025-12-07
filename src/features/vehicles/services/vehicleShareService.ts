@@ -34,6 +34,7 @@ export interface PublicMaintenanceInfo {
   notes?: string;
   blockchainStatus: string;
   blockchainHash?: string;
+  integrityStatus?: string;
   createdAt: string;
   attachments?: PublicAttachment[];
 }

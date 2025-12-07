@@ -17,7 +17,9 @@ import {
   FileOutlined,
   FilterOutlined,
   ClearOutlined,
-  TableOutlined
+  TableOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { VehicleService } from '../../features/vehicles/services/vehicleService';
 import { VehicleServiceService } from '../../features/vehicles/services/vehicleServiceService';
@@ -32,7 +34,6 @@ import { getApiBaseUrl } from '../../shared/utils/env';
 import ServiceModal from '../../features/vehicles/components/ServiceModal';
 import { logger } from '../../shared/utils/logger';
 import { useIntegrityVerification } from '../../features/blockchain/hooks/useIntegrityVerification';
-import IntegrityStatusBadge from '../../components/ui/IntegrityStatusBadge/IntegrityStatusBadge';
 import { IntegrityStatus } from '../../features/vehicles/types/vehicle.types';
 
 const { Text } = Typography;
@@ -560,22 +561,22 @@ const MaintenancePage = React.memo(function MaintenancePage() {
     const exportData = filteredMaintenance.map(service => {
       const vehicle = memoizedVehicles.find(v => v.id === service.vehicleId);
       const maintenanceEvent = service as MaintenanceEvent;
-      const status = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
+      const blockchainStatus = maintenanceEvent.blockchainStatus?.status || maintenanceEvent.status || 'PENDING';
+      const integrityStatus = maintenanceEvent.integrityStatus;
+      
       let statusText: string;
       
-      switch (status) {
-        case 'CONFIRMED':
-          statusText = 'Confirmado';
-          break;
-        case 'SUBMITTED':
-          statusText = 'Enviado';
-          break;
-        case 'FAILED':
-          statusText = 'Falhou';
-          break;
-        default:
-          statusText = 'Pendente';
-          break;
+      if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VALID) {
+        statusText = 'Verificado';
+      }
+      else if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VIOLATED) {
+        statusText = 'Adulterado';
+      }
+      else if (blockchainStatus === 'FAILED' || blockchainStatus === 'REVERTED') {
+        statusText = 'Falha';
+      }
+      else {
+        statusText = 'Pendente';
       }
 
       return {
@@ -862,61 +863,43 @@ const MaintenancePage = React.memo(function MaintenancePage() {
       key: 'status',
       align: 'center' as const,
       render: (record: MaintenanceEvent) => {
-        const status = record.blockchainStatus?.status || record.status || 'PENDING';
+        const blockchainStatus = record.blockchainStatus?.status || record.status || 'PENDING';
+        const integrityStatus = record.integrityStatus;
         
+        // Determinar status combinado
         let color: string;
         let icon: React.ReactNode;
         let text: string;
 
-        switch (status) {
-          case 'CONFIRMED':
-            color = 'green';
-            icon = <EyeOutlined />;
-            text = 'Confirmado';
-            break;
-          case 'SUBMITTED':
-            color = 'blue';
-            icon = <ReloadOutlined />;
-            text = 'Enviado';
-            break;
-          case 'FAILED':
-            color = 'red';
-            icon = <ReloadOutlined />;
-            text = 'Falhou';
-            break;
-          default:
-            color = 'orange';
-            icon = <ReloadOutlined />;
-            text = 'Pendente';
-            break;
+        // Verificado: Confirmado na blockchain + íntegro
+        if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VALID) {
+          color = 'green';
+          icon = <CheckCircleOutlined />;
+          text = 'Verificado';
+        }
+        // Adulterado: Hash não confere (adulteração detectada)
+        else if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VIOLATED) {
+          color = 'red';
+          icon = <ExclamationCircleOutlined />;
+          text = 'Adulterado';
+        }
+        // Falha: Erro ao registrar na blockchain
+        else if (blockchainStatus === 'FAILED' || blockchainStatus === 'REVERTED') {
+          color = 'red';
+          icon = <ReloadOutlined />;
+          text = 'Falha';
+        }
+        // Pendente: Aguardando confirmação na blockchain
+        else {
+          color = 'orange';
+          icon = <ReloadOutlined />;
+          text = 'Pendente';
         }
 
         return (
           <Tag color={color} icon={icon}>
             {text}
           </Tag>
-        );
-      },
-    },
-    {
-      title: 'Integridade',
-      key: 'integrity',
-      align: 'center' as const,
-      render: (record: MaintenanceEvent) => {
-        const hasBlockchainHash = record.hash || record.blockchainHash;
-        if (!hasBlockchainHash) {
-          return null;
-        }
-
-        const integrityStatus = record.integrityStatus || IntegrityStatus.NOT_VERIFIED;
-
-        return (
-          <IntegrityStatusBadge
-            status={integrityStatus}
-            checkedAt={record.integrityCheckedAt}
-            showDetails={true}
-            size="small"
-          />
         );
       },
     },
@@ -1342,32 +1325,36 @@ const MaintenancePage = React.memo(function MaintenancePage() {
             </Descriptions.Item>
             <Descriptions.Item label="Status">
               {(() => {
-                const status = pageState.selectedMaintenance.blockchainStatus?.status || pageState.selectedMaintenance.status || 'PENDING';
+                const blockchainStatus = pageState.selectedMaintenance.blockchainStatus?.status || pageState.selectedMaintenance.status || 'PENDING';
+                const integrityStatus = pageState.selectedMaintenance.integrityStatus;
+                
                 let color: string;
                 let icon: React.ReactNode;
                 let text: string;
 
-                switch (status) {
-                  case 'CONFIRMED':
-                    color = 'green';
-                    icon = <EyeOutlined />;
-                    text = 'Confirmado';
-                    break;
-                  case 'SUBMITTED':
-                    color = 'blue';
-                    icon = <ReloadOutlined />;
-                    text = 'Enviado';
-                    break;
-                  case 'FAILED':
-                    color = 'red';
-                    icon = <ReloadOutlined />;
-                    text = 'Falhou';
-                    break;
-                  default:
-                    color = 'orange';
-                    icon = <ReloadOutlined />;
-                    text = 'Pendente';
-                    break;
+                // Verificado: Confirmado na blockchain + íntegro
+                if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VALID) {
+                  color = 'green';
+                  icon = <CheckCircleOutlined />;
+                  text = 'Verificado';
+                }
+                // Adulterado: Hash não confere (adulteração detectada)
+                else if (blockchainStatus === 'CONFIRMED' && integrityStatus === IntegrityStatus.VIOLATED) {
+                  color = 'red';
+                  icon = <ExclamationCircleOutlined />;
+                  text = 'Adulterado';
+                }
+                // Falha: Erro ao registrar na blockchain
+                else if (blockchainStatus === 'FAILED' || blockchainStatus === 'REVERTED') {
+                  color = 'red';
+                  icon = <ReloadOutlined />;
+                  text = 'Falha';
+                }
+                // Pendente: Aguardando confirmação na blockchain
+                else {
+                  color = 'orange';
+                  icon = <ReloadOutlined />;
+                  text = 'Pendente';
                 }
 
                 return (
@@ -1382,16 +1369,6 @@ const MaintenancePage = React.memo(function MaintenancePage() {
                 <Typography.Text code style={{ fontSize: '12px' }}>
                   {pageState.selectedMaintenance.blockchainHash}
                 </Typography.Text>
-              </Descriptions.Item>
-            )}
-            {pageState.selectedMaintenance.blockchainHash && 
-             pageState.selectedMaintenance.blockchainStatus?.status === 'CONFIRMED' && (
-              <Descriptions.Item label="Status de Integridade">
-                <IntegrityStatusBadge
-                  status={pageState.selectedMaintenance.integrityStatus}
-                  checkedAt={pageState.selectedMaintenance.integrityCheckedAt}
-                  showDetails={true}
-                />
               </Descriptions.Item>
             )}
             {pageState.selectedMaintenance.attachments && pageState.selectedMaintenance.attachments.length > 0 && (

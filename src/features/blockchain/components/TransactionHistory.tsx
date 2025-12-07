@@ -7,10 +7,12 @@ import {
   BlockOutlined,
   EyeOutlined,
   CopyOutlined,
-  CloseCircleOutlined
+  CloseCircleOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { BlockchainService } from '../services/blockchainService';
+import { IntegrityStatus } from '../../vehicles/types/vehicle.types';
 
 const { Text } = Typography;
 
@@ -25,6 +27,7 @@ interface Transaction {
   mileage: number;
   blockNumber?: number;
   vehicleId?: string;
+  integrityStatus?: IntegrityStatus;
   vehicle?: {
     brand?: string;
     model?: string;
@@ -59,6 +62,7 @@ export default function TransactionHistory() {
           mileage: s.mileage || 0,
           blockNumber: (s as { blockNumber?: number }).blockNumber,
           vehicleId: s.vehicleId,
+          integrityStatus: (s as { integrityStatus?: IntegrityStatus }).integrityStatus,
           vehicle: (s as { vehicle?: { brand?: string; model?: string; plate?: string } }).vehicle,
         }));
 
@@ -333,8 +337,13 @@ export default function TransactionHistory() {
   ];
 
   // Separar transações por status
-  const confirmedTransactions = transactions.filter(tx => tx.status === 'CONFIRMED');
+  const confirmedTransactions = transactions.filter(tx => 
+    tx.status === 'CONFIRMED' && tx.integrityStatus !== IntegrityStatus.VIOLATED
+  );
   const failedTransactions = transactions.filter(tx => tx.status === 'FAILED');
+  const adulteratedTransactions = transactions.filter(tx => 
+    tx.status === 'CONFIRMED' && tx.integrityStatus === IntegrityStatus.VIOLATED
+  );
 
   if (loading) {
     return (
@@ -392,7 +401,7 @@ export default function TransactionHistory() {
       label: (
         <Space>
           <CheckCircleOutlined />
-          <span>Confirmadas ({confirmedTransactions.length})</span>
+          <span>Verificadas ({confirmedTransactions.length})</span>
         </Space>
       ),
       children: confirmedTransactions.length > 0 ? (
@@ -401,10 +410,32 @@ export default function TransactionHistory() {
         <div style={{ padding: '32px', textAlign: 'center' }}>
           <CheckCircleOutlined style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }} />
           <Text style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '16px', marginBottom: '8px' }}>
-            Nenhuma transação confirmada
+            Nenhuma transação verificada
           </Text>
           <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            As transações confirmadas aparecerão aqui
+            As transações verificadas aparecerão aqui
+          </Text>
+        </div>
+      ),
+    },
+    {
+      key: 'adulterated',
+      label: (
+        <Space>
+          <ExclamationCircleOutlined />
+          <span>Adulteradas ({adulteratedTransactions.length})</span>
+        </Space>
+      ),
+      children: adulteratedTransactions.length > 0 ? (
+        renderTable(adulteratedTransactions)
+      ) : (
+        <div style={{ padding: '32px', textAlign: 'center' }}>
+          <ExclamationCircleOutlined style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }} />
+          <Text style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '16px', marginBottom: '8px' }}>
+            Nenhum registro adulterado
+          </Text>
+          <Text style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+            Todos os registros verificados estão íntegros
           </Text>
         </div>
       ),

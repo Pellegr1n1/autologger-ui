@@ -161,6 +161,9 @@ describe('PublicVehiclePage', () => {
           serviceDate: '2024-01-15',
           createdAt: '2024-01-15',
           type: 'maintenance',
+          blockchainStatus: 'Confirmado',
+          blockchainHash: '0x123',
+          integrityStatus: 'valid',
         },
       ],
     });
@@ -251,6 +254,9 @@ describe('PublicVehiclePage', () => {
           serviceDate: '2024-01-15',
           createdAt: '2024-01-15',
           type: 'maintenance',
+          blockchainStatus: 'Confirmado',
+          blockchainHash: '0x123',
+          integrityStatus: 'valid',
         },
       ],
     });
@@ -351,6 +357,9 @@ describe('PublicVehiclePage', () => {
           serviceDate: '2024-01-15',
           createdAt: '2024-01-15',
           type: 'maintenance',
+          blockchainStatus: 'Confirmado',
+          blockchainHash: '0x123',
+          integrityStatus: 'valid',
         },
       ],
     });

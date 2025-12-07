@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { notification } from 'antd';
-import { BlockchainService, IntegrityStatus } from '../services/blockchainService';
+import { BlockchainService } from '../services/blockchainService';
+import { IntegrityStatus } from '../../vehicles/types/vehicle.types';
 import { VehicleEvent } from '../../vehicles/types/vehicle.types';
 
 interface UseIntegrityVerificationOptions {
